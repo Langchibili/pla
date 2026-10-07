@@ -1,0 +1,26 @@
+{
+  "kind": "singleType",
+  "collectionName": "affiliate_settings",
+  "info": {
+    "singularName": "affiliate-settings",
+    "pluralName": "affiliate-settings-records",
+    "displayName": "Affiliate Settings"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "conditions_template": {
+      "type": "json",
+      "default": {
+        "operator": "all",
+        "conditions": [
+          { "type": "trigger", "value": "tournament_entry_created" },
+          { "type": "minimum_tournament_entries", "value": 1 },
+          { "type": "account_status", "value": "active" },
+          { "type": "email_verified", "value": true }
+        ],
+        "description": "Every listed condition must pass before the referrer earns Plapo."
+      },
+      "required": true
+    }
+  }
+}

@@ -14,6 +14,32 @@ import SkeletonList from '@/components/SkeletonList';
 import ErrorNote from '@/components/ErrorNote';
 import { AFRICA } from '@/lib/theme';
 
+function StageSchedule({ stage }) {
+  const [expanded, setExpanded] = useState(false);
+  const schedule = useApi(`schedule-${stage.documentId}`, () => endpoints.stageSchedule(stage.documentId), { enabled: expanded });
+
+  return (
+    <Box sx={{ mt: 1 }}>
+      <Button size="small" color="secondary" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+        {expanded ? 'Hide schedule' : 'View schedule'}
+      </Button>
+      {expanded && (schedule.loading ? <Typography variant="body2" color="text.secondary">Loading schedule…</Typography>
+        : schedule.error ? <Typography variant="body2" color="error.main">Schedule unavailable.</Typography>
+          : schedule.data?.matches?.length ? <Box sx={{ display: 'grid', gap: 1, mt: 1 }}>
+            {schedule.data.matches.map((match, index) => (
+              <Box key={`${stage.documentId}-${index}`} sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, py: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography fontWeight={700}>{match.player1 || 'TBD'} vs {match.player2 || 'TBD'}</Typography>
+                  <Typography variant="caption" color="text.secondary">{label(match.status)} · {fmtDate(match.deadline)}</Typography>
+                </Box>
+                {match.player1_score != null && <Typography fontWeight={800}>{match.player1_score}–{match.player2_score}</Typography>}
+              </Box>
+            ))}
+          </Box> : <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Fixtures have not been published yet.</Typography>)}
+    </Box>
+  );
+}
+
 export default function TournamentDetail() {
   const { id } = useParams(); const router = useRouter(); const toast = useToast(); const { user, refresh } = useAuth();
   const { data: t, loading, error, reload } = useApi(`t-${id}`, () => endpoints.tournament(id));
@@ -49,6 +75,7 @@ export default function TournamentDetail() {
           <Surface key={s.documentId} accent={AFRICA.gold} sx={{ p: 1.8 }}>
             <Typography fontWeight={800}>{s.stage_order}. {s.stage_name} <Typography component="span" variant="caption" color="text.secondary">({label(s.stage_type)})</Typography></Typography>
             <Typography variant="caption" color="text.secondary">{fmtDate(s.starts_at)} → {fmtDate(s.ends_at)} · top {s.advance_count ?? '—'} advance</Typography>
+            <StageSchedule stage={s} />
           </Surface>))}
       </Box>
       <Button variant="outlined" color="secondary" onClick={() => router.push(`/leaderboard?t=${id}`)}>View leaderboard</Button>

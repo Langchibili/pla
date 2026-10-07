@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "affiliate_impressions",
+  "info": {
+    "singularName": "affiliate-impression",
+    "pluralName": "affiliate-impressions",
+    "displayName": "Affiliate Impression",
+    "description": "First-touch referral impressions matched during email OTP registration."
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "signature_hash": { "type": "string", "required": true },
+    "device_hash": { "type": "string" },
+    "referral_code": { "type": "string", "required": true },
+    "affiliate_owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "converted_user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "converted": { "type": "boolean", "default": false, "required": true },
+    "expires_at": { "type": "datetime", "required": true },
+    "user_agent": { "type": "string" },
+    "referral_url": { "type": "string" }
+  }
+}

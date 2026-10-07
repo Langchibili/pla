@@ -1,38 +1,62 @@
 'use client';
 import { Box, Button, Tab, Tabs, TextField, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { haptic } from '@/lib/haptics';
 import KenteStripe from '@/components/KenteStripe';
-import { AFRICA } from '@/lib/theme';
-
-// Replace with a real fingerprint lib (e.g. FingerprintJS) — server stores only the hash
-const deviceHash = async () => { const s = [navigator.userAgent, screen.width, screen.height, navigator.language, Intl.DateTimeFormat().resolvedOptions().timeZone].join('|'); const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join(''); };
+import { createDeviceHash, useReferralCode } from '@/lib/device';
 
 export default function Login() {
-  const { signIn, signUp } = useAuth(); const toast = useToast();
-  const [mode, setMode] = useState(0); const [f, setF] = useState({ username: '', email: '', password: '', ref: '' }); const [busy, setBusy] = useState(false);
-  useEffect(() => { const r = new URLSearchParams(location.search).get('ref'); if (r) { setF((x) => ({ ...x, ref: r })); setMode(1); } }, []);
-  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const { requestOtp, resendOtp, verifyOtp } = useAuth(); const toast = useToast();
+  const attributedCode = useReferralCode();
+  const [mode, setMode] = useState(null); const [email, setEmail] = useState(''); const [code, setCode] = useState('');
+  const [manualReferralCode, setManualReferralCode] = useState(''); const [stage, setStage] = useState('email'); const [busy, setBusy] = useState(false);
+  const selectedMode = mode ?? (attributedCode ? 1 : 0);
+  const referralCode = manualReferralCode || attributedCode;
+  const purpose = selectedMode === 0 ? 'login' : 'signup';
   const submit = async (e) => {
     e.preventDefault(); setBusy(true); haptic('medium');
-    try { mode === 0 ? await signIn(f.email, f.password) : await signUp({ username: f.username, email: f.email, password: f.password, device_hash: await deviceHash(), referral_code: f.ref || undefined }); haptic('success'); }
+    try {
+      if (stage === 'email') {
+        const hash = await createDeviceHash();
+        await requestOtp(email, purpose, referralCode || undefined, hash);
+        setStage('code');
+        toast('A verification code was sent to your email.', 'success');
+      } else {
+        await verifyOtp(email, code, purpose);
+        sessionStorage.removeItem('pla_referral_code');
+        haptic('success');
+      }
+    }
     catch (err) { toast(err.message, 'error'); } finally { setBusy(false); }
+  };
+  const resend = async () => {
+    setBusy(true);
+    try {
+      const hash = await createDeviceHash();
+      await resendOtp(email, purpose, referralCode || undefined, hash);
+      toast('A new verification code was sent.', 'success');
+    } catch (err) { toast(err.message, 'error'); } finally { setBusy(false); }
   };
   return (
     <Box sx={{ minHeight: '100dvh', display: 'grid', alignContent: 'center', px: 3, py: 6, maxWidth: 440, mx: 'auto' }}>
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 22 }}>
         <Typography variant="h2" sx={{ lineHeight: 1 }}>ProLeague<br /><Box component="span" sx={{ color: 'secondary.main' }}>Africa</Box></Typography>
         <KenteStripe height={6} sx={{ my: 2.5, width: 120 }} />
-        <Tabs value={mode} onChange={(_, v) => { haptic('select'); setMode(v); }} variant="fullWidth" textColor="secondary" indicatorColor="secondary" sx={{ mb: 3 }}><Tab label="Sign in" /><Tab label="Create account" /></Tabs>
+        <Tabs value={selectedMode} onChange={(_, value) => { haptic('select'); setMode(value); setStage('email'); setCode(''); }} variant="fullWidth" textColor="secondary" indicatorColor="secondary" sx={{ mb: 3 }}><Tab label="Sign in" /><Tab label="Create account" /></Tabs>
         <Box component="form" onSubmit={submit} sx={{ display: 'grid', gap: 2 }}>
-          {mode === 1 && <TextField label="Username" value={f.username} onChange={set('username')} required />}
-          <TextField label={mode === 0 ? 'Email or username' : 'Email'} value={f.email} onChange={set('email')} required autoComplete="username" />
-          <TextField label="Password" type="password" value={f.password} onChange={set('password')} required autoComplete={mode ? 'new-password' : 'current-password'} />
-          {mode === 1 && <TextField label="Referral code (optional)" value={f.ref} onChange={set('ref')} />}
-          <Button type="submit" size="large" variant="contained" color="secondary" disabled={busy} sx={{ mt: 1 }}>{busy ? 'Please wait…' : mode ? 'Create account' : 'Sign in'}</Button>
+          <Typography color="text.secondary">{stage === 'email' ? 'Use your email address. We will send you a one-time code.' : `Enter the six-digit code sent to ${email}.`}</Typography>
+          {stage === 'email' ? <>
+            <TextField label="Email address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" />
+            {selectedMode === 1 && <TextField label="Referral code (optional)" value={manualReferralCode || attributedCode} onChange={(event) => setManualReferralCode(event.target.value)} />}
+          </> : <>
+            <TextField label="Email verification code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))} required inputProps={{ inputMode: 'numeric', autoComplete: 'one-time-code', maxLength: 6 }} />
+            <Button type="button" color="secondary" onClick={resend} disabled={busy}>Resend code</Button>
+            <Button type="button" onClick={() => { setStage('email'); setCode(''); }}>Change email</Button>
+          </>}
+          <Button type="submit" size="large" variant="contained" color="secondary" disabled={busy || (stage === 'code' && code.length !== 6)} sx={{ mt: 1 }}>{busy ? 'Please wait…' : stage === 'email' ? 'Send verification code' : selectedMode ? 'Create account' : 'Sign in'}</Button>
         </Box>
       </motion.div>
     </Box>

@@ -1,0 +1,73 @@
+{
+  "kind": "collectionType",
+  "collectionName": "countries",
+  "info": {
+    "singularName": "country",
+    "pluralName": "countries",
+    "displayName": "Country"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "iso_code": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "minLength": 2,
+      "maxLength": 3
+    },
+    "dial_code": {
+      "type": "string"
+    },
+    "default_currency": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::currency.currency",
+      "inversedBy": "countries"
+    },
+    "country_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "required": true
+    },
+    "initial_free_plapo": { "type": "integer", "min": 0 },
+    "score_on_forfeit": { "type": "string" },
+    "suspended_match_score": { "type": "string" },
+    "suspended_match_points": { "type": "integer", "min": 0 },
+    "win_points": { "type": "integer", "min": 0 },
+    "draw_points": { "type": "integer", "min": 0 },
+    "loss_points": { "type": "integer", "min": 0 },
+    "default_match_time_limit_hours": { "type": "integer", "min": 1 },
+    "postponement_response_hours": { "type": "integer", "min": 1 },
+    "max_postponements_per_match": { "type": "integer", "min": 0 },
+    "single_submission_grace_hours": { "type": "integer", "min": 0 },
+    "min_ocr_confidence": { "type": "decimal", "min": 0, "max": 1 },
+    "referral_monthly_cap": { "type": "integer", "min": 0 },
+    "transfers_enabled": { "type": "boolean" },
+    "rates_refresh_minutes": { "type": "integer", "min": 5 },
+    "screenshot_retention_days": { "type": "integer", "min": 1 },
+    "default_payment_gateway": {
+      "type": "enumeration",
+      "enum": ["pawapay", "lenco"]
+    },
+    "affiliate_system_enabled": { "type": "boolean" },
+    "affiliate_reward_points": { "type": "integer", "min": 0 },
+    "affiliate_reward_conditions": { "type": "json" },
+    "tournaments": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::tournament.tournament",
+      "mappedBy": "country"
+    }
+  }
+}

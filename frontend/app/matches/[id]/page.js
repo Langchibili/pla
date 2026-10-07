@@ -60,11 +60,11 @@ export default function MatchRoom() {
       {m.dispute_status === 'open' && <Surface accent={AFRICA.red}><Typography fontWeight={800}>Dispute open</Typography><Typography variant="body2" color="text.secondary">An admin is reviewing both screenshots.</Typography></Surface>}
 
       {open && <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
-        <Button variant="outlined" color="secondary" onClick={() => { haptic('medium'); setSheet('unavailable'); }}>Can't play</Button>
+        <Button variant="outlined" color="secondary" onClick={() => { haptic('medium'); setSheet('unavailable'); }}>Can&apos;t play</Button>
         <Button variant="outlined" color="error" onClick={() => { haptic('warning'); setSheet('dispute'); }}>Dispute</Button>
       </Box>}
 
-      <ActionSheet open={sheet === 'unavailable'} onClose={() => setSheet(null)} title="Can't play this match?">
+      <ActionSheet open={sheet === 'unavailable'} onClose={() => setSheet(null)} title="Can&apos;t play this match?">
         <TextField select label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} sx={{ mb: 2 }}>{REASONS.map(([v, l]) => <MenuItem key={v} value={v}>{l}</MenuItem>)}</TextField>
         <TextField type="datetime-local" label="Proposed new time" value={slot} onChange={(e) => setSlot(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ mb: 2 }} />
         <Box sx={{ display: 'grid', gap: 1.2 }}>

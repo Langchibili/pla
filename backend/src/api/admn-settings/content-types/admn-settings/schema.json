@@ -1,0 +1,128 @@
+{
+  "kind": "singleType",
+  "collectionName": "admn_settings",
+  "info": {
+    "singularName": "admn-settings",
+    "pluralName": "admn-settings-entries",
+    "displayName": "Admn Settings"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "initial_free_plapo": {
+      "type": "integer",
+      "required": true,
+      "default": 0,
+      "min": 0
+    },
+    "score_on_forfeit": {
+      "type": "string",
+      "required": true,
+      "default": "2:0"
+    },
+    "suspended_match_score": {
+      "type": "string",
+      "required": true,
+      "default": "0:0"
+    },
+    "suspended_match_points": {
+      "type": "integer",
+      "default": 0
+    },
+    "win_points": {
+      "type": "integer",
+      "default": 3
+    },
+    "draw_points": {
+      "type": "integer",
+      "default": 1
+    },
+    "loss_points": {
+      "type": "integer",
+      "default": 0
+    },
+    "base_currency": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::currency.currency"
+    },
+    "default_match_time_limit_hours": {
+      "type": "integer",
+      "default": 48,
+      "min": 1
+    },
+    "postponement_response_hours": {
+      "type": "integer",
+      "default": 6,
+      "min": 1
+    },
+    "max_postponements_per_match": {
+      "type": "integer",
+      "default": 1,
+      "min": 0
+    },
+    "single_submission_grace_hours": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "min_ocr_confidence": {
+      "type": "decimal",
+      "default": 0.8,
+      "min": 0,
+      "max": 1
+    },
+    "referral_monthly_cap": {
+      "type": "integer",
+      "default": 20,
+      "min": 0
+    },
+    "transfers_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "rates_refresh_minutes": {
+      "type": "integer",
+      "default": 360,
+      "min": 5
+    },
+    "screenshot_retention_days": {
+      "type": "integer",
+      "default": 180,
+      "min": 1
+    },
+    "default_payment_gateway": {
+      "type": "enumeration",
+      "enum": ["pawapay", "lenco"],
+      "default": "pawapay",
+      "required": true
+    },
+    "affiliate_system_enabled": { "type": "boolean", "default": false },
+    "affiliate_reward_points": { "type": "integer", "default": 25, "min": 0 },
+    "affiliate_reward_conditions": {
+      "type": "json",
+      "default": {
+        "operator": "all",
+        "conditions": [
+          { "type": "trigger", "value": "tournament_entry_created" },
+          { "type": "minimum_tournament_entries", "value": 1 },
+          { "type": "account_status", "value": "active" },
+          { "type": "email_verified", "value": true }
+        ]
+      }
+    },
+    "affiliate_conditions_template": {
+      "type": "json",
+      "default": {
+        "operator": "all",
+        "conditions": [
+          { "type": "trigger", "value": "tournament_entry_created" },
+          { "type": "minimum_tournament_entries", "value": 1 },
+          { "type": "account_status", "value": "active" },
+          { "type": "email_verified", "value": true }
+        ]
+      }
+    }
+  }
+}

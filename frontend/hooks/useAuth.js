@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { endpoints, tokenStore } from '@/lib/api';
 import { closeSocket } from '@/lib/socket';
 
@@ -7,16 +8,36 @@ const Ctx = createContext(null);
 export const useAuth = () => useContext(Ctx);
 
 export function AuthProvider({ children }) {
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [ready, setReady] = useState(false);
   const refresh = useCallback(async () => {
     if (!tokenStore.get()) { setUser(null); setReady(true); return null; }
     try { const u = await endpoints.me(); setUser(u); return u; } catch { setUser(null); return null; } finally { setReady(true); }
   }, []);
-  useEffect(() => { refresh(); }, [refresh]);
-  const signIn = async (identifier, password) => { const r = await endpoints.login({ identifier, password }); tokenStore.set(r.jwt); return refresh(); };
-  const signUp = async (b) => { const r = await endpoints.register(b); tokenStore.set(r.jwt); return refresh(); };
-  const signOut = () => { tokenStore.clear(); closeSocket(); setUser(null); location.href = '/login'; };
-  const value = useMemo(() => ({ user, ready, refresh, signIn, signUp, signOut, setUser }), [user, ready, refresh]);
+  useEffect(() => {
+    queueMicrotask(() => { void refresh(); });
+  }, [refresh]);
+  const requestOtp = (email, purpose, referralCode, deviceHash) => endpoints.sendEmailOtp({
+    email,
+    purpose,
+    referral_code: referralCode,
+    device_hash: deviceHash,
+  });
+  const resendOtp = (email, purpose, referralCode, deviceHash) => endpoints.resendEmailOtp({
+    email,
+    purpose,
+    referral_code: referralCode,
+    device_hash: deviceHash,
+  });
+  const verifyOtp = async (email, code, purpose) => {
+    const result = await endpoints.verifyEmailOtp({ email, code, purpose });
+    tokenStore.set(result.jwt);
+    setUser(result.user);
+    setReady(true);
+    return result.user;
+  };
+  const signOut = useCallback(() => { tokenStore.clear(); closeSocket(); setUser(null); router.replace('/login'); }, [router]);
+  const value = useMemo(() => ({ user, ready, refresh, requestOtp, resendOtp, verifyOtp, signOut, setUser }), [user, ready, refresh, signOut]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

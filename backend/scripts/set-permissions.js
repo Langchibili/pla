@@ -28,15 +28,13 @@ const ADMIN_ROLE_PREFIX = 'pla-';
  */
 const DEFAULT_GRANTS = [
   // --- Public (logged out) ---
-  { role: 'public', actions: [`${UP}.auth.register`, `${UP}.auth.callback`, `${UP}.auth.forgotPassword`, `${UP}.auth.resetPassword`],
-    resource: 'auth', guard: 'Register runs the device-registry check and referral code; rate-limit all four. `callback` is login.' },
   { role: 'public', actions: act('country', 'find', 'findOne'), resource: 'country',
     guard: 'Needed on the signup screen. Return only country_status = active.' },
   { role: 'public', actions: act('currency', 'find', 'findOne'), resource: 'currency',
     guard: 'Needed to show prices before login. Return only currency_status = active.' },
 
   // --- Authenticated (a signed-in player) ---
-  { role: 'authenticated', actions: [`${UP}.user.me`, `${UP}.auth.changePassword`], resource: 'user (self)',
+  { role: 'authenticated', actions: [`${UP}.user.me`], resource: 'user (self)',
     guard: '`me` returns only the caller; strip push_token, device data and role internals.' },
   { role: 'authenticated', actions: act('country', 'find', 'findOne'), resource: 'country', guard: 'Active only.' },
   { role: 'authenticated', actions: act('currency', 'find', 'findOne'), resource: 'currency', guard: 'Active only.' },
@@ -61,8 +59,8 @@ const CUSTOM_ACTIONS = [
     guard: 'Whitelist those fields only. Never role, balances, user_status, referral fields, free_plapo_granted.' },
 
   { action: act('tournament-entry', 'join')[0], method: 'POST', path: '/api/tournament-entries/join', resource: 'tournament-entry',
-    purpose: 'Enter a tournament: validates in_game_name against the game format, charges Plapo, writes the ledger, creates the entry.',
-    guard: 'Registration open, not already entered, balance covers fee, one transaction, idempotency key.' },
+    purpose: 'Enter a free tournament after validating the in-game name and eligibility.',
+    guard: 'Registration open, active game, country/capacity checks, no duplicate entry; paid tournaments are rejected until ledger charging exists.' },
   { action: act('tournament-entry', 'mine')[0], method: 'GET', path: '/api/tournament-entries/mine', resource: 'tournament-entry',
     purpose: 'My entries and standings.', guard: 'user = caller.' },
   { action: act('tournament-entry', 'leaderboard')[0], method: 'GET', path: '/api/tournament-entries/leaderboard', resource: 'tournament-entry',
@@ -259,6 +257,37 @@ const SUPER_ADMIN_ONLY = [
   'Create admin users, assign admin roles, manage API tokens, webhooks, Users & Permissions roles and plugin settings',
 ];
 
+const markdownCell = (value) => String(value ?? '').replaceAll('|', '\\|').replaceAll('\n', ' ');
+
+function renderMarkdown() {
+  const lines = ['# ProLeague Africa Permissions', '', '## API Grants', '', '| Role | Resource | Actions | Controller guard |', '| --- | --- | --- | --- |'];
+  for (const grant of DEFAULT_GRANTS) {
+    lines.push(`| ${markdownCell(grant.role)} | ${markdownCell(grant.resource)} | ${markdownCell(grant.actions.join(', '))} | ${markdownCell(grant.guard)} |`);
+  }
+
+  lines.push('', '## Custom Actions', '', '| Action | Method | Path | Purpose | Guard |', '| --- | --- | --- | --- | --- |');
+  for (const item of CUSTOM_ACTIONS) {
+    lines.push(`| ${markdownCell(item.action)} | ${markdownCell(item.method)} | ${markdownCell(item.path)} | ${markdownCell(item.purpose)} | ${markdownCell(item.guard)} |`);
+  }
+
+  lines.push('', '## Public Webhooks', '', '| Route | Verification |', '| --- | --- |');
+  for (const webhook of WEBHOOKS) lines.push(`| ${markdownCell(webhook.route)} | ${markdownCell(webhook.how)} |`);
+
+  lines.push('', '## Never Granted To Players', '', '| Surface | Reason |', '| --- | --- |');
+  for (const [surface, reason] of NEVER_FOR_PLAYERS) lines.push(`| ${markdownCell(surface)} | ${markdownCell(reason)} |`);
+
+  lines.push('', '## Admin Roles', '', '| Role | Access | Plugins |', '| --- | --- | --- |');
+  for (const role of ADMIN_ROLES) {
+    const access = role.content.map((item) => `${item.type}: ${Object.keys(item).filter((key) => key !== 'type').join(', ')}`).join('; ');
+    lines.push(`| ${markdownCell(role.name)} (${markdownCell(role.code)}) | ${markdownCell(access)} | ${markdownCell(role.plugins.join(', '))} |`);
+  }
+
+  lines.push('', '## Socket Rules', '', '| Event | Sender | Rule |', '| --- | --- | --- |');
+  for (const item of SOCKET_EVENTS) lines.push(`| ${markdownCell(item.event)} | ${markdownCell(item.from)} | ${markdownCell(item.rule)} |`);
+  lines.push('', '## Super Admin Only', '', ...SUPER_ADMIN_ONLY.map((item) => `- ${item}`), '');
+  return lines.join('\n');
+}
+
 module.exports = {
   ADMIN_ROLE_PREFIX,
   SUPER_ADMIN_CODE: 'strapi-super-admin',
@@ -272,4 +301,14 @@ module.exports = {
   ADMIN_ROLES,
   SUPER_ADMIN_ONLY,
   USER_UID,
+  renderMarkdown,
 };
+
+if (require.main === module) {
+  if (process.argv.includes('--markdown')) {
+    process.stdout.write(`${renderMarkdown()}\n`);
+  } else {
+    process.stderr.write('This file is the permissions matrix and read-only report generator. Role changes must be applied manually in Strapi Admin. Use --markdown to print the matrix.\n');
+    process.exitCode = 2;
+  }
+}

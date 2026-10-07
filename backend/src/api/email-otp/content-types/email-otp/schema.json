@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "email_otp_verifications",
+  "info": {
+    "singularName": "email-otp",
+    "pluralName": "email-otps",
+    "displayName": "Email OTP Verification"
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "email": { "type": "email", "required": true },
+    "code_hash": { "type": "string", "required": true },
+    "purpose": {
+      "type": "enumeration",
+      "enum": ["login", "signup"],
+      "required": true
+    },
+    "expires_at": { "type": "datetime", "required": true },
+    "attempts": { "type": "integer", "default": 0, "required": true },
+    "last_sent_at": { "type": "datetime", "required": true },
+    "referral_code": { "type": "string" },
+    "device_hash": { "type": "string" }
+  }
+}

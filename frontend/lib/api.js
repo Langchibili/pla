@@ -30,15 +30,18 @@ export async function api(path, { method = 'GET', body, form, auth = true, signa
 const data = (p) => p.then((r) => r.data ?? r);
 // Strapi 5 returns flat documents: { data, meta }
 export const endpoints = {
-  login: (b) => api('/auth/local', { method: 'POST', body: b, auth: false }),
-  register: (b) => api('/auth/local/register', { method: 'POST', body: b, auth: false }),
+  sendEmailOtp: (b) => api('/auth/email-otp/send', { method: 'POST', body: b, auth: false }),
+  resendEmailOtp: (b) => api('/auth/email-otp/resend', { method: 'POST', body: b, auth: false }),
+  verifyEmailOtp: (b) => api('/auth/email-otp/verify', { method: 'POST', body: b, auth: false }),
+  trackAffiliateImpression: (b) => api('/affiliate-impressions/track', { method: 'POST', body: b, auth: false }),
+  checkAffiliateImpression: (b) => api('/affiliate-impressions/check', { method: 'POST', body: b, auth: false }),
   me: () => api('/users/me?populate[0]=country&populate[1]=preferred_currency'),
   updateMe: (id, b) => api(`/users/${id}`, { method: 'PUT', body: b }),
   tournaments: (q = '') => data(api(`/tournaments?populate[0]=game&populate[1]=country&populate[2]=banner&sort=starts_at:asc&filters[tournament_status][$in][0]=published&filters[tournament_status][$in][1]=registration_open&filters[tournament_status][$in][2]=in_progress${q}`)),
   tournament: (id) => data(api(`/tournaments/${id}?populate[0]=game&populate[1]=country&populate[2]=banner&populate[3]=stages&populate[4]=prize_pool_currency`)),
   entries: (id) => data(api(`/tournament-entries?filters[tournament][documentId][$eq]=${id}&sort=points:desc&pagination[pageSize]=100`)),
   // Custom routes you add in Strapi (see README)
-  enter: (id, inGameName) => api(`/tournaments/${id}/enter`, { method: 'POST', body: { in_game_name: inGameName } }),
+  enter: (id, inGameName) => api('/tournament-entries/join', { method: 'POST', body: { tournament_id: id, in_game_name: inGameName } }),
   myMatches: () => data(api('/me/matches')),
   match: (id) => data(api(`/me/matches/${id}`)),
   submitResult: (id, file) => { const f = new FormData(); f.append('screenshot', file); return api(`/matches/${id}/submit`, { method: 'POST', form: f }); },
@@ -47,4 +50,5 @@ export const endpoints = {
   transfer: (b) => api('/me/wallet/transfer', { method: 'POST', body: b }),
   packages: () => data(api('/plapo-packages?populate=currency&sort=sort_order:asc&filters[plapo_package_status][$eq]=active')),
   referrals: () => data(api('/me/referrals')),
+  stageSchedule: (id) => data(api(`/tournament-stages/${encodeURIComponent(id)}/schedule`, { auth: false })),
 };
