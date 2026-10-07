@@ -1,0 +1,66 @@
+{
+  "kind": "collectionType",
+  "collectionName": "prize_payouts",
+  "info": {
+    "singularName": "prize-payout",
+    "pluralName": "prize-payouts",
+    "displayName": "Prize Payout"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "tournament": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament.tournament",
+      "inversedBy": "prize_payouts"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "tournament_entry": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament-entry.tournament-entry"
+    },
+    "place": {
+      "type": "integer",
+      "required": true,
+      "min": 1
+    },
+    "amount": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "currency": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::currency.currency"
+    },
+    "prize_payout_status": {
+      "type": "enumeration",
+      "enum": [
+        "calculated",
+        "approved",
+        "paid",
+        "failed",
+        "cancelled"
+      ],
+      "default": "calculated",
+      "required": true
+    },
+    "payout_reference": {
+      "type": "string"
+    },
+    "approved_at": {
+      "type": "datetime"
+    },
+    "paid_at": {
+      "type": "datetime"
+    }
+  }
+}

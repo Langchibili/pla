@@ -1,0 +1,133 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tournaments",
+  "info": {
+    "singularName": "tournament",
+    "pluralName": "tournaments",
+    "displayName": "Tournament"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title"
+    },
+    "description": {
+      "type": "text"
+    },
+    "banner": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "game": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game.game",
+      "inversedBy": "tournaments"
+    },
+    "country": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::country.country",
+      "inversedBy": "tournaments"
+    },
+    "tournament_config": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament-config.tournament-config",
+      "inversedBy": "tournaments"
+    },
+    "config_snapshot": {
+      "type": "json"
+    },
+    "tournament_status": {
+      "type": "enumeration",
+      "enum": [
+        "draft",
+        "published",
+        "registration_open",
+        "registration_closed",
+        "in_progress",
+        "completed",
+        "cancelled"
+      ],
+      "default": "draft",
+      "required": true
+    },
+    "requires_entry_fee": {
+      "type": "boolean",
+      "default": false
+    },
+    "entry_fee_plapo": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "has_prize_pool": {
+      "type": "boolean",
+      "default": false
+    },
+    "prize_pool_currency": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::currency.currency"
+    },
+    "prize_pool_initial_amount": {
+      "type": "decimal",
+      "default": 0,
+      "min": 0
+    },
+    "prize_pool_current_amount": {
+      "type": "decimal",
+      "default": 0,
+      "min": 0
+    },
+    "min_players": {
+      "type": "integer",
+      "min": 2
+    },
+    "max_players": {
+      "type": "integer",
+      "min": 2
+    },
+    "registration_opens_at": {
+      "type": "datetime"
+    },
+    "registration_closes_at": {
+      "type": "datetime"
+    },
+    "starts_at": {
+      "type": "datetime"
+    },
+    "ends_at": {
+      "type": "datetime"
+    },
+    "stages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::tournament-stage.tournament-stage",
+      "mappedBy": "tournament"
+    },
+    "entries": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::tournament-entry.tournament-entry",
+      "mappedBy": "tournament"
+    },
+    "prize_payouts": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::prize-payout.prize-payout",
+      "mappedBy": "tournament"
+    }
+  }
+}

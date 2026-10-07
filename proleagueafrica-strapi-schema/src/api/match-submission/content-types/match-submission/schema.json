@@ -1,0 +1,65 @@
+{
+  "kind": "collectionType",
+  "collectionName": "match_submissions",
+  "info": {
+    "singularName": "match-submission",
+    "pluralName": "match-submissions",
+    "displayName": "Match Submission"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "match": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::match.match",
+      "inversedBy": "submissions"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "screenshot": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "screenshot_hash": {
+      "type": "string"
+    },
+    "match_submission_status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "processing",
+        "valid",
+        "invalid",
+        "needs_review",
+        "rejected"
+      ],
+      "default": "pending",
+      "required": true
+    },
+    "score_job_id": {
+      "type": "string"
+    },
+    "extracted_json": {
+      "type": "json"
+    },
+    "ocr_confidence": {
+      "type": "decimal",
+      "min": 0,
+      "max": 1
+    },
+    "score_zone_found": {
+      "type": "string"
+    },
+    "rejection_reason": {
+      "type": "string"
+    }
+  }
+}

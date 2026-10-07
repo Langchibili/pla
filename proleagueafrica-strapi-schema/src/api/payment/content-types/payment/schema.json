@@ -1,0 +1,67 @@
+{
+  "kind": "collectionType",
+  "collectionName": "payments",
+  "info": {
+    "singularName": "payment",
+    "pluralName": "payments",
+    "displayName": "Payment"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "plapo_package": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::plapo-package.plapo-package"
+    },
+    "provider": {
+      "type": "string",
+      "required": true
+    },
+    "provider_reference": {
+      "type": "string",
+      "unique": true
+    },
+    "idempotency_key": {
+      "type": "string",
+      "unique": true
+    },
+    "amount": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "currency": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::currency.currency"
+    },
+    "plapo_credited": {
+      "type": "integer",
+      "default": 0
+    },
+    "payment_status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "succeeded",
+        "failed",
+        "refunded"
+      ],
+      "default": "pending",
+      "required": true
+    },
+    "webhook_payload": {
+      "type": "json"
+    },
+    "paid_at": {
+      "type": "datetime"
+    }
+  }
+}

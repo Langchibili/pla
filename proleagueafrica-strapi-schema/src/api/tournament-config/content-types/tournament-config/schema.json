@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tournament_configs",
+  "info": {
+    "singularName": "tournament-config",
+    "pluralName": "tournament-configs",
+    "displayName": "Tournament Config"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "game": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game.game",
+      "inversedBy": "tournament_configs"
+    },
+    "settings_json": {
+      "type": "json",
+      "required": true
+    },
+    "tournaments": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::tournament.tournament",
+      "mappedBy": "tournament_config"
+    }
+  }
+}

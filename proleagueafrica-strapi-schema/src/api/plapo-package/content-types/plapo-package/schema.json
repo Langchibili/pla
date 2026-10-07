@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "plapo_packages",
+  "info": {
+    "singularName": "plapo-package",
+    "pluralName": "plapo-packages",
+    "displayName": "Plapo Package"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "plapo_amount": {
+      "type": "integer",
+      "required": true,
+      "min": 1
+    },
+    "bonus_plapo": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "price": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "currency": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::currency.currency"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    },
+    "plapo_package_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "required": true
+    }
+  }
+}

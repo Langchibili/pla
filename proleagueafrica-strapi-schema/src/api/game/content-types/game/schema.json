@@ -1,0 +1,89 @@
+{
+  "kind": "collectionType",
+  "collectionName": "games",
+  "info": {
+    "singularName": "game",
+    "pluralName": "games",
+    "displayName": "Game"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "inactive",
+      "required": true
+    },
+    "result_type": {
+      "type": "enumeration",
+      "enum": [
+        "head_to_head",
+        "rounds",
+        "team_score",
+        "placement_kills"
+      ],
+      "default": "head_to_head",
+      "required": true
+    },
+    "score_service_key": {
+      "type": "string",
+      "required": true
+    },
+    "parser_version": {
+      "type": "string"
+    },
+    "in_game_id_format": {
+      "type": "string"
+    },
+    "in_game_id_label": {
+      "type": "string"
+    },
+    "score_min": {
+      "type": "integer",
+      "default": 0
+    },
+    "score_max": {
+      "type": "integer"
+    },
+    "score_zones": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::game-score-zone.game-score-zone",
+      "mappedBy": "game"
+    },
+    "tournaments": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::tournament.tournament",
+      "mappedBy": "game"
+    },
+    "tournament_configs": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::tournament-config.tournament-config",
+      "mappedBy": "game"
+    }
+  }
+}

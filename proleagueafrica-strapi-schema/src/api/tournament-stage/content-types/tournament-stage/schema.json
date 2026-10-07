@@ -1,0 +1,74 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tournament_stages",
+  "info": {
+    "singularName": "tournament-stage",
+    "pluralName": "tournament-stages",
+    "displayName": "Tournament Stage"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "tournament": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament.tournament",
+      "inversedBy": "stages"
+    },
+    "stage_order": {
+      "type": "integer",
+      "required": true,
+      "min": 1
+    },
+    "stage_name": {
+      "type": "string",
+      "required": true
+    },
+    "stage_type": {
+      "type": "enumeration",
+      "enum": [
+        "league",
+        "knockout"
+      ],
+      "default": "league",
+      "required": true
+    },
+    "tournament_stage_status": {
+      "type": "enumeration",
+      "enum": [
+        "scheduled",
+        "in_progress",
+        "completed"
+      ],
+      "default": "scheduled",
+      "required": true
+    },
+    "starts_at": {
+      "type": "datetime",
+      "required": true
+    },
+    "ends_at": {
+      "type": "datetime",
+      "required": true
+    },
+    "advance_count": {
+      "type": "integer",
+      "min": 1
+    },
+    "min_matches_per_player": {
+      "type": "integer",
+      "min": 0
+    },
+    "match_time_limit_hours": {
+      "type": "integer",
+      "min": 1
+    },
+    "matches": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::match.match",
+      "mappedBy": "tournament_stage"
+    }
+  }
+}

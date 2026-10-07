@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "device_registries",
+  "info": {
+    "singularName": "device-registry",
+    "pluralName": "device-registries",
+    "displayName": "Device Registry"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "device_hash": {
+      "type": "string",
+      "required": true
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "platform": {
+      "type": "string"
+    },
+    "device_registry_status": {
+      "type": "enumeration",
+      "enum": [
+        "clean",
+        "flagged",
+        "under_review",
+        "cleared",
+        "banned"
+      ],
+      "default": "clean",
+      "required": true
+    },
+    "flag_reason": {
+      "type": "string"
+    },
+    "first_seen_at": {
+      "type": "datetime"
+    },
+    "last_seen_at": {
+      "type": "datetime"
+    }
+  }
+}

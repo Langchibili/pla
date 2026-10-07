@@ -1,0 +1,199 @@
+# # Dependencies
+# /node_modules
+# /.pnp
+# .pnp.js
+
+# # Testing
+# /coverage
+
+# /.next/
+# /out/
+
+# # Production
+# /build
+
+# # Misc
+# .DS_Store
+# *.pem
+
+# # Debug
+# npm-debug.log*
+# yarn-debug.log*
+# yarn-error.log*
+
+# # Local env files
+# .env*.local
+# .env
+
+# # Vercel
+# .vercel
+
+# # Typescript
+# *.tsbuildinfo
+# next-env.d.ts
+
+# # PWA
+# /public/sw.js
+# /public/workbox-*.js
+# /public/sw.js.map
+# /public/workbox-*.js.map
+
+# # IDE
+# .vscode/
+# .idea/
+
+# # Secrets
+# Secrets.js
+
+*.zip
+*.txt
+!backend-permissions-matrix.txt
+backend/node_modules
+backend/src-old
+backend-err
+backend-old-stuff
+backend/.strapi
+backend/.strapi-updater.json
+backend/build
+backend/.env
+backend/config-old
+
+yarn-error.log
+
+# testing
+/coverage
+
+admin/Secrets.js
+admin/mvp-and-mmp-features.txt
+admin/logic.txt
+yarn-error.log
+
+
+# dependencies
+admin/node_modules
+admin/.pnp
+admin/.pnp.js
+admin/.yarn/install-state.gz
+
+
+# testing
+/coverage
+
+# next.js
+admin/.next/
+admin/out/
+
+# production
+admin/build
+
+# misc
+admin/.DS_Store
+admin/*.pem
+
+# debug
+admin/npm-debug.log*
+admin/yarn-debug.log*
+admin/yarn-error.log*
+bugslog.txt
+# local env files
+admin/.env*.local
+
+# vercel
+admin/.vercel
+
+# typescript
+admin/*.tsbuildinfo
+admin/next-env.d.ts
+frontend/Secrets.js
+frontend/mvp-and-mmp-features.txt
+frontend/logic.txt
+yarn-error.log
+
+
+# dependencies
+frontend/node_modules
+frontend/.pnp
+frontend/.pnp.js
+frontend/.yarn/install-state.gz
+
+
+# testing
+/coverage
+
+# next.js
+frontend/.next/
+frontend/out/
+
+# production
+frontend/build
+
+# misc
+frontend/.DS_Store
+frontend/*.pem
+
+# debug
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+bugslog.txt
+# local env files
+frontend/.env 
+
+# vercel
+frontend/.vercel
+
+# typescript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+plapp/node_modules/
+
+# Expo
+plapp/.expo/
+plapp/dist/
+plapp/web-build/
+plapp/expo-env.d.ts
+
+# Native
+plapp/.kotlin/
+plapp/*.orig.*
+plapp/*.jks
+plapp/*.p8
+plapp/*.p12
+plapp/*.key
+plapp/*.mobileprovision
+
+# Metro
+plapp/.metro-health-check*
+
+# debug
+plapp/npm-debug.*
+plapp/yarn-debug.*
+plapp/yarn-error.*
+
+# macOS
+plapp/.DS_Store
+plapp/*.pem
+
+# local env files
+plapp/.env*.local
+
+# typescript
+plapp/*.tsbuildinfo
+plapp/AppleApptsx.txt
+plapp/dev-eas.txt
+
+# generated native folders
+plapp/ios
+plapp/android
+plapp/.env
+plapp/modules/**/android/.gradle/
+plapp/modules/**/android/build/
+
+
+score-service/__pycache__/
+score-service/.pytest_cache/
+score-service/.env

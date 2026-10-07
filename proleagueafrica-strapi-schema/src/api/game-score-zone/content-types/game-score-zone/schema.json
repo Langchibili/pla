@@ -1,0 +1,45 @@
+{
+  "kind": "collectionType",
+  "collectionName": "game_score_zones",
+  "info": {
+    "singularName": "game-score-zone",
+    "pluralName": "game-score-zones",
+    "displayName": "Game Score Zone"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "game": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game.game",
+      "inversedBy": "score_zones"
+    },
+    "allowed_zone": {
+      "type": "enumeration",
+      "enum": [
+        "top_left",
+        "top_center",
+        "top_right",
+        "middle_left",
+        "center",
+        "middle_right",
+        "bottom_left",
+        "bottom_center",
+        "bottom_right"
+      ],
+      "default": "top_center",
+      "required": true
+    },
+    "required_orientation": {
+      "type": "enumeration",
+      "enum": [
+        "landscape",
+        "portrait"
+      ],
+      "default": "landscape",
+      "required": true
+    }
+  }
+}

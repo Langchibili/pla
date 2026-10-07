@@ -1,0 +1,132 @@
+{
+  "kind": "collectionType",
+  "collectionName": "matches",
+  "info": {
+    "singularName": "match",
+    "pluralName": "matches",
+    "displayName": "Match"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "tournament": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament.tournament"
+    },
+    "tournament_stage": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament-stage.tournament-stage",
+      "inversedBy": "matches"
+    },
+    "player1_entry": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament-entry.tournament-entry",
+      "inversedBy": "matches_as_player1"
+    },
+    "player2_entry": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament-entry.tournament-entry",
+      "inversedBy": "matches_as_player2"
+    },
+    "is_bye": {
+      "type": "boolean",
+      "default": false
+    },
+    "match_code": {
+      "type": "string",
+      "unique": true
+    },
+    "previous_match_codes": {
+      "type": "json"
+    },
+    "match_deadline": {
+      "type": "datetime"
+    },
+    "original_deadline": {
+      "type": "datetime"
+    },
+    "postponement_count": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "match_status": {
+      "type": "enumeration",
+      "enum": [
+        "scheduled",
+        "postponed",
+        "awaiting_confirmation",
+        "in_dispute",
+        "invalid",
+        "completed",
+        "forfeited",
+        "suspended"
+      ],
+      "default": "scheduled",
+      "required": true
+    },
+    "player1_score": {
+      "type": "integer"
+    },
+    "player2_score": {
+      "type": "integer"
+    },
+    "winner_entry": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament-entry.tournament-entry"
+    },
+    "result_source": {
+      "type": "enumeration",
+      "enum": [
+        "both_submissions",
+        "single_submission",
+        "forfeit",
+        "admin_ruling",
+        "suspension",
+        "bye"
+      ]
+    },
+    "dispute_status": {
+      "type": "enumeration",
+      "enum": [
+        "none",
+        "open",
+        "resolved"
+      ],
+      "default": "none",
+      "required": true
+    },
+    "dispute_opened_by": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "dispute_note": {
+      "type": "text"
+    },
+    "admin_ruling_note": {
+      "type": "text"
+    },
+    "resolved_at": {
+      "type": "datetime"
+    },
+    "submissions": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::match-submission.match-submission",
+      "mappedBy": "match"
+    },
+    "events": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::match-event.match-event",
+      "mappedBy": "match"
+    }
+  }
+}

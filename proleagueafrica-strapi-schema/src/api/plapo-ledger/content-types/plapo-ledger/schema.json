@@ -1,0 +1,80 @@
+{
+  "kind": "collectionType",
+  "collectionName": "plapo_ledgers",
+  "info": {
+    "singularName": "plapo-ledger",
+    "pluralName": "plapo-ledgers",
+    "displayName": "Plapo Ledger"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "amount": {
+      "type": "integer",
+      "required": true
+    },
+    "ledger_type": {
+      "type": "enumeration",
+      "enum": [
+        "signup_bonus",
+        "purchase",
+        "entry_fee",
+        "referral_reward",
+        "transfer_out",
+        "transfer_in",
+        "prize",
+        "refund",
+        "promo",
+        "admin_adjustment"
+      ],
+      "required": true
+    },
+    "plapo_source": {
+      "type": "enumeration",
+      "enum": [
+        "free",
+        "purchased",
+        "earned",
+        "received"
+      ],
+      "required": true
+    },
+    "plapo_ledger_status": {
+      "type": "enumeration",
+      "enum": [
+        "posted",
+        "reversed"
+      ],
+      "default": "posted",
+      "required": true
+    },
+    "tournament": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament.tournament"
+    },
+    "payment": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::payment.payment"
+    },
+    "counterparty": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "unique": true
+    },
+    "note": {
+      "type": "string"
+    }
+  }
+}

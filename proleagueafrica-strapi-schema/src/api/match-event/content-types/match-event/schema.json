@@ -1,0 +1,79 @@
+{
+  "kind": "collectionType",
+  "collectionName": "match_events",
+  "info": {
+    "singularName": "match-event",
+    "pluralName": "match-events",
+    "displayName": "Match Event"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "match": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::match.match",
+      "inversedBy": "events"
+    },
+    "actor": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "parent_event": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::match-event.match-event"
+    },
+    "event_type": {
+      "type": "enumeration",
+      "enum": [
+        "unavailable",
+        "postpone_request",
+        "postpone_accept",
+        "postpone_counter",
+        "postpone_decline",
+        "postpone_lapsed",
+        "forfeit",
+        "dispute_opened",
+        "admin_override"
+      ],
+      "required": true
+    },
+    "reason_code": {
+      "type": "enumeration",
+      "enum": [
+        "technical_difficulty",
+        "emergency",
+        "other"
+      ]
+    },
+    "proposed_slots": {
+      "type": "json"
+    },
+    "proposed_time": {
+      "type": "datetime"
+    },
+    "response_due_at": {
+      "type": "datetime"
+    },
+    "match_event_status": {
+      "type": "enumeration",
+      "enum": [
+        "open",
+        "accepted",
+        "countered",
+        "declined",
+        "lapsed",
+        "applied"
+      ],
+      "default": "open",
+      "required": true
+    },
+    "idempotency_key": {
+      "type": "string",
+      "unique": true
+    }
+  }
+}

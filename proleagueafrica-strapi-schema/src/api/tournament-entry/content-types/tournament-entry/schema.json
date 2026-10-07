@@ -1,0 +1,93 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tournament_entries",
+  "info": {
+    "singularName": "tournament-entry",
+    "pluralName": "tournament-entries",
+    "displayName": "Tournament Entry"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "tournament": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament.tournament",
+      "inversedBy": "entries"
+    },
+    "in_game_name": {
+      "type": "string",
+      "required": true
+    },
+    "anon_label": {
+      "type": "string"
+    },
+    "tournament_entry_status": {
+      "type": "enumeration",
+      "enum": [
+        "registered",
+        "active",
+        "advanced",
+        "eliminated",
+        "withdrawn",
+        "refunded"
+      ],
+      "default": "registered",
+      "required": true
+    },
+    "current_stage": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tournament-stage.tournament-stage"
+    },
+    "points": {
+      "type": "integer",
+      "default": 0
+    },
+    "matches_played": {
+      "type": "integer",
+      "default": 0
+    },
+    "wins": {
+      "type": "integer",
+      "default": 0
+    },
+    "draws": {
+      "type": "integer",
+      "default": 0
+    },
+    "losses": {
+      "type": "integer",
+      "default": 0
+    },
+    "goals_for": {
+      "type": "integer",
+      "default": 0
+    },
+    "goals_against": {
+      "type": "integer",
+      "default": 0
+    },
+    "final_position": {
+      "type": "integer"
+    },
+    "matches_as_player1": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::match.match",
+      "mappedBy": "player1_entry"
+    },
+    "matches_as_player2": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::match.match",
+      "mappedBy": "player2_entry"
+    }
+  }
+}
