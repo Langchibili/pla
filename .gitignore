@@ -63,47 +63,47 @@ yarn-error.log
 # testing
 /coverage
 
-admin/Secrets.js
-admin/mvp-and-mmp-features.txt
-admin/logic.txt
+plapo/Secrets.js
+plapo/mvp-and-mmp-features.txt
+plapo/logic.txt
 yarn-error.log
 
 
 # dependencies
-admin/node_modules
-admin/.pnp
-admin/.pnp.js
-admin/.yarn/install-state.gz
+plapo/node_modules
+plapo/.pnp
+plapo/.pnp.js
+plapo/.yarn/install-state.gz
 
 
 # testing
 /coverage
 
 # next.js
-admin/.next/
-admin/out/
+plapo/.next/
+plapo/out/
 
 # production
-admin/build
+plapo/build
 
 # misc
-admin/.DS_Store
-admin/*.pem
+plapo/.DS_Store
+plapo/*.pem
 
 # debug
-admin/npm-debug.log*
-admin/yarn-debug.log*
-admin/yarn-error.log*
+plapo/npm-debug.log*
+plapo/yarn-debug.log*
+plapo/yarn-error.log*
 bugslog.txt
 # local env files
-admin/.env*.local
+plapo/.env*.local
 
 # vercel
-admin/.vercel
+plapo/.vercel
 
 # typescript
-admin/*.tsbuildinfo
-admin/next-env.d.ts
+plapo/*.tsbuildinfo
+plapo/next-env.d.ts
 frontend/Secrets.js
 frontend/mvp-and-mmp-features.txt
 frontend/logic.txt
