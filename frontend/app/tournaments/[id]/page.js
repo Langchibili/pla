@@ -1,0 +1,67 @@
+'use client';
+import { Box, Button, TextField, Typography, Chip } from '@mui/material';
+import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { endpoints } from '@/lib/api';
+import { useApi } from '@/hooks/useApi';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
+import { fmtDate, fmtMoney, fmtPlapo, label } from '@/lib/format';
+import { haptic } from '@/lib/haptics';
+import Surface from '@/components/Surface';
+import ActionSheet from '@/components/ActionSheet';
+import SkeletonList from '@/components/SkeletonList';
+import ErrorNote from '@/components/ErrorNote';
+import { AFRICA } from '@/lib/theme';
+
+export default function TournamentDetail() {
+  const { id } = useParams(); const router = useRouter(); const toast = useToast(); const { user, refresh } = useAuth();
+  const { data: t, loading, error, reload } = useApi(`t-${id}`, () => endpoints.tournament(id));
+  const board = useApi(`b-${id}`, () => endpoints.entries(id), { interval: 30000 });
+  const [open, setOpen] = useState(false); const [name, setName] = useState(''); const [busy, setBusy] = useState(false);
+  if (loading) return <SkeletonList count={3} height={140} />;
+  if (error) return <ErrorNote error={error} onRetry={reload} />;
+  const fmt = t.game?.in_game_id_format ? new RegExp(t.game.in_game_id_format) : null;
+  const valid = name.trim().length > 1 && (!fmt || fmt.test(name.trim()));
+  const joined = (board.data || []).some((e) => e.user?.id === user.id);
+  const canEnter = t.tournament_status === 'registration_open' && t.game?.game_status === 'active';
+  const enter = async () => {
+    setBusy(true);
+    try { await endpoints.enter(id, name.trim()); haptic('success'); toast('You are in. Good luck!'); setOpen(false); refresh(); board.reload(); }
+    catch (e) { toast(e.message, 'error'); } finally { setBusy(false); }
+  };
+  return (
+    <Box sx={{ display: 'grid', gap: 2 }}>
+      <Surface sx={{ p: 3, background: `linear-gradient(145deg, #0c4a26, #0d1810)` }}>
+        <Chip size="small" color="secondary" label={label(t.tournament_status)} sx={{ mb: 1 }} />
+        <Typography variant="h4">{t.title}</Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5 }}>{t.game?.name} · {t.country?.name || 'Pan-Africa'}</Typography>
+        {t.description && <Typography sx={{ mt: 1.5 }} variant="body2">{t.description}</Typography>}
+      </Surface>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+        {[['Entry', t.requires_entry_fee ? `${fmtPlapo(t.entry_fee_plapo)} Plapo` : 'Free'], ['Prize pool', t.has_prize_pool ? fmtMoney(t.prize_pool_current_amount, t.prize_pool_currency?.code) : '—'], ['Players', `${board.data?.length ?? 0}/${t.max_players ?? '∞'}`], ['Starts', fmtDate(t.starts_at)]].map(([k, v]) => (
+          <Surface key={k} sx={{ p: 1.8 }}><Typography variant="caption" color="text.secondary">{k}</Typography><Typography fontWeight={800} color={k === 'Prize pool' ? 'secondary.main' : 'text.primary'}>{v}</Typography></Surface>
+        ))}
+      </Box>
+      <Typography variant="h6">Stages</Typography>
+      <Box sx={{ display: 'grid', gap: 1.2 }}>
+        {[...(t.stages || [])].sort((a, b) => a.stage_order - b.stage_order).map((s) => (
+          <Surface key={s.documentId} accent={AFRICA.gold} sx={{ p: 1.8 }}>
+            <Typography fontWeight={800}>{s.stage_order}. {s.stage_name} <Typography component="span" variant="caption" color="text.secondary">({label(s.stage_type)})</Typography></Typography>
+            <Typography variant="caption" color="text.secondary">{fmtDate(s.starts_at)} → {fmtDate(s.ends_at)} · top {s.advance_count ?? '—'} advance</Typography>
+          </Surface>))}
+      </Box>
+      <Button variant="outlined" color="secondary" onClick={() => router.push(`/leaderboard?t=${id}`)}>View leaderboard</Button>
+      <Box sx={{ position: 'sticky', bottom: 'calc(env(safe-area-inset-bottom) + 100px)', zIndex: 5 }}>
+        <Button fullWidth size="large" variant="contained" color={joined ? 'primary' : 'secondary'} disabled={joined || !canEnter} onClick={() => { haptic('medium'); setOpen(true); }}>
+          {joined ? 'You are registered' : canEnter ? (t.requires_entry_fee ? `Join for ${fmtPlapo(t.entry_fee_plapo)} Plapo` : 'Join free') : 'Registration closed'}
+        </Button>
+      </Box>
+      <ActionSheet open={open} onClose={() => setOpen(false)} title="Enter your in-game name">
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Type the exact name {t.game?.name} shows during a match. It is locked for this tournament.</Typography>
+        <TextField label={t.game?.in_game_id_label || 'In-game name'} value={name} onChange={(e) => setName(e.target.value)} error={!!name && !valid} helperText={!!name && !valid ? 'This does not match the format for this game.' : ' '} />
+        <Button fullWidth size="large" variant="contained" color="secondary" disabled={!valid || busy} onClick={enter}>{busy ? 'Joining…' : 'Confirm and join'}</Button>
+      </ActionSheet>
+    </Box>
+  );
+}
