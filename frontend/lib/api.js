@@ -44,7 +44,7 @@ export const endpoints = {
   updateMe: (id, b) => api(`/users/${id}`, { method: 'PUT', body: b }),
   tournaments: (q = '') => data(api(`/tournaments?populate[0]=game&populate[1]=country&populate[2]=banner&sort=starts_at:asc&filters[tournament_status][$in][0]=published&filters[tournament_status][$in][1]=registration_open&filters[tournament_status][$in][2]=in_progress${q}`)),
   tournament: (id) => data(api(`/tournaments/${id}?populate[0]=game&populate[1]=country&populate[2]=banner&populate[3]=stages&populate[4]=prize_pool_currency`)),
-  entries: (id) => data(api(`/tournament-entries?filters[tournament][documentId][$eq]=${id}&sort=points:desc&pagination[pageSize]=100`)),
+  entries: (id) => data(api(`/tournament-entries/leaderboard?tournament_id=${encodeURIComponent(id)}`)),
   // Custom routes you add in Strapi (see README)
   enter: (id, inGameName) => api('/tournament-entries/join', { method: 'POST', body: { tournament_id: id, in_game_name: inGameName } }),
   myMatches: () => data(api('/me/matches')),
@@ -52,7 +52,7 @@ export const endpoints = {
   submitResult: (id, file) => { const form = new FormData(); form.append('match_id', String(id)); form.append('screenshot', file); return api('/match-submissions/submit', { method: 'POST', form }); },
   matchAction: (id, action, body) => api(`/matches/${id}/${action}`, { method: 'POST', body }),
   wallet: () => data(api('/me/wallet')),
-  transfer: (b) => api('/me/wallet/transfer', { method: 'POST', body: b }),
+  transfer: (b) => api('/me/wallet/transfer', { method: 'POST', body: { ...b, idempotency_key: crypto.randomUUID() } }),
   packages: () => data(api('/plapo-packages?populate=currency&sort=sort_order:asc&filters[plapo_package_status][$eq]=active')),
   referrals: () => data(api('/me/referrals')),
   stageSchedule: (id) => data(api(`/tournament-stages/${encodeURIComponent(id)}/schedule`, { auth: false })),

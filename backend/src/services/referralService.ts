@@ -30,6 +30,8 @@ export async function recordAffiliateImpression(
     ? params.deviceHash!.toLowerCase()
     : undefined;
   if (!params.ip && !deviceHash) return false;
+  const signatureSource = params.ip || deviceHash;
+  if (!signatureSource) return false;
 
   const affiliate = await strapi.db.query(USER_UID).findOne({
     where: { referral_code: referralCode },
@@ -37,10 +39,18 @@ export async function recordAffiliateImpression(
   });
   if (!affiliate) return false;
 
-  const signatureHash = buildIpSignature(params.ip || deviceHash!);
+  const signatureHash = buildIpSignature(signatureSource);
+  const identityConditions: Record<string, unknown>[] = deviceHash
+    ? [
+      { device_hash: deviceHash },
+      ...(params.ip
+        ? [{ signature_hash: buildIpSignature(params.ip), device_hash: { $null: true } }]
+        : []),
+    ]
+    : [{ signature_hash: signatureHash }];
   const currentImpression = await strapi.db.query(IMPRESSION_UID).findOne({
     where: {
-      signature_hash: signatureHash,
+      $or: identityConditions,
       converted: false,
       expires_at: { $gt: new Date() },
     },
@@ -69,11 +79,19 @@ export async function hasAffiliateImpression(
   ip: string,
   deviceHash?: string,
 ): Promise<boolean> {
-  const conditions: Record<string, unknown>[] = [];
-  if (ip) conditions.push({ signature_hash: buildIpSignature(ip) });
-  if (deviceHash && /^[a-f0-9]{64}$/i.test(deviceHash)) {
-    conditions.unshift({ device_hash: deviceHash.toLowerCase() });
-  }
+  const normalizedDeviceHash = /^[a-f0-9]{64}$/i.test(deviceHash ?? '')
+    ? deviceHash!.toLowerCase()
+    : undefined;
+  const conditions: Record<string, unknown>[] = normalizedDeviceHash
+    ? [
+      { device_hash: normalizedDeviceHash },
+      ...(ip
+        ? [{ signature_hash: buildIpSignature(ip), device_hash: { $null: true } }]
+        : []),
+    ]
+    : ip
+      ? [{ signature_hash: buildIpSignature(ip) }]
+      : [];
   if (!conditions.length) return false;
 
   const impression = await strapi.db.query(IMPRESSION_UID).findOne({
@@ -107,9 +125,16 @@ export async function attachAffiliateAttribution(
     const deviceHash = /^[a-f0-9]{64}$/i.test(params.deviceHash ?? '')
       ? params.deviceHash!.toLowerCase()
       : undefined;
-    const matchConditions: Record<string, unknown>[] = [];
-    if (params.ip) matchConditions.push({ signature_hash: buildIpSignature(params.ip) });
-    if (deviceHash) matchConditions.unshift({ device_hash: deviceHash });
+    const matchConditions: Record<string, unknown>[] = deviceHash
+      ? [
+        { device_hash: deviceHash },
+        ...(params.ip
+          ? [{ signature_hash: buildIpSignature(params.ip), device_hash: { $null: true } }]
+          : []),
+      ]
+      : params.ip
+        ? [{ signature_hash: buildIpSignature(params.ip) }]
+        : [];
     if (matchConditions.length) {
       impression = await strapi.db.query(IMPRESSION_UID).findOne({
         where: {
@@ -126,9 +151,16 @@ export async function attachAffiliateAttribution(
       ? params.deviceHash!.toLowerCase()
       : undefined;
     if (!params.ip && !deviceHash) return;
-    const matchConditions: Record<string, unknown>[] = [];
-    if (params.ip) matchConditions.push({ signature_hash: buildIpSignature(params.ip) });
-    if (deviceHash) matchConditions.unshift({ device_hash: deviceHash });
+    const matchConditions: Record<string, unknown>[] = deviceHash
+      ? [
+        { device_hash: deviceHash },
+        ...(params.ip
+          ? [{ signature_hash: buildIpSignature(params.ip), device_hash: { $null: true } }]
+          : []),
+      ]
+      : params.ip
+        ? [{ signature_hash: buildIpSignature(params.ip) }]
+        : [];
 
     impression = await strapi.db.query(IMPRESSION_UID).findOne({
       where: {
@@ -182,7 +214,14 @@ export async function awardReferralAfterTournamentEntry(
   });
   if (!referredUser) return;
 
-  const settings = await resolveSettingsForCountry(strapi, referredUser.country?.id);
+  const referral = await strapi.db.query(REFERRAL_UID).findOne({
+    where: { referred_user: referredUserId, referral_status: 'pending' },
+    populate: { referrer: { populate: { country: { select: ['id'] } } } },
+  });
+  const referrerId = referral?.referrer?.id;
+  if (!referral || !referrerId || referrerId === referredUserId) return;
+
+  const settings = await resolveSettingsForCountry(strapi, referral.referrer.country?.id);
   if (!settings.affiliate_system_enabled || Number(settings.affiliate_reward_points) <= 0) return;
   const conditions = settings.affiliate_reward_conditions;
   if (conditions?.operator !== 'all' || !Array.isArray(conditions.conditions)) return;
@@ -201,12 +240,19 @@ export async function awardReferralAfterTournamentEntry(
   });
   if (!conditionPassed) return;
 
-  const referral = await strapi.db.query(REFERRAL_UID).findOne({
-    where: { referred_user: referredUserId, referral_status: 'pending' },
-    populate: { referrer: { select: ['id'] } },
+  const monthlyCap = Number(settings.referral_monthly_cap);
+  if (monthlyCap <= 0) return;
+  const monthStart = new Date();
+  monthStart.setUTCDate(1);
+  monthStart.setUTCHours(0, 0, 0, 0);
+  const monthlyRewards = await strapi.db.query(REFERRAL_UID).count({
+    where: {
+      referrer: referrerId,
+      referral_status: 'rewarded',
+      rewarded_at: { $gte: monthStart },
+    },
   });
-  const referrerId = referral?.referrer?.id;
-  if (!referrerId || referrerId === referredUserId) return;
+  if (monthlyRewards >= monthlyCap) return;
 
   const idempotencyKey = `referral:first-tournament-entry:${referredUserId}`;
   const existingCredit = await strapi.db.query(LEDGER_UID).findOne({

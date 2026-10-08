@@ -13,7 +13,23 @@ export function AuthProvider({ children }) {
   const [ready, setReady] = useState(false);
   const refresh = useCallback(async () => {
     if (!tokenStore.get()) { setUser(null); setReady(true); return null; }
-    try { const u = await endpoints.me(); setUser(u); return u; } catch { setUser(null); return null; } finally { setReady(true); }
+    try {
+      const user = await endpoints.me();
+      let nextUser = user;
+      try {
+        const wallet = await endpoints.wallet();
+        nextUser = { ...user, ...wallet };
+      } catch (error) {
+        console.error('Unable to load wallet balances', error);
+      }
+      setUser(nextUser);
+      return nextUser;
+    } catch {
+      setUser(null);
+      return null;
+    } finally {
+      setReady(true);
+    }
   }, []);
   useEffect(() => {
     queueMicrotask(() => { void refresh(); });

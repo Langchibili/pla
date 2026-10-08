@@ -1,7 +1,7 @@
 'use strict';
 /**
  * ProLeagueAfrica permissions matrix: the single source of truth.
- * Read by scripts/set-permissions.js (applies it) and by `--markdown` (prints PERMISSIONS.md tables).
+ * Read-only source of truth for manual Strapi role setup. `--markdown` prints the role/action tables.
  *
  * Deny by default. Anything not listed here is NOT granted to Public / Authenticated, and the
  * script removes it from those two roles unless you pass --no-prune.
@@ -66,10 +66,16 @@ const CUSTOM_ACTIONS = [
   { action: act('tournament-entry', 'leaderboard')[0], method: 'GET', path: '/api/tournament-entries/leaderboard', resource: 'tournament-entry',
     purpose: 'Per-stage and overall leaderboard with my position pinned.', guard: 'Return anon_label / display handle, never user ids or in-game names.' },
 
-  { action: act('match', 'mine')[0], method: 'GET', path: '/api/matches/mine', resource: 'match',
+  { action: act('match', 'mine')[0], method: 'GET', path: '/api/me/matches', resource: 'match',
     purpose: 'My matches with deadlines.', guard: 'Caller must be player1 or player2; opponent shown as anonymous label only.' },
-  { action: act('match', 'room')[0], method: 'GET', path: '/api/matches/:id/room', resource: 'match',
+  { action: act('match', 'room')[0], method: 'GET', path: '/api/me/matches/:id', resource: 'match',
     purpose: 'One match room: code, countdown, state, event history.', guard: 'Participants only; never expose opponent user, entry name or contact.' },
+  { action: act('match', 'postpone')[0], method: 'POST', path: '/api/matches/:id/postpone', resource: 'match',
+    purpose: 'Request a new match time.', guard: 'Participant only; enforce stage end, postponement limit and response deadline.' },
+  { action: act('match', 'forfeit')[0], method: 'POST', path: '/api/matches/:id/forfeit', resource: 'match',
+    purpose: 'Forfeit an unresolved match.', guard: 'Participant only; resolve once using country/admin score settings.' },
+  { action: act('match', 'dispute')[0], method: 'POST', path: '/api/matches/:id/dispute', resource: 'match',
+    purpose: 'Open a dispute with submitted evidence.', guard: 'Participant only; require at least one submission and resolve once.' },
 
   { action: act('match-submission', 'submit')[0], method: 'POST', path: '/api/match-submissions/submit', resource: 'match-submission',
     purpose: 'Upload my result screenshot. The screenshot upload happens here, so players need no upload-plugin access.',
@@ -77,11 +83,11 @@ const CUSTOM_ACTIONS = [
   { action: act('match-submission', 'history')[0], method: 'GET', path: '/api/match-submissions/history/:matchId', resource: 'match-submission',
     purpose: 'Both screenshots and the final score of a resolved match.', guard: 'Participants only, and only after the match is resolved.' },
 
-  { action: act('plapo-ledger', 'wallet')[0], method: 'GET', path: '/api/plapo-ledgers/wallet', resource: 'plapo-ledger',
+  { action: act('plapo-ledger', 'wallet')[0], method: 'GET', path: '/api/me/wallet', resource: 'plapo-ledger',
     purpose: 'Spendable and transferable balance.', guard: 'Caller only; computed from the ledger.' },
-  { action: act('plapo-ledger', 'mine')[0], method: 'GET', path: '/api/plapo-ledgers/mine', resource: 'plapo-ledger',
+  { action: act('plapo-ledger', 'mine')[0], method: 'GET', path: '/api/me/wallet/ledger', resource: 'plapo-ledger',
     purpose: 'My Plapo history.', guard: 'user = caller.' },
-  { action: act('plapo-ledger', 'transfer')[0], method: 'POST', path: '/api/plapo-ledgers/transfer', resource: 'plapo-ledger',
+  { action: act('plapo-ledger', 'transfer')[0], method: 'POST', path: '/api/me/wallet/transfer', resource: 'plapo-ledger',
     purpose: 'Send Plapo to another player.', guard: 'Transferable bucket only (purchased/received), transfers_enabled, caller not flagged, idempotency key, recipient resolved by referral code or handle.' },
 
   { action: act('payment', 'checkout')[0], method: 'POST', path: '/api/payments/checkout', resource: 'payment',
@@ -89,7 +95,7 @@ const CUSTOM_ACTIONS = [
   { action: act('payment', 'mine')[0], method: 'GET', path: '/api/payments/mine', resource: 'payment',
     purpose: 'My payment history.', guard: 'user = caller; strip webhook_payload and provider_reference.' },
 
-  { action: act('referral', 'mine')[0], method: 'GET', path: '/api/referrals/mine', resource: 'referral',
+  { action: act('referral', 'mine')[0], method: 'GET', path: '/api/me/referrals', resource: 'referral',
     purpose: 'My code, link and the status of each invite.', guard: 'referrer = caller; show status only, not the invitee\'s identity.' },
 
   { action: act('prize-payout', 'mine')[0], method: 'GET', path: '/api/prize-payouts/mine', resource: 'prize-payout',

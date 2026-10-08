@@ -1,8 +1,17 @@
-# ProLeague Africa — main app (Next.js 14, JS, MUI)
-npm i && cp .env.example .env.local && npm run dev
+# ProLeague Africa — main app (Next.js 16, JavaScript, MUI)
+
+Install dependencies with `npm install`, set the `NEXT_PUBLIC_*` values in `.env.local`,
+then run `npm run build` and `npm start` for a production-mode local run on port 3011.
 
 ## Custom Strapi routes this frontend expects
-POST /tournaments/:id/enter {in_game_name} · GET /me/matches · GET /me/matches/:id (adds opponent_label, match_code, submissions[{mine}])
-POST /matches/:id/submit (multipart 'screenshot') · POST /matches/:id/{postpone,forfeit,dispute}
-GET /me/wallet ({ledger}) · POST /me/wallet/transfer {to,amount} · GET /me/referrals ({pending,rewarded})
-Register accepts device_hash + referral_code. Socket.IO auth: {token}. Add public/icon-192.png and icon-512.png.
+
+- `POST /auth/email-otp/send`, `/resend`, and `/verify` for email-based registration and sign-in.
+- `POST /affiliate-impressions/track` and `/check` for browser-to-app referral attribution.
+- `POST /tournament-entries/join` and `GET /tournament-entries/leaderboard?tournament_id=...`.
+- `GET /tournament-stages/:id/schedule` for the public, anonymized stage schedule.
+- `GET /me/matches` and `/me/matches/:id`; match actions use `POST /matches/:id/{postpone,forfeit,dispute}`.
+- `POST /match-submissions/submit` with multipart field `screenshot`.
+- `GET /me/wallet`, `/me/wallet/ledger`, and `POST /me/wallet/transfer` with `{to, amount, idempotency_key}`.
+- `GET /me/referrals` returns the caller's code and aggregate invite statuses.
+
+Socket.IO authentication uses `{token}`. Add `public/icon-192.png` and `public/icon-512.png`.

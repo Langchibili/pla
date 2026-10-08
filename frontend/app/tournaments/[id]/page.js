@@ -41,7 +41,7 @@ function StageSchedule({ stage }) {
 }
 
 export default function TournamentDetail() {
-  const { id } = useParams(); const router = useRouter(); const toast = useToast(); const { user, refresh } = useAuth();
+  const { id } = useParams(); const router = useRouter(); const toast = useToast(); const { refresh } = useAuth();
   const { data: t, loading, error, reload } = useApi(`t-${id}`, () => endpoints.tournament(id));
   const board = useApi(`b-${id}`, () => endpoints.entries(id), { interval: 30000 });
   const [open, setOpen] = useState(false); const [name, setName] = useState(''); const [busy, setBusy] = useState(false);
@@ -49,7 +49,7 @@ export default function TournamentDetail() {
   if (error) return <ErrorNote error={error} onRetry={reload} />;
   const fmt = t.game?.in_game_id_format ? new RegExp(t.game.in_game_id_format) : null;
   const valid = name.trim().length > 1 && (!fmt || fmt.test(name.trim()));
-  const joined = (board.data || []).some((e) => e.user?.id === user.id);
+  const joined = (board.data || []).some((e) => e.is_me);
   const canEnter = t.tournament_status === 'registration_open' && t.game?.game_status === 'active';
   const enter = async () => {
     setBusy(true);

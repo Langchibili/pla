@@ -2,7 +2,7 @@ const LEDGER_UID = 'api::plapo-ledger.plapo-ledger';
 
 const SPEND_ORDER = ['free', 'earned', 'received', 'purchased'];
 
-async function sourceBalances(strapi: any, userId: number): Promise<Record<string, number>> {
+export async function getPlapoSourceBalances(strapi: any, userId: number): Promise<Record<string, number>> {
   const rows = await strapi.db.query(LEDGER_UID).findMany({
     where: { user: userId, plapo_ledger_status: 'posted' },
     select: ['amount', 'plapo_source'],
@@ -13,6 +13,17 @@ async function sourceBalances(strapi: any, userId: number): Promise<Record<strin
     if (source in balances) balances[source] += Number(row.amount) || 0;
   }
   return balances;
+}
+
+export async function getPlapoBalances(
+  strapi: any,
+  userId: number,
+): Promise<{ spendable_balance: number; transferable_balance: number }> {
+  const balances = await getPlapoSourceBalances(strapi, userId);
+  return {
+    spendable_balance: Object.values(balances).reduce((total, amount) => total + amount, 0),
+    transferable_balance: Math.max(0, balances.purchased) + Math.max(0, balances.received),
+  };
 }
 
 export async function createTournamentEntryWithPlapoCharge(
@@ -28,14 +39,15 @@ export async function createTournamentEntryWithPlapoCharge(
   const amount = Math.trunc(Number(params.amount));
   if (!Number.isFinite(amount) || amount < 0) throw new Error('Entry fee must be a non-negative Plapo amount');
 
-  return strapi.db.transaction(async () => {
+  return strapi.db.transaction(async ({ trx }: any) => {
+    await trx('up_users').where({ id: params.userId }).forUpdate().first();
     const existingDebit = await strapi.db.query(LEDGER_UID).findOne({
       where: { idempotency_key: { $startsWith: `${params.idempotencyKey}:` } },
       select: ['id'],
     });
     if (existingDebit) throw new Error('This tournament entry was already charged');
 
-    const balances = await sourceBalances(strapi, params.userId);
+    const balances = await getPlapoSourceBalances(strapi, params.userId);
     const balance = Object.values(balances).reduce((total, value) => total + value, 0);
     if (balance < amount) throw new Error('Your Plapo balance is too low for this entry fee');
 

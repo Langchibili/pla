@@ -37,6 +37,7 @@ export default factories.createCoreController('api::email-otp.email-otp', ({ str
         purpose: body.purpose,
         referralCode: body.referral_code,
         deviceHash: body.device_hash,
+        countryId: body.country_id,
       });
       return ctx.send({ sent: true });
     } catch (error) {

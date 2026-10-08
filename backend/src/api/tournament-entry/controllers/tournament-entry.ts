@@ -3,6 +3,41 @@ import { randomBytes } from 'crypto';
 import { createTournamentEntryWithPlapoCharge } from '../../../services/plapoLedgerService';
 
 export default factories.createCoreController('api::tournament-entry.tournament-entry', ({ strapi }) => ({
+	async leaderboard(ctx: any) {
+		const tournamentId = String(ctx.query.tournament_id ?? ctx.query.tournamentId ?? '');
+		if (!tournamentId) return ctx.badRequest('tournament_id is required');
+
+		const entries = await strapi.db.query('api::tournament-entry.tournament-entry').findMany({
+			where: /^\d+$/.test(tournamentId)
+				? { $or: [{ tournament: { id: Number(tournamentId) } }, { tournament: { documentId: tournamentId } }] }
+				: { tournament: { documentId: tournamentId } },
+			populate: { user: { select: ['id'] } },
+			orderBy: [
+				{ points: 'desc' },
+				{ wins: 'desc' },
+				{ goals_for: 'desc' },
+			],
+			limit: 100,
+		});
+		const userId = Number(ctx.state.user?.id);
+
+		return ctx.send({
+			data: entries.map((entry: any) => ({
+				documentId: entry.documentId,
+				anon_label: entry.anon_label,
+				tournament_entry_status: entry.tournament_entry_status,
+				points: entry.points,
+				matches_played: entry.matches_played,
+				wins: entry.wins,
+				draws: entry.draws,
+				losses: entry.losses,
+				goals_for: entry.goals_for,
+				goals_against: entry.goals_against,
+				is_me: Number(entry.user?.id) === userId,
+			})),
+		});
+	},
+
 	async join(ctx: any) {
 		const userId = Number(ctx.state.user?.id);
 		if (!Number.isInteger(userId) || userId < 1) return ctx.unauthorized();

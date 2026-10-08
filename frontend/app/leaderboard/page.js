@@ -4,7 +4,6 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback } from 'react';
 import { endpoints } from '@/lib/api';
 import { useApi } from '@/hooks/useApi';
-import { useAuth } from '@/hooks/useAuth';
 import { useSocketEvent } from '@/hooks/useSocket';
 import Surface from '@/components/Surface';
 import SkeletonList from '@/components/SkeletonList';
@@ -13,12 +12,12 @@ import { AFRICA } from '@/lib/theme';
 
 const MEDAL = [AFRICA.gold, '#C0C6CC', '#CD7F32'];
 function Board() {
-  const t = useSearchParams().get('t'); const { user } = useAuth();
+  const t = useSearchParams().get('t');
   const { data, loading, reload } = useApi(`lb-${t}`, () => endpoints.entries(t), { interval: 30000, enabled: !!t });
   useSocketEvent('leaderboard:updated', useCallback(() => reload(), [reload]));
   if (!t) return <EmptyState title="Pick a tournament" body="Open a tournament and tap View leaderboard." />;
   if (loading) return <SkeletonList count={6} height={64} />;
-  const me = (data || []).findIndex((e) => e.user?.id === user.id);
+  const me = (data || []).findIndex((e) => e.is_me);
   return (
     <Box sx={{ display: 'grid', gap: 1.2 }}>
       {(data || []).map((e, i) => (

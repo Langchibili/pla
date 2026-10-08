@@ -149,49 +149,49 @@ frontend/next-env.d.ts
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
-plapp/node_modules/
+plaapp/node_modules/
 
 # Expo
-plapp/.expo/
-plapp/dist/
-plapp/web-build/
-plapp/expo-env.d.ts
+plaapp/.expo/
+plaapp/dist/
+plaapp/web-build/
+plaapp/expo-env.d.ts
 
 # Native
-plapp/.kotlin/
-plapp/*.orig.*
-plapp/*.jks
-plapp/*.p8
-plapp/*.p12
-plapp/*.key
-plapp/*.mobileprovision
+plaapp/.kotlin/
+plaapp/*.orig.*
+plaapp/*.jks
+plaapp/*.p8
+plaapp/*.p12
+plaapp/*.key
+plaapp/*.mobileprovision
 
 # Metro
-plapp/.metro-health-check*
+plaapp/.metro-health-check*
 
 # debug
-plapp/npm-debug.*
-plapp/yarn-debug.*
-plapp/yarn-error.*
+plaapp/npm-debug.*
+plaapp/yarn-debug.*
+plaapp/yarn-error.*
 
 # macOS
-plapp/.DS_Store
-plapp/*.pem
+plaapp/.DS_Store
+plaapp/*.pem
 
 # local env files
-plapp/.env*.local
+plaapp/.env*.local
 
 # typescript
-plapp/*.tsbuildinfo
-plapp/AppleApptsx.txt
-plapp/dev-eas.txt
+plaapp/*.tsbuildinfo
+plaapp/AppleApptsx.txt
+plaapp/dev-eas.txt
 
 # generated native folders
-plapp/ios
-plapp/android
-plapp/.env
-plapp/modules/**/android/.gradle/
-plapp/modules/**/android/build/
+plaapp/ios
+plaapp/android
+plaapp/.env
+plaapp/modules/**/android/.gradle/
+plaapp/modules/**/android/build/
 
 
 score-service/__pycache__/
