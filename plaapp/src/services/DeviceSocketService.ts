@@ -5,17 +5,39 @@ import { logger } from '../utils/logger';
 
 type SocketHandler = (payload: unknown) => void;
 
+const PLA_EVENTS = [
+  E.NOTIFICATION_NEW,
+  E.NOTIFICATION_BROADCAST,
+  E.SYSTEM_ANNOUNCEMENT,
+  E.WALLET_UPDATED,
+  E.MATCH_RESULT_READY,
+  E.MATCH_SUBMISSION_RECEIVED,
+  E.MATCH_POSTPONE_RESPONSE,
+  E.MATCH_DISPUTE_OPENED,
+  E.LEADERBOARD_UPDATED,
+  E.DEVICE_REGISTER_SUCCESS,
+  E.DEVICE_REGISTER_ERROR,
+  E.DEVICE_SESSION_REPLACED,
+] as const;
+
 class DeviceSocketService {
   private socket: Socket | null = null;
   private handlers = new Map<string, Set<SocketHandler>>();
   private deviceId: string | null = null;
   private connected = false;
+  private heartbeat: ReturnType<typeof setInterval> | null = null;
 
-  async connect(url: string, token: string, deviceId: string, deviceInfo: Record<string, unknown>): Promise<boolean> {
-    if (!url) {
-      logger.warn('Device socket URL is not configured');
+  async connect(
+    url: string,
+    token: string,
+    deviceId: string,
+    deviceInfo: Record<string, unknown>,
+  ): Promise<boolean> {
+    if (!url || !token || !deviceId) {
+      logger.warn('Cannot connect the device socket without its URL and signed-in session');
       return false;
     }
+
     const network = await NetInfo.fetch();
     if (!network.isConnected) return false;
 
@@ -34,25 +56,17 @@ class DeviceSocketService {
 
     return new Promise((resolve) => {
       let settled = false;
-      const timeout = setTimeout(() => {
-        if (!settled) {
-          settled = true;
-          resolve(false);
-        }
-      }, 12000);
-      socket.once(E.CONNECT, () => {
+      const finish = (connected: boolean) => {
         if (settled) return;
         settled = true;
         clearTimeout(timeout);
-        resolve(true);
-      });
+        resolve(connected);
+      };
+      const timeout = setTimeout(() => finish(false), 12000);
+      socket.once(E.CONNECT, () => finish(true));
       socket.once('connect_error', (error) => {
-        logger.warn('Device socket connection failed', error.message);
-        if (!settled) {
-          settled = true;
-          clearTimeout(timeout);
-          resolve(false);
-        }
+        logger.warn('PLA device socket connection failed', error.message);
+        finish(false);
       });
     });
   }
@@ -67,48 +81,48 @@ class DeviceSocketService {
     };
   }
 
-  isConnected(): boolean {
-    return this.connected && Boolean(this.socket?.connected);
-  }
-
   clearHandlers(): void {
     this.handlers.clear();
   }
 
   disconnect(clearHandlers = true): void {
+    if (this.heartbeat) clearInterval(this.heartbeat);
+    this.heartbeat = null;
     this.socket?.removeAllListeners();
     this.socket?.disconnect();
     this.socket = null;
     this.connected = false;
+    this.deviceId = null;
     if (clearHandlers) this.handlers.clear();
+  }
+
+  isConnected(): boolean {
+    return this.connected && Boolean(this.socket?.connected);
   }
 
   private attach(socket: Socket, deviceInfo: Record<string, unknown>): void {
     socket.on(E.CONNECT, () => {
       this.connected = true;
       this.emit(E.CONNECTED, {});
-      if (this.deviceId) socket.emit(E.DEVICE_REGISTER, { deviceId: this.deviceId, deviceInfo });
+      if (this.deviceId) {
+        socket.emit(E.DEVICE_REGISTER, { deviceId: this.deviceId, deviceInfo });
+        this.heartbeat = setInterval(() => {
+          if (this.deviceId && socket.connected) {
+            socket.emit(E.DEVICE_HEARTBEAT, { deviceId: this.deviceId });
+          }
+        }, 30000);
+      }
     });
     socket.on(E.DISCONNECT, (reason) => {
       this.connected = false;
+      if (this.heartbeat) clearInterval(this.heartbeat);
+      this.heartbeat = null;
       this.emit(E.DISCONNECTED, { reason });
     });
 
-    const events = [
-      E.NOTIFICATION_NEW,
-      E.NOTIFICATION_BROADCAST,
-      E.SYSTEM_ANNOUNCEMENT,
-      E.WALLET_UPDATED,
-      E.MATCH_RESULT_READY,
-      E.MATCH_SUBMISSION_RECEIVED,
-      E.MATCH_POSTPONE_RESPONSE,
-      E.MATCH_DISPUTE_OPENED,
-      E.LEADERBOARD_UPDATED,
-      E.DEVICE_REGISTER_SUCCESS,
-      E.DEVICE_REGISTER_ERROR,
-      E.DEVICE_SESSION_REPLACED,
-    ];
-    for (const event of events) socket.on(event, (payload) => this.emit(event, payload));
+    for (const event of PLA_EVENTS) {
+      socket.on(event, (payload) => this.emit(event, payload));
+    }
 
     socket.on(E.PING, (payload) => socket.emit(E.PONG, payload));
   }
@@ -118,7 +132,7 @@ class DeviceSocketService {
       try {
         handler(payload);
       } catch (error) {
-        logger.error(`Socket event handler failed: ${event}`, error);
+        logger.error(`Device socket event handler failed: ${event}`, error);
       }
     });
   }

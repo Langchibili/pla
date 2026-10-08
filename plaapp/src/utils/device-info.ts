@@ -11,9 +11,12 @@ export async function getDeviceInfo() {
   let deviceId = Platform.OS === 'web'
     ? Constants.installationId ?? ''
     : await SecureStore.getItemAsync(INSTALLATION_KEY);
+
   if (!deviceId) {
     deviceId = Crypto.randomUUID();
-    if (Platform.OS !== 'web') await SecureStore.setItemAsync(INSTALLATION_KEY, deviceId);
+    if (Platform.OS !== 'web') {
+      await SecureStore.setItemAsync(INSTALLATION_KEY, deviceId);
+    }
   }
 
   return {
@@ -27,6 +30,8 @@ export async function getDeviceInfo() {
     osVersion: Device.osVersion ?? String(Platform.Version),
     appVersion: Application.nativeApplicationVersion ?? Constants.expoConfig?.version ?? '1.0.0',
     buildNumber: Application.nativeBuildVersion ?? '1',
+    expoVersion: Constants.expoVersion ?? 'Unknown',
     isDevice: Device.isDevice,
+    totalMemory: Device.totalMemory ?? null,
   };
 }

@@ -1,5 +1,7 @@
 type LogArgs = unknown[];
 
+const APP_LABEL = 'PLA';
+
 export const logger = {
   debug(message: string, ...args: LogArgs) {
     if (__DEV__) console.debug(`[${APP_LABEL}]`, message, ...args);
@@ -14,5 +16,3 @@ export const logger = {
     console.error(`[${APP_LABEL}]`, message, ...args);
   },
 };
-
-const APP_LABEL = 'PLA';

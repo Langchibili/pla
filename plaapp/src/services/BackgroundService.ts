@@ -1,30 +1,46 @@
 import DeviceSocketService from './DeviceSocketService';
 import NotificationService from './NotificationService';
-import { API_URL, DEVICE_SOCKET_URL } from '../utils/constants';
+import { CONSTANTS } from '../utils/constants';
 import { getDeviceInfo } from '../utils/device-info';
+import { logger } from '../utils/logger';
+
+type ServiceConfig = {
+  userId: string | number;
+  token: string;
+};
 
 class BackgroundService {
-  async start(userId: number | string, token: string, notify: (type: string, payload: unknown) => void): Promise<boolean> {
+  async start({ userId, token }: ServiceConfig): Promise<boolean> {
     const deviceInfo = await getDeviceInfo();
-    const deviceId = String(deviceInfo.deviceId);
-    const notificationToken = await NotificationService.initialize((type, payload) => notify(type, payload));
+    const notificationToken = NotificationService.getToken();
+
     if (notificationToken) {
-      if (!API_URL) throw new Error('EXPO_PUBLIC_API_URL is required to register push notifications');
-      const pushResponse = await fetch(`${API_URL.replace(/\/+$/, '')}/users/${encodeURIComponent(String(userId))}`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ push_token: notificationToken }),
-      });
-      if (!pushResponse.ok) {
-        throw new Error(`Could not register push token with PLA backend (HTTP ${pushResponse.status})`);
+      const response = await fetch(
+        `${CONSTANTS.BACKEND_URL.replace(/\/+$/, '')}/users/${encodeURIComponent(String(userId))}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ push_token: notificationToken }),
+        },
+      );
+      if (!response.ok) {
+        logger.warn('Could not register the PLA push token', { status: response.status });
       }
     }
-    return DeviceSocketService.connect(DEVICE_SOCKET_URL, token, deviceId, deviceInfo);
+
+    return DeviceSocketService.connect(
+      CONSTANTS.DEVICE_SOCKET_URL,
+      token,
+      deviceInfo.deviceId,
+      deviceInfo,
+    );
   }
 
-  async stop(): Promise<void> {
+  stop(): void {
     DeviceSocketService.disconnect();
-    NotificationService.cleanup();
   }
 
   isConnected(): boolean {

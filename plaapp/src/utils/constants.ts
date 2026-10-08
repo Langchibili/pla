@@ -1,10 +1,10 @@
 import Constants from 'expo-constants';
 
-export const APP_NAME = 'ProLeague Africa';
-export const FRONTEND_URL = process.env.EXPO_PUBLIC_FRONTEND_URL ?? '';
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
-export const DEVICE_SOCKET_URL = process.env.EXPO_PUBLIC_DEVICE_SOCKET_URL ?? '';
-export const EAS_PROJECT_ID = process.env.EXPO_PUBLIC_EAS_PROJECT_ID
+const emulatorHost = '10.0.2.2';
+const socketBaseUrl = process.env.EXPO_PUBLIC_SOCKET_URL ?? `http://${emulatorHost}:3015`;
+
+export const EXPO_PUBLIC_PROJECT_ID =
+  process.env.EXPO_PUBLIC_EAS_PROJECT_ID
   ?? Constants.easConfig?.projectId
   ?? Constants.expoConfig?.extra?.eas?.projectId
   ?? '';
@@ -31,3 +31,15 @@ export const SOCKET_EVENTS = {
   PING: 'ping',
   PONG: 'pong',
 } as const;
+
+export const CONSTANTS = {
+  APP_NAME: 'ProLeague Africa',
+  APP_VERSION: '1.0.1',
+  FRONTEND_URL: process.env.EXPO_PUBLIC_FRONTEND_URL ?? `http://${emulatorHost}:3011`,
+  BACKEND_URL: process.env.EXPO_PUBLIC_API_URL ?? `http://${emulatorHost}:1377/api`,
+  DEVICE_SOCKET_URL:
+    process.env.EXPO_PUBLIC_DEVICE_SOCKET_URL ?? `${socketBaseUrl}/device-sockets`,
+  MAIN_SOCKET_URL:
+    process.env.EXPO_PUBLIC_MAIN_SOCKET_URL ?? `${socketBaseUrl}/main-sockets`,
+  NOTIFICATION: { HEARTBEAT_INTERVAL: 30000 },
+};

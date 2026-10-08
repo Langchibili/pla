@@ -1,8 +1,8 @@
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { EXPO_PUBLIC_PROJECT_ID } from '../utils/constants';
 import { logger } from '../utils/logger';
-import { EAS_PROJECT_ID } from '../utils/constants';
 
 export type NativeNotification = {
   title: string;
@@ -10,7 +10,10 @@ export type NativeNotification = {
   data?: Record<string, unknown>;
 };
 
-type NotificationHandler = (type: 'NOTIFICATION_RECEIVED' | 'NOTIFICATION_TAPPED', data: unknown) => void;
+type NotificationHandler = (
+  type: 'NOTIFICATION_RECEIVED' | 'NOTIFICATION_TAPPED',
+  payload: unknown,
+) => void;
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -34,23 +37,26 @@ class NotificationService {
 
     const permission = await this.requestPermission();
     if (permission !== 'granted') {
-      logger.info('Push notification permission was not granted');
+      logger.info('Notification permission was not granted');
       return null;
     }
 
     if (!Device.isDevice) {
-      logger.info('Push-token registration requires a physical device');
+      logger.info('Push token registration requires a physical device');
+      this.setupListeners();
       return null;
     }
 
-    if (!EAS_PROJECT_ID) {
-      logger.warn('Push token unavailable: configure the EAS project ID in the app configuration');
+    if (!EXPO_PUBLIC_PROJECT_ID) {
+      logger.warn('Push token unavailable: configure the EAS project ID');
       this.setupListeners();
       return null;
     }
 
     try {
-      this.token = (await Notifications.getExpoPushTokenAsync({ projectId: EAS_PROJECT_ID })).data;
+      this.token = (await Notifications.getExpoPushTokenAsync({
+        projectId: EXPO_PUBLIC_PROJECT_ID,
+      })).data;
       if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
           name: 'Default',
@@ -60,6 +66,7 @@ class NotificationService {
     } catch (error) {
       logger.warn('Push-token registration failed', error);
     }
+
     this.setupListeners();
     const lastResponse = await Notifications.getLastNotificationResponseAsync();
     if (lastResponse) {

@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import { Linking } from 'react-native';
 
 class PermissionManager {
   async requestNotificationPermission(): Promise<boolean> {
@@ -15,6 +16,10 @@ class PermissionManager {
   async request(permission: string): Promise<string> {
     if (permission !== 'notification') return 'unsupported';
     return (await this.requestNotificationPermission()) ? 'granted' : 'denied';
+  }
+
+  async openAppSettings(): Promise<void> {
+    await Linking.openSettings();
   }
 }
 

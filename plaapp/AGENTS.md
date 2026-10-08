@@ -23,11 +23,13 @@ npx expo install --fix      # fix incompatible package versions
 
 Run lint and typecheck before declaring any task done.
 
-## Navigation & Routing
+## App structure
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
+- `index.ts` registers the native root in `App.tsx`; `AppContent.tsx` owns the
+  WebView, native bridge, and PLA notification/socket lifecycle.
+- Keep app screens and native services in `src/`. Web navigation belongs to the
+  PLA frontend loaded in the WebView; do not add a second native router.
+- Use `app.json` for Expo app identity and native module configuration.
 
 ## Building with EAS
 
@@ -39,3 +41,4 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+- Validate app changes with `npx tsc --noEmit`, `npm run lint`, and `npx expo export --platform android`.
