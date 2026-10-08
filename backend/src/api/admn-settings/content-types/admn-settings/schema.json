@@ -98,6 +98,10 @@
       "default": "pawapay",
       "required": true
     },
+    "overideOtpCode": {
+      "type": "string",
+      "default": "121212"
+    },
     "affiliate_system_enabled": { "type": "boolean", "default": false },
     "affiliate_reward_points": { "type": "integer", "default": 25, "min": 0 },
     "affiliate_reward_conditions": {

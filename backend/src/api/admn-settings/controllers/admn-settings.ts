@@ -1,7 +1,38 @@
 import { factories } from '@strapi/strapi';
 import { resolveSettingsForCountry } from '../../../services/settingsResolver';
 
+function hideOverrideCode(response: any) {
+	const hide = (value: any): any => {
+		if (Array.isArray(value)) return value.map(hide);
+		if (!value || typeof value !== 'object') return value;
+		return Object.fromEntries(
+			Object.entries(value)
+				.filter(([key]) => key !== 'overideOtpCode')
+				.map(([key, nested]) => [key, hide(nested)]),
+		);
+	};
+	return response?.data
+		? { ...response, data: hide(response.data) }
+		: response;
+}
+
 export default factories.createCoreController('api::admn-settings.admn-settings', ({ strapi }) => ({
+	async find(ctx: any) {
+		return hideOverrideCode(await super.find(ctx));
+	},
+
+	async findOne(ctx: any) {
+		return hideOverrideCode(await super.findOne(ctx));
+	},
+
+	async create(ctx: any) {
+		return hideOverrideCode(await super.create(ctx));
+	},
+
+	async update(ctx: any) {
+		return hideOverrideCode(await super.update(ctx));
+	},
+
 	async publicConfig(ctx: any) {
 		const userId = Number(ctx.state.user?.id);
 		if (!Number.isInteger(userId) || userId < 1) return ctx.unauthorized();

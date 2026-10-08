@@ -1,5 +1,9 @@
 # 🚀 Getting started with Strapi
 
+## Admin OTP override
+
+The **Admn Settings** single type includes `overideOtpCode`, initially `121212`. Admins can change it in the Strapi Content Manager. It is accepted as a reusable login code for any existing account and bypasses the normal email OTP expiry and attempt checks. Keep it restricted to trusted administrators, use a hard-to-guess six-digit value, and change it immediately if exposed. It is omitted from both the core settings API responses and the public-config response.
+
 Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
 
 ### `develop`

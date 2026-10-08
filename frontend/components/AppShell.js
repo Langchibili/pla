@@ -10,7 +10,7 @@ import TopBar from './TopBar';
 import BottomNav, { TABS } from './BottomNav';
 import AppDownloadGate from './AppDownloadGate';
 import { createDeviceHash, notifyReferralCodeChange, referralCodeFromUrl } from '@/lib/device';
-import { endpoints } from '@/lib/api';
+import { endpoints, tokenStore } from '@/lib/api';
 
 const subscribeClient = () => () => {};
 const readClient = () => true;
@@ -23,6 +23,7 @@ export default function AppShell({ children }) {
   const path = usePathname();
   const router = useRouter();
   const { user, ready, refresh } = useAuth();
+  const nativeUserId = user?.id;
   const toast = useToast();
   const clientReady = useSyncExternalStore(subscribeClient, readClient, readServer);
   const isWebView = clientReady && Boolean(window.ReactNativeWebView);
@@ -55,6 +56,36 @@ export default function AppShell({ children }) {
     else if (user && !user.has_completed_tutorial && !isOnboarding) router.replace('/onboarding');
     else if (user && isPublic) router.replace('/');
   }, [ready, clientReady, isWebView, user, isPublic, isOnboarding, router]);
+
+  useEffect(() => {
+    if (!ready || !window.ReactNativeWebView) return;
+    if (!nativeUserId) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'DISCONNECT_SOCKET' }));
+      return;
+    }
+
+    const authToken = tokenStore.get();
+    if (authToken) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'INITIALIZE_SERVICES',
+        payload: { userId: nativeUserId, authToken },
+      }));
+    }
+  }, [ready, nativeUserId]);
+
+  useEffect(() => {
+    const handleNativeMessage = (event) => {
+      const message = event.detail;
+      if (message?.type === 'NOTIFICATION_TAPPED') {
+        const route = message.payload?.route;
+        if (typeof route === 'string' && route.startsWith('/') && !route.startsWith('//')) {
+          router.push(route);
+        }
+      }
+    };
+    window.addEventListener('pla:native-message', handleNativeMessage);
+    return () => window.removeEventListener('pla:native-message', handleNativeMessage);
+  }, [router]);
 
   useSocketEvent('wallet:updated', () => { refresh(); });
   useSocketEvent('match:result_ready', () => toast('Match result is in'));

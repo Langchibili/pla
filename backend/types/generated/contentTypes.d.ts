@@ -562,6 +562,8 @@ export interface ApiAdmnSettingsAdmnSettings extends Struct.SingleTypeSchema {
         number
       > &
       Schema.Attribute.DefaultTo<0.8>;
+    overideOtpCode: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'121212'>;
     postponement_response_hours: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {

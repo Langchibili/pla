@@ -1,50 +1,45 @@
-# Welcome to your Expo app 👋
+# PLA mobile app
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The Expo app is the native shell for the PLA web client. It hosts the web app in a
+WebView and bridges authenticated sessions to native push notifications and the
+PLA device Socket.IO namespace. It does not request location or draw-over
+permissions.
 
-## Get started
+## Local setup
 
-1. Install dependencies
+1. Install packages with `npm install`.
+2. Copy `.env.example` to `.env` and set the frontend, Strapi API, and device
+   socket URLs. The sample host `10.0.2.2` is for an Android emulator; use the
+   computer's LAN IP for a physical device and `localhost` for an iOS simulator.
+3. Start the Next frontend and Strapi backend using the project run instructions.
+4. Start the PLA socket service from `../sockets` with `npm start`.
+5. Start Expo with `npx expo start` and open the app in an Android/iOS
+   development build.
 
-   ```bash
-   npm install
-   ```
+The website sends the current user's ID and JWT to the native bridge only after
+login. The socket service independently validates that JWT against Strapi; it
+does not trust a client-supplied user ID. Push-token registration additionally
+requires an EAS project ID and the platform's push credentials. Set
+`EXPO_PUBLIC_EAS_PROJECT_ID` before testing push delivery.
 
-2. Start the app
+## Native services
 
-   ```bash
-   npx expo start
-   ```
+- `src/services/BackgroundService.ts` initializes push notifications, registers
+  the push token against the signed-in user's Strapi profile, and connects the
+  device socket. It disconnects both services on logout or app teardown.
+- `src/services/DeviceSocketService.ts` authenticates with the user's JWT,
+  registers device information, and relays PLA notification, wallet, match, and
+  tournament events to the WebView.
+- `src/services/NotificationService.ts` handles permissions, Expo push tokens,
+  foreground notifications, and notification taps.
+- `src/services/PermissionManager.ts` exposes notification permission status and
+  requests to the WebView bridge.
 
-In the output, you'll find options to open the app in a
+The old Expo demo routes, themed components, and sample artwork have been
+removed. Bidz4u auction audio, draw-over, and location behavior are not part of
+the PLA app.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Validation
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Run `npx tsc --noEmit`, `npm run lint`, and `npx expo export --platform android`
+to type-check, lint, and create an Android production JavaScript bundle.

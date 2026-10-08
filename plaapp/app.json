@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "plaapp",
+    "name": "ProLeague Africa",
     "slug": "plaapp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -38,7 +38,10 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

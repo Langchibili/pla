@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import { endpoints } from '@/lib/api';
 import { useApi } from '@/hooks/useApi';
 import { useCountdown } from '@/hooks/useCountdown';
-import { emit, useSocketEvent } from '@/hooks/useSocket';
+import { emit, useSocketEvent, useSocketRoom } from '@/hooks/useSocket';
 import { useToast } from '@/hooks/useToast';
 import { haptic } from '@/lib/haptics';
 import { fmtDate, label, SCORE_FLAG, STATUS_COLOR } from '@/lib/format';
@@ -20,6 +20,7 @@ const REASONS = [['technical_difficulty', 'Technical difficulty'], ['emergency',
 
 export default function MatchRoom() {
   const { id } = useParams(); const toast = useToast();
+  useSocketRoom('match', id);
   const { data: m, loading, error, reload } = useApi(`m-${id}`, () => endpoints.match(id), { interval: 20000 });
   const cd = useCountdown(m?.match_deadline);
   const [sheet, setSheet] = useState(null); const [reason, setReason] = useState('technical_difficulty'); const [slot, setSlot] = useState('');

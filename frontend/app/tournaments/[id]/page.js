@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { endpoints } from '@/lib/api';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/hooks/useAuth';
+import { useSocketRoom } from '@/hooks/useSocket';
 import { useToast } from '@/hooks/useToast';
 import { fmtDate, fmtMoney, fmtPlapo, label } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
@@ -42,6 +43,7 @@ function StageSchedule({ stage }) {
 
 export default function TournamentDetail() {
   const { id } = useParams(); const router = useRouter(); const toast = useToast(); const { refresh } = useAuth();
+  useSocketRoom('tournament', id);
   const { data: t, loading, error, reload } = useApi(`t-${id}`, () => endpoints.tournament(id));
   const board = useApi(`b-${id}`, () => endpoints.entries(id), { interval: 30000 });
   const [open, setOpen] = useState(false); const [name, setName] = useState(''); const [busy, setBusy] = useState(false);

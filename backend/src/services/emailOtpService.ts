@@ -9,6 +9,7 @@ import { grantInitialPlapo } from './plapoLedgerService';
 
 const OTP_UID = 'api::email-otp.email-otp';
 const USER_UID = 'plugin::users-permissions.user';
+const ADMIN_SETTINGS_UID = 'api::admn-settings.admn-settings';
 const OTP_LIFETIME_MS = 5 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -35,6 +36,14 @@ function otpHash(email: string, purpose: string, code: string): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new EmailOtpError('Email OTP is not configured', 503);
   return createHash('sha256').update(`${secret}:${email}:${purpose}:${code}`).digest('hex');
+}
+
+function matchesAdminOverrideOtp(code: string, configuredCode: unknown): boolean {
+  if (configuredCode === null || configuredCode === undefined || configuredCode === '') return false;
+  if (typeof configuredCode !== 'string' || !/^\d{6}$/.test(configuredCode)) {
+    throw new EmailOtpError('Admin override OTP must be a six-digit code', 503);
+  }
+  return timingSafeEqual(Buffer.from(code), Buffer.from(configuredCode));
 }
 
 function validDeviceHash(value: unknown): string | undefined {
@@ -169,28 +178,37 @@ export async function verifyEmailOtp(
     throw new EmailOtpError('Enter the six-digit verification code', 400);
   }
 
-  const otp = await strapi.db.query(OTP_UID).findOne({ where: { email, purpose } });
-  if (!otp || new Date(otp.expires_at).getTime() <= Date.now()) {
-    if (otp) await strapi.db.query(OTP_UID).delete({ where: { id: otp.id } });
-    throw new EmailOtpError('The verification code is invalid or expired', 400);
-  }
-  if (Number(otp.attempts) >= MAX_ATTEMPTS) {
-    await strapi.db.query(OTP_UID).delete({ where: { id: otp.id } });
-    throw new EmailOtpError('Too many incorrect attempts. Request a new code.', 429);
-  }
+  const adminSettings = purpose === 'login'
+    ? await strapi.db.query(ADMIN_SETTINGS_UID).findOne({ select: ['overideOtpCode'] })
+    : null;
+  const isAdminOverride = purpose === 'login'
+    && matchesAdminOverrideOtp(params.code, adminSettings?.overideOtpCode);
 
-  const expectedHash = Buffer.from(otp.code_hash, 'hex');
-  const receivedHash = Buffer.from(otpHash(email, purpose, params.code), 'hex');
-  if (expectedHash.length !== receivedHash.length || !timingSafeEqual(expectedHash, receivedHash)) {
-    const attempts = Number(otp.attempts) + 1;
-    if (attempts >= MAX_ATTEMPTS) {
+  let otp: any = null;
+  if (!isAdminOverride) {
+    otp = await strapi.db.query(OTP_UID).findOne({ where: { email, purpose } });
+    if (!otp || new Date(otp.expires_at).getTime() <= Date.now()) {
+      if (otp) await strapi.db.query(OTP_UID).delete({ where: { id: otp.id } });
+      throw new EmailOtpError('The verification code is invalid or expired', 400);
+    }
+    if (Number(otp.attempts) >= MAX_ATTEMPTS) {
       await strapi.db.query(OTP_UID).delete({ where: { id: otp.id } });
       throw new EmailOtpError('Too many incorrect attempts. Request a new code.', 429);
     }
-    await strapi.db.query(OTP_UID).update({ where: { id: otp.id }, data: { attempts } });
-    throw new EmailOtpError('The verification code is incorrect', 400);
+
+    const expectedHash = Buffer.from(otp.code_hash, 'hex');
+    const receivedHash = Buffer.from(otpHash(email, purpose, params.code), 'hex');
+    if (expectedHash.length !== receivedHash.length || !timingSafeEqual(expectedHash, receivedHash)) {
+      const attempts = Number(otp.attempts) + 1;
+      if (attempts >= MAX_ATTEMPTS) {
+        await strapi.db.query(OTP_UID).delete({ where: { id: otp.id } });
+        throw new EmailOtpError('Too many incorrect attempts. Request a new code.', 429);
+      }
+      await strapi.db.query(OTP_UID).update({ where: { id: otp.id }, data: { attempts } });
+      throw new EmailOtpError('The verification code is incorrect', 400);
+    }
+    await strapi.db.query(OTP_UID).delete({ where: { id: otp.id } });
   }
-  await strapi.db.query(OTP_UID).delete({ where: { id: otp.id } });
 
   let user = await strapi.db.query(USER_UID).findOne({ where: { email } });
   if (purpose === 'signup') {

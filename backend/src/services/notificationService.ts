@@ -45,3 +45,40 @@ export async function sendSmsNotification(
   if (!phoneNumber) return;
   await sendSmsToPhone(phoneNumber, message);
 }
+
+export async function sendExpoPushNotification(
+  strapi: any,
+  userId: number,
+  notification: { title: string; body: string; data?: Record<string, unknown> },
+): Promise<void> {
+  const user = await strapi.db.query('plugin::users-permissions.user').findOne({
+    where: { id: userId },
+    select: ['push_token'],
+  });
+  const token = typeof user?.push_token === 'string' ? user.push_token : '';
+  if (!token) return;
+  if (!/^(ExponentPushToken|ExpoPushToken)\[[A-Za-z0-9_-]+\]$/.test(token)) {
+    throw new Error(`Invalid Expo push token for user ${userId}`);
+  }
+
+  const response = await fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      to: token,
+      title: notification.title,
+      body: notification.body,
+      data: notification.data ?? {},
+      sound: 'default',
+    }),
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!response.ok) throw new Error(`Expo push service returned HTTP ${response.status}`);
+  const result = await response.json() as {
+    data?: { status?: string; message?: string } | Array<{ status?: string; message?: string }>;
+  };
+  const ticket = Array.isArray(result.data) ? result.data[0] : result.data;
+  if (ticket?.status === 'error') {
+    throw new Error(`Expo rejected the push notification: ${ticket.message ?? 'unknown error'}`);
+  }
+}
