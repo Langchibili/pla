@@ -705,9 +705,6 @@ export interface ApiAffiliateSettingsAffiliateSettings
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    enabled: Schema.Attribute.Boolean &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -715,38 +712,6 @@ export interface ApiAffiliateSettingsAffiliateSettings
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
-    reward_conditions: Schema.Attribute.JSON &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<{
-        conditions: [
-          {
-            type: 'trigger';
-            value: 'tournament_entry_created';
-          },
-          {
-            type: 'minimum_tournament_entries';
-            value: 1;
-          },
-          {
-            type: 'account_status';
-            value: 'active';
-          },
-          {
-            type: 'email_verified';
-            value: true;
-          },
-        ];
-        operator: 'all';
-      }>;
-    reward_points: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<25>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1009,6 +974,7 @@ export interface ApiEmailOtpEmailOtp extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<0>;
     code_hash: Schema.Attribute.String & Schema.Attribute.Required;
+    country_id: Schema.Attribute.Integer;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1370,6 +1336,7 @@ export interface ApiPaymentPayment extends Struct.CollectionTypeSchema {
         },
         number
       >;
+    checkout_url: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1381,6 +1348,7 @@ export interface ApiPaymentPayment extends Struct.CollectionTypeSchema {
       'api::payment.payment'
     > &
       Schema.Attribute.Private;
+    merchant_reference: Schema.Attribute.String & Schema.Attribute.Unique;
     paid_at: Schema.Attribute.DateTime;
     payment_status: Schema.Attribute.Enumeration<
       ['pending', 'succeeded', 'failed', 'refunded']
@@ -2415,6 +2383,9 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    phone_number: Schema.Attribute.String;
+    phone_verified: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     preferred_currency: Schema.Attribute.Relation<
       'manyToOne',
       'api::currency.currency'

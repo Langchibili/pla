@@ -5,6 +5,8 @@ export default (plugin: any) => {
     in_game_names: { type: 'json' },
     has_completed_tutorial: { type: 'boolean', default: false },
     push_token: { type: 'string' },
+    phone_number: { type: 'string' },
+    phone_verified: { type: 'boolean', default: false },
     user_status: {
       type: 'enumeration',
       enum: ['active', 'flagged', 'suspended', 'banned'],

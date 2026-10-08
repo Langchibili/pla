@@ -1,5 +1,6 @@
 import { factories } from '@strapi/strapi';
 import { randomBytes } from 'crypto';
+import { createTournamentEntryWithPlapoCharge } from '../../../services/plapoLedgerService';
 
 export default factories.createCoreController('api::tournament-entry.tournament-entry', ({ strapi }) => ({
 	async join(ctx: any) {
@@ -27,14 +28,13 @@ export default factories.createCoreController('api::tournament-entry.tournament-
 			populate: { game: true, country: { select: ['id'] } },
 		});
 		if (!tournament) return ctx.notFound('Tournament not found');
+		const entryFee = tournament.requires_entry_fee ? Number(tournament.entry_fee_plapo) : 0;
+		if (!Number.isInteger(entryFee) || entryFee < 0) return ctx.badRequest('Tournament entry fee is invalid');
 		if (tournament.tournament_status !== 'registration_open') return ctx.badRequest('Registration is not open');
 		if (tournament.registration_closes_at && new Date(tournament.registration_closes_at).getTime() <= Date.now()) {
 			return ctx.badRequest('Registration has closed');
 		}
 		if (tournament.game?.game_status !== 'active') return ctx.badRequest('This game is not active');
-		if (tournament.requires_entry_fee || Number(tournament.entry_fee_plapo) > 0) {
-			return ctx.badRequest('Paid tournament entry is unavailable until ledger charging is configured');
-		}
 		if (tournament.country?.id && Number(tournament.country.id) !== Number(user.country?.id)) {
 			return ctx.forbidden('This tournament is not available in your country');
 		}
@@ -62,20 +62,33 @@ export default factories.createCoreController('api::tournament-entry.tournament-
 			}
 		}
 
-		const entry = await strapi.documents('api::tournament-entry.tournament-entry').create({
-			data: {
-				user: userId,
-				tournament: tournament.documentId ?? tournament.id,
-				in_game_name: inGameName,
-				anon_label: `Player ${randomBytes(4).toString('hex').toUpperCase()}`,
-				tournament_entry_status: 'registered',
-			},
-		});
+		let result;
+		try {
+			result = await createTournamentEntryWithPlapoCharge(strapi, {
+				userId,
+				tournamentId: tournament.id,
+				amount: entryFee,
+				idempotencyKey: `tournament-entry:${tournament.documentId ?? tournament.id}:${userId}`,
+				entryData: {
+					user: userId,
+					tournament: tournament.documentId ?? tournament.id,
+					in_game_name: inGameName,
+					anon_label: `Player ${randomBytes(4).toString('hex').toUpperCase()}`,
+					tournament_entry_status: 'registered',
+				},
+			});
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Tournament entry failed';
+			if (message.includes('Plapo balance')) return ctx.badRequest(message);
+			if (message.includes('already charged')) return ctx.conflict(message);
+			throw error;
+		}
 
 		return ctx.send({
 			data: {
-				documentId: entry.documentId,
-				tournament_entry_status: entry.tournament_entry_status,
+				documentId: result.entry.documentId,
+				tournament_entry_status: result.entry.tournament_entry_status,
+				plapo_balance: result.balance,
 			},
 		}, 201);
 	},

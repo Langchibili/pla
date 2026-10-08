@@ -18,17 +18,19 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     queueMicrotask(() => { void refresh(); });
   }, [refresh]);
-  const requestOtp = (email, purpose, referralCode, deviceHash) => endpoints.sendEmailOtp({
+  const requestOtp = (email, purpose, referralCode, deviceHash, countryId) => endpoints.sendEmailOtp({
     email,
     purpose,
     referral_code: referralCode,
     device_hash: deviceHash,
+    country_id: countryId,
   });
-  const resendOtp = (email, purpose, referralCode, deviceHash) => endpoints.resendEmailOtp({
+  const resendOtp = (email, purpose, referralCode, deviceHash, countryId) => endpoints.resendEmailOtp({
     email,
     purpose,
     referral_code: referralCode,
     device_hash: deviceHash,
+    country_id: countryId,
   });
   const verifyOtp = async (email, code, purpose) => {
     const result = await endpoints.verifyEmailOtp({ email, code, purpose });

@@ -3,6 +3,9 @@ import {
   attachAffiliateAttribution,
   createReferralCode,
 } from './referralService';
+import { sendEmailNotification } from './notificationService';
+import { resolveSettingsForCountry } from './settingsResolver';
+import { grantInitialPlapo } from './plapoLedgerService';
 
 const OTP_UID = 'api::email-otp.email-otp';
 const USER_UID = 'plugin::users-permissions.user';
@@ -40,17 +43,6 @@ function validDeviceHash(value: unknown): string | undefined {
     : undefined;
 }
 
-async function sendOtpEmail(strapi: any, email: string, code: string): Promise<void> {
-  await strapi.plugin('email').service('email').send({
-    to: email,
-    from: process.env.EMAIL_FROM,
-    replyTo: process.env.EMAIL_REPLY_TO,
-    subject: 'Your ProLeague Africa verification code',
-    text: `Your ProLeague Africa verification code is ${code}. It expires in five minutes.`,
-    html: `<p>Your ProLeague Africa verification code is <strong>${code}</strong>.</p><p>It expires in five minutes.</p>`,
-  });
-}
-
 export async function sendEmailOtp(
   strapi: any,
   params: {
@@ -58,6 +50,7 @@ export async function sendEmailOtp(
     purpose: unknown;
     referralCode?: unknown;
     deviceHash?: unknown;
+    countryId?: unknown;
   },
 ): Promise<void> {
   const email = normalizeEmail(params.email);
@@ -73,6 +66,17 @@ export async function sendEmailOtp(
       select: ['id'],
     });
     if (!affiliate) throw new EmailOtpError('Referral code is invalid', 400);
+  }
+  const countryId = purpose === 'signup' ? Number(params.countryId) : undefined;
+  if (purpose === 'signup') {
+    if (!Number.isInteger(countryId) || Number(countryId) < 1) {
+      throw new EmailOtpError('Choose your country before creating an account', 400);
+    }
+    const country = await strapi.db.query('api::country.country').findOne({
+      where: { id: countryId, country_status: 'active' },
+      select: ['id'],
+    });
+    if (!country) throw new EmailOtpError('The selected country is not available', 400);
   }
 
   const existingUser = await strapi.db.query(USER_UID).findOne({
@@ -107,6 +111,7 @@ export async function sendEmailOtp(
     last_sent_at: now,
     referral_code: purpose === 'signup' ? referralCode : undefined,
     device_hash: purpose === 'signup' ? validDeviceHash(params.deviceHash) : undefined,
+    country_id: purpose === 'signup' ? countryId : undefined,
   };
 
   const savedOtp = existingOtp
@@ -114,7 +119,12 @@ export async function sendEmailOtp(
     : await strapi.db.query(OTP_UID).create({ data: otpData });
 
   try {
-    await sendOtpEmail(strapi, email, code);
+    await sendEmailNotification(strapi, {
+      email,
+      subject: 'Your ProLeague Africa verification code',
+      text: `Your ProLeague Africa verification code is ${code}. It expires in five minutes.`,
+      html: `<p>Your ProLeague Africa verification code is <strong>${code}</strong>.</p><p>It expires in five minutes.</p>`,
+    });
   } catch (error) {
     await strapi.db.query(OTP_UID).delete({ where: { id: savedOtp.id } });
     strapi.log.error('[EmailOtp:send]', error);
@@ -201,8 +211,12 @@ export async function verifyEmailOtp(
       role: role.id,
       user_status: 'active',
       referral_code: await nextReferralCode(strapi),
+      country: otp.country_id,
       free_plapo_granted: false,
     });
+
+    const signupSettings = await resolveSettingsForCountry(strapi, Number(otp.country_id));
+    await grantInitialPlapo(strapi, user.id, signupSettings.initial_free_plapo);
 
     await attachAffiliateAttribution(strapi, user, {
       referralCode: otp.referral_code,

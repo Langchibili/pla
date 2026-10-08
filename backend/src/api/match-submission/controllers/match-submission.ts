@@ -1,6 +1,7 @@
 import { factories } from '@strapi/strapi';
 import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { readFile } from 'fs/promises';
+import { resolveSettingsForCountry } from '../../../services/settingsResolver';
 
 const UNPARSED_BODY = Symbol.for('unparsedBody');
 
@@ -126,7 +127,7 @@ export default factories.createCoreController('api::match-submission.match-submi
 				],
 			},
 			populate: {
-				match: { populate: { tournament: { populate: { game: true } } } },
+				match: { populate: { tournament: { populate: { game: true, country: { select: ['id'] } } } } },
 			},
 		});
 		if (!submission) return ctx.notFound('Submission not found');
@@ -141,8 +142,8 @@ export default factories.createCoreController('api::match-submission.match-submi
 			})
 			: [];
 		const allowedZones = zones.map((zone: any) => zone.allowed_zone);
-		const settings = await strapi.db.query('api::admn-settings.admn-settings').findOne({});
-		const confidenceThreshold = Number(settings?.min_ocr_confidence ?? 0.8);
+		const settings = await resolveSettingsForCountry(strapi, submission.match?.tournament?.country?.id);
+		const confidenceThreshold = Number(settings.min_ocr_confidence ?? 0.8);
 		const status = result.status === 'rejected' || result.status === 'no_score_found'
 			? 'invalid'
 			: !allowedZones.includes(result.zone)

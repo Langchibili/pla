@@ -24,6 +24,11 @@
       "type": "string",
       "required": true
     },
+    "merchant_reference": {
+      "type": "string",
+      "unique": true
+    },
+    "checkout_url": { "type": "string" },
     "provider_reference": {
       "type": "string",
       "unique": true

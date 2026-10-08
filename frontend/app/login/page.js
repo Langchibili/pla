@@ -1,8 +1,10 @@
 'use client';
-import { Box, Button, Tab, Tabs, TextField, Typography } from '@mui/material';
+import { Box, Button, MenuItem, Tab, Tabs, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { useApi } from '@/hooks/useApi';
+import { endpoints } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { haptic } from '@/lib/haptics';
 import KenteStripe from '@/components/KenteStripe';
@@ -10,9 +12,11 @@ import { createDeviceHash, useReferralCode } from '@/lib/device';
 
 export default function Login() {
   const { requestOtp, resendOtp, verifyOtp } = useAuth(); const toast = useToast();
+  const countries = useApi('active-countries', endpoints.countries);
   const attributedCode = useReferralCode();
   const [mode, setMode] = useState(null); const [email, setEmail] = useState(''); const [code, setCode] = useState('');
-  const [manualReferralCode, setManualReferralCode] = useState(''); const [stage, setStage] = useState('email'); const [busy, setBusy] = useState(false);
+  const [manualReferralCode, setManualReferralCode] = useState(''); const [countryId, setCountryId] = useState('');
+  const [stage, setStage] = useState('email'); const [busy, setBusy] = useState(false);
   const selectedMode = mode ?? (attributedCode ? 1 : 0);
   const referralCode = manualReferralCode || attributedCode;
   const purpose = selectedMode === 0 ? 'login' : 'signup';
@@ -21,7 +25,7 @@ export default function Login() {
     try {
       if (stage === 'email') {
         const hash = await createDeviceHash();
-        await requestOtp(email, purpose, referralCode || undefined, hash);
+        await requestOtp(email, purpose, referralCode || undefined, hash, countryId || undefined);
         setStage('code');
         toast('A verification code was sent to your email.', 'success');
       } else {
@@ -36,7 +40,7 @@ export default function Login() {
     setBusy(true);
     try {
       const hash = await createDeviceHash();
-      await resendOtp(email, purpose, referralCode || undefined, hash);
+      await resendOtp(email, purpose, referralCode || undefined, hash, countryId || undefined);
       toast('A new verification code was sent.', 'success');
     } catch (err) { toast(err.message, 'error'); } finally { setBusy(false); }
   };
@@ -50,6 +54,9 @@ export default function Login() {
           <Typography color="text.secondary">{stage === 'email' ? 'Use your email address. We will send you a one-time code.' : `Enter the six-digit code sent to ${email}.`}</Typography>
           {stage === 'email' ? <>
             <TextField label="Email address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" />
+            {selectedMode === 1 && <TextField select label="Country" value={countryId} onChange={(event) => setCountryId(event.target.value)} required disabled={countries.loading}>
+              {(countries.data || []).map((country) => <MenuItem key={country.id} value={country.id}>{country.name} {country.default_currency?.code ? `(${country.default_currency.code})` : ''}</MenuItem>)}
+            </TextField>}
             {selectedMode === 1 && <TextField label="Referral code (optional)" value={manualReferralCode || attributedCode} onChange={(event) => setManualReferralCode(event.target.value)} />}
           </> : <>
             <TextField label="Email verification code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))} required inputProps={{ inputMode: 'numeric', autoComplete: 'one-time-code', maxLength: 6 }} />

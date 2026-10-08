@@ -59,8 +59,8 @@ const CUSTOM_ACTIONS = [
     guard: 'Whitelist those fields only. Never role, balances, user_status, referral fields, free_plapo_granted.' },
 
   { action: act('tournament-entry', 'join')[0], method: 'POST', path: '/api/tournament-entries/join', resource: 'tournament-entry',
-    purpose: 'Enter a free tournament after validating the in-game name and eligibility.',
-    guard: 'Registration open, active game, country/capacity checks, no duplicate entry; paid tournaments are rejected until ledger charging exists.' },
+    purpose: 'Enter a tournament after validating the in-game name and eligibility; paid entries charge Plapo, never cash.',
+    guard: 'Registration open, active game, country/capacity checks, no duplicate entry, server-derived fee, atomic idempotent ledger debit and entry creation.' },
   { action: act('tournament-entry', 'mine')[0], method: 'GET', path: '/api/tournament-entries/mine', resource: 'tournament-entry',
     purpose: 'My entries and standings.', guard: 'user = caller.' },
   { action: act('tournament-entry', 'leaderboard')[0], method: 'GET', path: '/api/tournament-entries/leaderboard', resource: 'tournament-entry',
