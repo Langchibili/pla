@@ -6,7 +6,6 @@ import {
   Platform,
   StatusBar,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
@@ -17,10 +16,14 @@ import BackgroundService from './src/services/BackgroundService';
 import DeviceSocketService from './src/services/DeviceSocketService';
 import NotificationService from './src/services/NotificationService';
 import PermissionManager from './src/services/PermissionManager';
-import { SOCKET_EVENTS, CONSTANTS } from './src/utils/constants';
+import {
+  CONSTANTS,
+  NATIVE_EVENTS,
+  SOCKET_EVENTS,
+  WEBVIEW_EVENTS,
+} from './src/utils/constants';
 import { logger } from './src/utils/logger';
 import { ConnectionLostBanner } from './src/components/ConnectionLostBanner';
-import { OfflineScreen } from './src/components/OfflineScreen';
 
 type NativeMessage = {
   type?: string;
@@ -29,16 +32,16 @@ type NativeMessage = {
 };
 
 const SOCKET_EVENTS_TO_FORWARD = [
-  SOCKET_EVENTS.NOTIFICATION_NEW,
-  SOCKET_EVENTS.NOTIFICATION_BROADCAST,
-  SOCKET_EVENTS.SYSTEM_ANNOUNCEMENT,
-  SOCKET_EVENTS.WALLET_UPDATED,
-  SOCKET_EVENTS.MATCH_RESULT_READY,
-  SOCKET_EVENTS.MATCH_SUBMISSION_RECEIVED,
-  SOCKET_EVENTS.MATCH_POSTPONE_RESPONSE,
-  SOCKET_EVENTS.MATCH_DISPUTE_OPENED,
-  SOCKET_EVENTS.LEADERBOARD_UPDATED,
-  SOCKET_EVENTS.DEVICE_SESSION_REPLACED,
+  SOCKET_EVENTS.NOTIFICATION.NEW,
+  SOCKET_EVENTS.NOTIFICATION.BROADCAST,
+  SOCKET_EVENTS.SYSTEM.ANNOUNCEMENT,
+  SOCKET_EVENTS.WALLET.UPDATED,
+  SOCKET_EVENTS.MATCH.RESULT_READY,
+  SOCKET_EVENTS.MATCH.SUBMISSION_RECEIVED,
+  SOCKET_EVENTS.MATCH.POSTPONE_RESPONSE,
+  SOCKET_EVENTS.MATCH.DISPUTE_OPENED,
+  SOCKET_EVENTS.LEADERBOARD.UPDATED,
+  SOCKET_EVENTS.DEVICE.SESSION_REPLACED,
 ] as const;
 
 function injectWebEvent(
@@ -60,6 +63,26 @@ export default function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState(CONSTANTS.FRONTEND_URLS.player);
+
+  const handleRetry = useCallback(async () => {
+    setHasError(false);
+    try {
+      const state = await NetInfo.refresh();
+      const connected = state.isConnected ?? false;
+      setIsConnected(connected);
+      if (connected) webViewRef.current?.reload();
+    } catch (error) {
+      logger.error('Could not refresh PLA network state', error);
+      setHasError(true);
+    }
+  }, []);
+
+  const renderCustomLoader = useCallback(() => (
+    <View style={styles.loading}>
+      {isLoading ? <ActivityIndicator size="large" color="#E3A300" /> : null}
+    </View>
+  ), [isLoading]);
 
   const sendToWebView = useCallback((type: string, payload: unknown) => {
     injectWebEvent(webViewRef.current, 'pla:native-message', { type, payload });
@@ -96,7 +119,7 @@ export default function AppContent() {
     for (const eventName of SOCKET_EVENTS_TO_FORWARD) {
       DeviceSocketService.on(eventName, (payloadData) => {
         sendToWebView(eventName, payloadData);
-        if (eventName === SOCKET_EVENTS.NOTIFICATION_NEW) {
+        if (eventName === SOCKET_EVENTS.NOTIFICATION.NEW) {
           const notification = payloadData as { title?: unknown; body?: unknown; data?: unknown };
           if (typeof notification?.title === 'string' && typeof notification.body === 'string') {
             void NotificationService.show({
@@ -111,10 +134,10 @@ export default function AppContent() {
       });
     }
     DeviceSocketService.on(SOCKET_EVENTS.CONNECTED, () => {
-      sendToWebView('SOCKET_CONNECTED', {});
+      sendToWebView(WEBVIEW_EVENTS.SOCKET_CONNECTED, {});
     });
     DeviceSocketService.on(SOCKET_EVENTS.DISCONNECTED, (payloadData) => {
-      sendToWebView('SOCKET_DISCONNECTED', payloadData);
+      sendToWebView(WEBVIEW_EVENTS.SOCKET_DISCONNECTED, payloadData);
     });
 
     const socketConnected = await BackgroundService.start({ userId, token });
@@ -133,27 +156,27 @@ export default function AppContent() {
     try {
       const payload = message.payload ?? {};
       switch (message.type) {
-        case 'INITIALIZE_SERVICES':
+        case NATIVE_EVENTS.INITIALIZE_SERVICES:
           sendResponse(message, await initializeServices(payload));
           break;
-        case 'DISCONNECT_SOCKET':
+        case NATIVE_EVENTS.DISCONNECT_SOCKET:
           sessionRef.current = null;
           BackgroundService.stop();
           NotificationService.cleanup();
           DeviceSocketService.clearHandlers();
           sendResponse(message, { success: true });
           break;
-        case 'REQUEST_PERMISSION':
+        case NATIVE_EVENTS.REQUEST_PERMISSION:
           sendResponse(message, {
             status: await PermissionManager.request(String(payload.permissionType ?? '')),
           });
           break;
-        case 'CHECK_PERMISSION':
+        case NATIVE_EVENTS.CHECK_PERMISSION:
           sendResponse(message, {
             status: await PermissionManager.check(String(payload.permissionType ?? '')),
           });
           break;
-        case 'SHOW_NOTIFICATION':
+        case NATIVE_EVENTS.SHOW_NOTIFICATION:
           if (typeof payload.title !== 'string' || typeof payload.body !== 'string') {
             throw new Error('Notification title and body are required');
           }
@@ -166,7 +189,7 @@ export default function AppContent() {
           });
           sendResponse(message, { success: true });
           break;
-        case 'RECONNECT_SOCKET':
+        case NATIVE_EVENTS.RECONNECT_SOCKET:
           if (!sessionRef.current) throw new Error('Sign in before reconnecting the PLA socket');
           BackgroundService.stop();
           sendResponse(message, await initializeServices({
@@ -209,69 +232,81 @@ export default function AppContent() {
     return () => subscription.remove();
   }, [canGoBack]);
 
-  if (!isConnected) {
-    return <OfflineScreen onRetry={() => void NetInfo.refresh()} />;
-  }
-
-  let frontendOrigin = '';
-  try {
-    frontendOrigin = new URL(CONSTANTS.FRONTEND_URL).origin;
-  } catch (error) {
-    logger.error('The PLA frontend URL is invalid', error);
-  }
-
   return (
-    <LinearGradient colors={['#FFFFFF', '#FFFFFF']} style={styles.fill}>
+    <LinearGradient
+      colors={['#FFFFFF', '#FFFFFF', '#FFFFFF']}
+      start={{ x: 0, y: 0.25 }}
+      end={{ x: 0.5, y: 1 }}
+      locations={[0, 0.5, 1]}
+      style={styles.fill}
+    >
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={styles.fill} edges={Platform.OS === 'ios' ? ['top', 'bottom'] : ['top']}>
         <ConnectionLostBanner
-          visible={hasError}
-          onRetry={() => webViewRef.current?.reload()}
-          message="Connection lost"
+          visible={hasError || !isConnected}
+          onRetry={handleRetry}
+          message={!isConnected ? 'No internet connection' : 'Connection lost'}
         />
-        {isLoading && (
-          <View style={styles.loading}>
-            <ActivityIndicator size="large" color="#E3A300" />
-            <Text style={styles.loadingText}>Loading ProLeague Africa…</Text>
-          </View>
-        )}
         <WebView
           ref={webViewRef}
-          source={{ uri: CONSTANTS.FRONTEND_URL }}
+          source={{ uri: CONSTANTS.FRONTEND_URLS.player }}
           onMessage={handleMessage}
-          onNavigationStateChange={(navigation) => setCanGoBack(navigation.canGoBack)}
+          onNavigationStateChange={(navigation) => {
+            setCurrentUrl(navigation.url);
+            setCanGoBack(navigation.canGoBack);
+          }}
           onLoadStart={() => {
             setIsLoading(true);
             setHasError(false);
           }}
-          onLoadEnd={() => setIsLoading(false)}
-          onError={() => {
+          onLoadEnd={() => {
+            logger.info('PLA frontend loading ended');
+            setIsLoading(false);
+          }}
+          onError={(event) => {
+            logger.error('PLA WebView error', event.nativeEvent);
             setIsLoading(false);
             setHasError(true);
           }}
           onHttpError={(event) => {
-            if (event.nativeEvent.statusCode >= 500) setHasError(true);
+            const { statusCode, url } = event.nativeEvent;
+            logger.error('PLA WebView HTTP error', statusCode, url);
+            if (
+              (statusCode >= 400 && url === currentUrl)
+              || url === CONSTANTS.FRONTEND_URLS.player
+            ) {
+              setHasError(true);
+            } else {
+              logger.warn('HTTP error on a WebView subresource or non-page URL', statusCode, url);
+            }
           }}
           onShouldStartLoadWithRequest={(request) => {
-            if (request.url.startsWith('mailto:') || request.url.startsWith('tel:')) {
-              void Linking.openURL(request.url);
+            const requestUrl = request.url;
+            if (
+              requestUrl.startsWith('mailto:')
+              || requestUrl.startsWith('tel:')
+              || requestUrl.includes('wa.me')
+            ) {
+              void Linking.openURL(requestUrl).catch((error: unknown) => {
+                logger.warn('Could not open an external PLA link', error);
+              });
               return false;
             }
-            try {
-              const url = new URL(request.url);
-              if (url.origin === frontendOrigin) return true;
-              if (url.protocol === 'https:' || url.protocol === 'http:') {
-                void Linking.openURL(request.url);
-              }
-            } catch (error) {
-              logger.warn('Blocked an invalid WebView navigation URL', error);
-            }
-            return false;
+            return true;
           }}
           javaScriptEnabled
           domStorageEnabled
+          startInLoadingState
+          renderLoading={renderCustomLoader}
+          originWhitelist={['*']}
+          allowsInlineMediaPlayback
+          mediaPlaybackRequiresUserAction={false}
+          cacheEnabled
+          cacheMode="LOAD_DEFAULT"
+          mixedContentMode="always"
+          allowFileAccess={false}
+          allowUniversalAccessFromFileURLs={false}
           sharedCookiesEnabled
-          startInLoadingState={false}
           style={styles.webView}
         />
       </SafeAreaView>
@@ -283,11 +318,9 @@ const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: '#FFFFFF' },
   webView: { flex: 1, backgroundColor: '#FFFFFF' },
   loading: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
   },
-  loadingText: { marginTop: 12, color: '#17221D', fontSize: 15 },
 });

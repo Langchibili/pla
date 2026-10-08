@@ -1,7 +1,7 @@
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { EXPO_PUBLIC_PROJECT_ID } from '../utils/constants';
+import { EXPO_PUBLIC_PROJECT_ID, WEBVIEW_EVENTS } from '../utils/constants';
 import { logger } from '../utils/logger';
 
 export type NativeNotification = {
@@ -11,7 +11,7 @@ export type NativeNotification = {
 };
 
 type NotificationHandler = (
-  type: 'NOTIFICATION_RECEIVED' | 'NOTIFICATION_TAPPED',
+  type: typeof WEBVIEW_EVENTS.NOTIFICATION_RECEIVED | typeof WEBVIEW_EVENTS.NOTIFICATION_TAPPED,
   payload: unknown,
 ) => void;
 
@@ -70,7 +70,10 @@ class NotificationService {
     this.setupListeners();
     const lastResponse = await Notifications.getLastNotificationResponseAsync();
     if (lastResponse) {
-      this.handler?.('NOTIFICATION_TAPPED', lastResponse.notification.request.content.data);
+      this.handler?.(
+        WEBVIEW_EVENTS.NOTIFICATION_TAPPED,
+        lastResponse.notification.request.content.data,
+      );
     }
     return this.token;
   }
@@ -104,10 +107,13 @@ class NotificationService {
 
   private setupListeners(): void {
     this.receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
-      this.handler?.('NOTIFICATION_RECEIVED', notification.request.content);
+      this.handler?.(WEBVIEW_EVENTS.NOTIFICATION_RECEIVED, notification.request.content);
     });
     this.responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      this.handler?.('NOTIFICATION_TAPPED', response.notification.request.content.data);
+      this.handler?.(
+        WEBVIEW_EVENTS.NOTIFICATION_TAPPED,
+        response.notification.request.content.data,
+      );
     });
   }
 

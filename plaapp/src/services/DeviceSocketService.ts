@@ -6,18 +6,18 @@ import { logger } from '../utils/logger';
 type SocketHandler = (payload: unknown) => void;
 
 const PLA_EVENTS = [
-  E.NOTIFICATION_NEW,
-  E.NOTIFICATION_BROADCAST,
-  E.SYSTEM_ANNOUNCEMENT,
-  E.WALLET_UPDATED,
-  E.MATCH_RESULT_READY,
-  E.MATCH_SUBMISSION_RECEIVED,
-  E.MATCH_POSTPONE_RESPONSE,
-  E.MATCH_DISPUTE_OPENED,
-  E.LEADERBOARD_UPDATED,
-  E.DEVICE_REGISTER_SUCCESS,
-  E.DEVICE_REGISTER_ERROR,
-  E.DEVICE_SESSION_REPLACED,
+  E.NOTIFICATION.NEW,
+  E.NOTIFICATION.BROADCAST,
+  E.SYSTEM.ANNOUNCEMENT,
+  E.WALLET.UPDATED,
+  E.MATCH.RESULT_READY,
+  E.MATCH.SUBMISSION_RECEIVED,
+  E.MATCH.POSTPONE_RESPONSE,
+  E.MATCH.DISPUTE_OPENED,
+  E.LEADERBOARD.UPDATED,
+  E.DEVICE.REGISTER_SUCCESS,
+  E.DEVICE.REGISTER_ERROR,
+  E.DEVICE.SESSION_REPLACED,
 ] as const;
 
 class DeviceSocketService {
@@ -64,7 +64,7 @@ class DeviceSocketService {
       };
       const timeout = setTimeout(() => finish(false), 12000);
       socket.once(E.CONNECT, () => finish(true));
-      socket.once('connect_error', (error) => {
+      socket.once(E.CONNECTION.CONNECT_ERROR, (error) => {
         logger.warn('PLA device socket connection failed', error.message);
         finish(false);
       });
@@ -105,10 +105,10 @@ class DeviceSocketService {
       this.connected = true;
       this.emit(E.CONNECTED, {});
       if (this.deviceId) {
-        socket.emit(E.DEVICE_REGISTER, { deviceId: this.deviceId, deviceInfo });
+        socket.emit(E.DEVICE.REGISTER, { deviceId: this.deviceId, deviceInfo });
         this.heartbeat = setInterval(() => {
           if (this.deviceId && socket.connected) {
-            socket.emit(E.DEVICE_HEARTBEAT, { deviceId: this.deviceId });
+            socket.emit(E.DEVICE.HEARTBEAT, { deviceId: this.deviceId });
           }
         }, 30000);
       }
@@ -124,7 +124,7 @@ class DeviceSocketService {
       socket.on(event, (payload) => this.emit(event, payload));
     }
 
-    socket.on(E.PING, (payload) => socket.emit(E.PONG, payload));
+    socket.on(E.CONNECTION.PING, (payload) => socket.emit(E.CONNECTION.PONG, payload));
   }
 
   private emit(event: string, payload: unknown): void {
