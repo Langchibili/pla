@@ -5,7 +5,7 @@ const SPEND_ORDER = ['free', 'earned', 'received', 'purchased'];
 export async function getPlapoSourceBalances(strapi: any, userId: number): Promise<Record<string, number>> {
   const rows = await strapi.db.query(LEDGER_UID).findMany({
     where: { user: userId, plapo_ledger_status: 'posted' },
-    select: ['amount', 'plapo_source'],
+    select: ['documentId', 'amount', 'plapo_source'],
   });
   const balances: Record<string, number> = { free: 0, earned: 0, received: 0, purchased: 0 };
   for (const row of rows) {

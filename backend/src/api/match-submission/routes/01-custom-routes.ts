@@ -1,6 +1,12 @@
 export default {
   routes: [
     {
+      method: 'GET',
+      path: '/match-submissions/history/:matchId',
+      handler: 'match-submission.history',
+      config: { policies: [] },
+    },
+    {
       method: 'POST',
       path: '/match-submissions/submit',
       handler: 'match-submission.submit',

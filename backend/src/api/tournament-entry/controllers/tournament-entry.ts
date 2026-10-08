@@ -3,6 +3,35 @@ import { randomBytes } from 'crypto';
 import { createTournamentEntryWithPlapoCharge } from '../../../services/plapoLedgerService';
 
 export default factories.createCoreController('api::tournament-entry.tournament-entry', ({ strapi }) => ({
+	async mine(ctx: any) {
+		const userId = Number(ctx.state.user?.id);
+		if (!Number.isInteger(userId) || userId < 1) return ctx.unauthorized();
+
+		const entries = await strapi.db.query('api::tournament-entry.tournament-entry').findMany({
+			where: { user: userId },
+			select: [
+				'documentId',
+				'in_game_name',
+				'anon_label',
+				'tournament_entry_status',
+				'points',
+				'matches_played',
+				'wins',
+				'draws',
+				'losses',
+				'goals_for',
+				'goals_against',
+			],
+			populate: {
+				tournament: { select: ['documentId', 'title', 'slug', 'tournament_status'] },
+				current_stage: { select: ['documentId', 'stage_name', 'stage_order'] },
+			},
+			orderBy: { createdAt: 'desc' },
+			limit: 100,
+		});
+		return ctx.send({ data: entries });
+	},
+
 	async leaderboard(ctx: any) {
 		const tournamentId = String(ctx.query.tournament_id ?? ctx.query.tournamentId ?? '');
 		if (!tournamentId) return ctx.badRequest('tournament_id is required');

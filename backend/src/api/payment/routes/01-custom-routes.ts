@@ -1,6 +1,12 @@
 export default {
   routes: [
     {
+      method: 'GET',
+      path: '/payments/mine',
+      handler: 'payment.mine',
+      config: { policies: [] },
+    },
+    {
       method: 'POST',
       path: '/payments/checkout',
       handler: 'payment.checkout',

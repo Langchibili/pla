@@ -54,9 +54,9 @@ const DEFAULT_GRANTS = [
  * The script grants these only once the route exists (it skips and lists the ones not built yet).
  */
 const CUSTOM_ACTIONS = [
-  { action: `${UP}.user.updateMe`, method: 'PUT', path: '/api/users/me', resource: 'user (self)',
+  { action: `${UP}.user.update`, method: 'PUT', path: '/api/users/:id', resource: 'user (self)',
     purpose: 'Update own country, preferred_currency, in_game_names, push_token, has_completed_tutorial.',
-    guard: 'Whitelist those fields only. Never role, balances, user_status, referral fields, free_plapo_granted.' },
+    guard: 'Caller id must equal the path id; whitelist those fields only. Never role, balances, user_status, referral fields, free_plapo_granted.' },
 
   { action: act('tournament-entry', 'join')[0], method: 'POST', path: '/api/tournament-entries/join', resource: 'tournament-entry',
     purpose: 'Enter a tournament after validating the in-game name and eligibility; paid entries charge Plapo, never cash.',

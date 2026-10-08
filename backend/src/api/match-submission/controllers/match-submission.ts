@@ -6,6 +6,60 @@ import { resolveSettingsForCountry } from '../../../services/settingsResolver';
 const UNPARSED_BODY = Symbol.for('unparsedBody');
 
 export default factories.createCoreController('api::match-submission.match-submission', ({ strapi }) => ({
+	async history(ctx: any) {
+		const userId = Number(ctx.state.user?.id);
+		if (!Number.isInteger(userId) || userId < 1) return ctx.unauthorized();
+
+		const matchId = String(ctx.params.matchId ?? '');
+		const match = await strapi.db.query('api::match.match').findOne({
+			where: /^\d+$/.test(matchId)
+				? { $or: [{ id: Number(matchId) }, { documentId: matchId }] }
+				: { documentId: matchId },
+			populate: {
+				player1_entry: { populate: { user: { select: ['id'] } } },
+				player2_entry: { populate: { user: { select: ['id'] } } },
+			},
+		});
+		if (!match) return ctx.notFound('Match not found');
+
+		const participantIds = [match.player1_entry?.user?.id, match.player2_entry?.user?.id];
+		if (!participantIds.some((id) => Number(id) === userId)) {
+			return ctx.forbidden('Only match participants can view submission history');
+		}
+		if (!['completed', 'forfeited', 'suspended', 'invalid'].includes(match.match_status)) {
+			return ctx.badRequest('Submission history is available after the match is resolved');
+		}
+
+		const submissions = await strapi.db.query('api::match-submission.match-submission').findMany({
+			where: { match: match.id },
+			select: ['documentId', 'match_submission_status', 'ocr_confidence', 'score_zone_found', 'extracted_json', 'createdAt'],
+			populate: {
+				user: { select: ['id'] },
+				screenshot: { select: ['url', 'name', 'mime'] },
+			},
+			orderBy: { createdAt: 'asc' },
+		});
+		return ctx.send({
+			data: {
+				match_status: match.match_status,
+				player1_score: match.player1_score,
+				player2_score: match.player2_score,
+				submissions: submissions.map((submission: any) => ({
+					documentId: submission.documentId,
+					is_me: Number(submission.user?.id) === userId,
+					match_submission_status: submission.match_submission_status,
+					ocr_confidence: submission.ocr_confidence,
+					score_zone_found: submission.score_zone_found,
+					extracted_json: submission.extracted_json,
+					screenshot: submission.screenshot
+						? { url: submission.screenshot.url, name: submission.screenshot.name, mime: submission.screenshot.mime }
+						: null,
+					createdAt: submission.createdAt,
+				})),
+			},
+		});
+	},
+
 	async submit(ctx: any) {
 		const userId = Number(ctx.state.user?.id);
 		if (!Number.isInteger(userId) || userId < 1) return ctx.unauthorized();

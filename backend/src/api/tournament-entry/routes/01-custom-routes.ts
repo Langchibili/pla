@@ -2,6 +2,12 @@ export default {
   routes: [
     {
       method: 'GET',
+      path: '/tournament-entries/mine',
+      handler: 'tournament-entry.mine',
+      config: { policies: [] },
+    },
+    {
+      method: 'GET',
       path: '/tournament-entries/leaderboard',
       handler: 'tournament-entry.leaderboard',
       config: { policies: [] },

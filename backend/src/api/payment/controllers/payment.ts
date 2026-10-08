@@ -23,6 +23,23 @@ export default factories.createCoreController('api::payment.payment', ({ strapi 
 		return ctx.methodNotAllowed('Use POST /payments/checkout');
 	},
 
+	async mine(ctx: any) {
+		const userId = Number(ctx.state.user?.id);
+		if (!Number.isInteger(userId) || userId < 1) return ctx.unauthorized();
+
+		const payments = await strapi.db.query(PAYMENT_UID).findMany({
+			where: { user: userId },
+			select: ['documentId', 'amount', 'plapo_credited', 'payment_status', 'paid_at', 'createdAt'],
+			populate: {
+				plapo_package: { select: ['name', 'plapo_amount', 'bonus_plapo'] },
+				currency: { select: ['code', 'symbol'] },
+			},
+			orderBy: { createdAt: 'desc' },
+			limit: 100,
+		});
+		return ctx.send({ data: payments });
+	},
+
 	async update(ctx: any) {
 		return ctx.methodNotAllowed('Payment records cannot be edited directly');
 	},
