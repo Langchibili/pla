@@ -11,8 +11,7 @@ const allowedMediaTypes = [
   'text/csv',
 ];
 
-const deniedTypes = [
-  'image/svg+xml',
+const deniedExecutableTypes = [
   'application/vnd.microsoft.portable-executable',
   'application/x-msdownload',
   'application/x-msdos-program',
@@ -23,41 +22,27 @@ const deniedTypes = [
   'application/x-mach-binary',
 ];
 
+// bidz4u uses OTP-only login — no password re-entry to fall back on — so the
+// whole point of a long session is to avoid re-sending an SMS OTP just to
+// keep using the app. 1 year, expressed both ways Strapi's config accepts it:
+
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin => ({
   'users-permissions': {
     config: {
-      jwtManagement: 'refresh',
-      sessions: {
-        httpOnly: true,
-      },
-    },
-  },
-  email: {
-    config: {
-      provider: 'nodemailer',
-      providerOptions: {
-        host: env('SMTP_HOST', 'localhost'),
-        port: env.int('SMTP_PORT', 587),
-        secure: env.bool('SMTP_SECURE', false),
-        auth: {
-          user: env('SMTP_USERNAME'),
-          pass: env('SMTP_PASSWORD'),
-        },
-      },
-      settings: {
-        defaultFrom: env('EMAIL_FROM'),
-        defaultReplyTo: env('EMAIL_REPLY_TO'),
-      },
-    },
+      jwt: {
+        expiresIn: '1y'
+      }
+    }
   },
   upload: {
     config: {
       security: {
         allowedTypes: allowedMediaTypes,
-        deniedTypes,
+        deniedTypes: deniedExecutableTypes,
       },
     },
   },
 });
 
 export default config;
+
