@@ -44,10 +44,14 @@ export const endpoints = {
   verifyEmailOtp: (b) => api('/auth/email-otp/verify', { method: 'POST', body: b, auth: false }),
   trackAffiliateImpression: (b) => api('/affiliate-impressions/track', { method: 'POST', body: b, auth: false }),
   checkAffiliateImpression: (b) => api('/affiliate-impressions/check', { method: 'POST', body: b, auth: false }),
-  me: () => api('/users/me?populate[0]=country&populate[1]=preferred_currency'),
+  me: () => api('/users/me?populate[country][populate][default_currency]=true&populate[preferred_currency]=true'),
   updateMe: (id, b) => api(`/users/${id}`, { method: 'PUT', body: b }),
-  tournaments: (q = '') => data(api(`/tournaments?populate[0]=game&populate[1]=country&populate[2]=banner&sort=starts_at:asc&filters[tournament_status][$in][0]=published&filters[tournament_status][$in][1]=registration_open&filters[tournament_status][$in][2]=in_progress${q}`)),
-  tournament: (id) => data(api(`/tournaments/${id}?populate[0]=game&populate[1]=country&populate[2]=banner&populate[3]=stages&populate[4]=prize_pool_currency`)),
+  tournaments: (q = '') => data(api(`/tournaments?populate[game]=true&populate[country]=true&populate[banner]=true&populate[prize_pool_currency]=true&sort=starts_at:asc&filters[tournament_status][$in][0]=published&filters[tournament_status][$in][1]=registration_open&filters[tournament_status][$in][2]=in_progress${q}`)),
+  tournament: (id) => data(api(`/tournaments/${encodeURIComponent(id)}?populate[game][populate][in_game_id_example]=true&populate[game][populate][screenshotExample]=true&populate[country]=true&populate[banner]=true&populate[stages]=true&populate[prize_pool_currency]=true`)),
+  convertPrice: (amount, fromCurrencyCode) => data(api('/currencies/convert-price', {
+    method: 'POST',
+    body: { amount, fromCurrencyCode },
+  })),
   entries: (id) => data(api(`/tournament-entries/leaderboard?tournament_id=${encodeURIComponent(id)}`)),
   // Custom routes you add in Strapi (see README)
   enter: (id, inGameName) => api('/tournament-entries/join', { method: 'POST', body: { tournament_id: id, in_game_name: inGameName } }),

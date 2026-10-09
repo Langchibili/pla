@@ -11,6 +11,7 @@ import Surface from '@/components/Surface';
 import ActionSheet from '@/components/ActionSheet';
 import SkeletonList from '@/components/SkeletonList';
 import { AFRICA } from '@/lib/theme';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 
 const STORE = process.env.NEXT_PUBLIC_STORE_URL || 'https://store.proleagueafrica.com';
 export default function Wallet() {
@@ -18,9 +19,11 @@ export default function Wallet() {
   const { data, loading, reload } = useApi('wallet', endpoints.wallet);
   useSocketEvent('wallet:updated', () => { reload(); refresh(); });
   const [open, setOpen] = useState(false); const [to, setTo] = useState(''); const [amt, setAmt] = useState('');
+  const [plapoInfoOpen, setPlapoInfoOpen] = useState(false);
   const send = async () => { try { await endpoints.transfer({ to, amount: Number(amt) }); toast('Plapo sent'); setOpen(false); reload(); refresh(); } catch (e) { toast(e.message, 'error'); } };
   return (
     <Box sx={{ display: 'grid', gap: 2.5 }}>
+      <Typography variant="h6">Plapo (Pro League Africa Points)</Typography>
       <Surface sx={{ p: 3, background: 'linear-gradient(145deg,#3a2800,#0d1810 75%)' }}>
         <Typography variant="caption" color="text.secondary">Spendable Plapo</Typography>
         <Typography variant="h2" color="secondary.main">{fmtPlapo(user.spendable_balance)}</Typography>
@@ -29,6 +32,16 @@ export default function Wallet() {
           <Button variant="contained" color="secondary" href={`${STORE}?token=handoff`}>Buy Plapo</Button>
           <Button variant="outlined" color="secondary" disabled={!user.transferable_balance} onClick={() => setOpen(true)}>Send</Button>
         </Box>
+      </Surface>
+      <Surface sx={{ p: 1.5 }}>
+        <Button fullWidth onClick={() => setPlapoInfoOpen((value) => !value)} aria-expanded={plapoInfoOpen} endIcon={<ExpandMoreRoundedIcon sx={{ transform: plapoInfoOpen ? 'rotate(180deg)' : 'none', transition: 'transform 180ms' }} />}>
+          What is Plapo?
+        </Button>
+        {plapoInfoOpen && (
+          <Typography variant="body2" color="text.secondary" sx={{ px: 1, pb: 1 }}>
+            Plapo is the in-app points balance used to pay tournament entry fees and receive rewards. Transfers are available where enabled. Plapo is not a fiat currency.
+          </Typography>
+        )}
       </Surface>
       <Typography variant="h6">History</Typography>
       {loading ? <SkeletonList count={4} height={64} /> : (data?.ledger || []).map((l) => (

@@ -68,6 +68,12 @@
       "relation": "oneToMany",
       "target": "api::tournament.tournament",
       "mappedBy": "country"
+    },
+    "eligible_tournaments": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tournament.tournament",
+      "mappedBy": "countries"
     }
   }
 }

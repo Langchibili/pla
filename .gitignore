@@ -47,6 +47,7 @@
 
 *.zip
 *.txt
+!/to-set.txt
 !backend-permissions-matrix.txt
 backend/node_modules
 backend/src-old

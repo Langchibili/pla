@@ -19,6 +19,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import { haptic } from '@/lib/haptics';
 import { mediaUrl } from '@/lib/api';
+import ClickableImage from './ClickableImage';
 
 async function compressLandscapeScreenshot(file) {
   if (!file.type.startsWith('image/')) throw new Error('Choose an image screenshot.');
@@ -166,7 +167,7 @@ export default function DocumentUploadCard({ onUpload, uploadedFile = null, disa
         </DialogContent>
       </Dialog>
 
-      {visiblePreview && <Box component="img" src={visiblePreview} alt="Match screenshot preview" sx={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 2, mb: 1.5, bgcolor: 'black' }} />}
+      {visiblePreview && <ClickableImage src={visiblePreview} alt="Match screenshot preview" sx={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 2, mb: 1.5, bgcolor: 'black' }} />}
       <Box onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={handleDrop}
         sx={{ border: '1px dashed', borderColor: dragging ? 'secondary.main' : 'divider', borderRadius: 2, p: 2, textAlign: 'center' }}>
         <Typography fontWeight={700}>{visibleFile ? 'Screenshot ready' : 'Add your full-time result'}</Typography>

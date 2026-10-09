@@ -40,6 +40,16 @@
       "target": "api::country.country",
       "inversedBy": "tournaments"
     },
+    "opentoall": {
+      "type": "boolean",
+      "default": true
+    },
+    "countries": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::country.country",
+      "inversedBy": "eligible_tournaments"
+    },
     "tournament_config": {
       "type": "relation",
       "relation": "manyToOne",

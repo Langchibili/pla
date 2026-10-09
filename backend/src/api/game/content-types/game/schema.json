@@ -60,6 +60,20 @@
     "in_game_id_label": {
       "type": "string"
     },
+    "in_game_id_example": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "screenshotExample": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
     "score_min": {
       "type": "integer",
       "default": 0

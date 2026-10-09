@@ -769,6 +769,10 @@ export interface ApiCountryCountry extends Struct.CollectionTypeSchema {
         },
         number
       >;
+    eligible_tournaments: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::tournament.tournament'
+    >;
     initial_free_plapo: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {
@@ -1070,6 +1074,7 @@ export interface ApiGameGame extends Struct.CollectionTypeSchema {
     game_status: Schema.Attribute.Enumeration<['active', 'inactive']> &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'inactive'>;
+    in_game_id_example: Schema.Attribute.Media<'images'>;
     in_game_id_format: Schema.Attribute.String;
     in_game_id_label: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -1093,6 +1098,7 @@ export interface ApiGameGame extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::game-score-zone.game-score-zone'
     >;
+    screenshotExample: Schema.Attribute.Media<'images'>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
     tournament_configs: Schema.Attribute.Relation<
       'oneToMany',
@@ -1802,6 +1808,7 @@ export interface ApiTournamentTournament extends Struct.CollectionTypeSchema {
   attributes: {
     banner: Schema.Attribute.Media<'images'>;
     config_snapshot: Schema.Attribute.JSON;
+    countries: Schema.Attribute.Relation<'manyToMany', 'api::country.country'>;
     country: Schema.Attribute.Relation<'manyToOne', 'api::country.country'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1843,6 +1850,7 @@ export interface ApiTournamentTournament extends Struct.CollectionTypeSchema {
         },
         number
       >;
+    opentoall: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     prize_payouts: Schema.Attribute.Relation<
       'oneToMany',
       'api::prize-payout.prize-payout'

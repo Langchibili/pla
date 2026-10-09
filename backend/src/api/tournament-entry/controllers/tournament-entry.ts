@@ -89,7 +89,11 @@ export default factories.createCoreController('api::tournament-entry.tournament-
 			where: /^\d+$/.test(tournamentId)
 				? { $or: [{ id: Number(tournamentId) }, { documentId: tournamentId }] }
 				: { documentId: tournamentId },
-			populate: { game: true, country: { select: ['id'] } },
+			populate: {
+				game: true,
+				country: { select: ['id'] },
+				countries: { select: ['id'] },
+			},
 		});
 		if (!tournament) return ctx.notFound('Tournament not found');
 		const entryFee = tournament.requires_entry_fee ? Number(tournament.entry_fee_plapo) : 0;
@@ -99,8 +103,20 @@ export default factories.createCoreController('api::tournament-entry.tournament-
 			return ctx.badRequest('Registration has closed');
 		}
 		if (tournament.game?.game_status !== 'active') return ctx.badRequest('This game is not active');
-		if (tournament.country?.id && Number(tournament.country.id) !== Number(user.country?.id)) {
-			return ctx.forbidden('This tournament is not available in your country');
+		if (!tournament.opentoall) {
+			const eligibleCountries = tournament.countries ?? [];
+			const userCountryId = Number(user.country?.id);
+			if (eligibleCountries.length > 0) {
+				if (!eligibleCountries.some((country: any) => Number(country.id) === userCountryId)) {
+					return ctx.forbidden('This tournament is not available in your country');
+				}
+			} else if (tournament.country?.id) {
+				if (Number(tournament.country.id) !== userCountryId) {
+					return ctx.forbidden('This tournament is not available in your country');
+				}
+			} else {
+				return ctx.forbidden('This tournament has no eligible countries configured');
+			}
 		}
 
 		const entryCount = await strapi.db.query('api::tournament-entry.tournament-entry').count({

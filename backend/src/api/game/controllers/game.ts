@@ -10,6 +10,8 @@ const PUBLIC_GAME_FIELDS = new Set([
 	'result_type',
 	'in_game_id_format',
 	'in_game_id_label',
+	'in_game_id_example',
+	'screenshotExample',
 	'score_min',
 	'score_max',
 	'createdAt',

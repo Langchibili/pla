@@ -2,17 +2,19 @@
 import { Box, Button, TextField, Typography, Chip } from '@mui/material';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { endpoints } from '@/lib/api';
+import { endpoints, mediaUrl } from '@/lib/api';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/hooks/useAuth';
 import { useSocketRoom } from '@/hooks/useSocket';
 import { useToast } from '@/hooks/useToast';
-import { fmtDate, fmtMoney, fmtPlapo, label } from '@/lib/format';
+import { fmtCurrencyAmount, fmtDate, fmtPlapo, label } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import Surface from '@/components/Surface';
 import ActionSheet from '@/components/ActionSheet';
 import SkeletonList from '@/components/SkeletonList';
 import ErrorNote from '@/components/ErrorNote';
+import ClickableImage from '@/components/ClickableImage';
+import { useCountdown } from '@/hooks/useCountdown';
 import { AFRICA } from '@/lib/theme';
 
 function StageSchedule({ stage }) {
@@ -41,11 +43,29 @@ function StageSchedule({ stage }) {
   );
 }
 
+function tournamentCountdownVisible(tournament, countdown) {
+  return Boolean(
+    tournament?.starts_at
+    && !countdown.done
+    && !['in_progress', 'completed', 'cancelled'].includes(tournament.tournament_status),
+  );
+}
+
 export default function TournamentDetail() {
-  const { id } = useParams(); const router = useRouter(); const toast = useToast(); const { refresh } = useAuth();
+  const { id } = useParams(); const router = useRouter(); const toast = useToast();
   useSocketRoom('tournament', id);
+  const { user, refresh } = useAuth();
   const { data: t, loading, error, reload } = useApi(`t-${id}`, () => endpoints.tournament(id));
   const board = useApi(`b-${id}`, () => endpoints.entries(id), { interval: 30000 });
+  const countdown = useCountdown(t?.starts_at);
+  const sourceCurrency = t?.prize_pool_currency?.code;
+  const viewerCurrency = user?.country?.default_currency?.code;
+  const shouldConvertPrize = Boolean(t?.has_prize_pool && sourceCurrency && viewerCurrency && sourceCurrency !== viewerCurrency);
+  const prizeConversion = useApi(
+    `prize-${id}-${t?.prize_pool_current_amount ?? ''}-${sourceCurrency ?? ''}-${viewerCurrency ?? ''}`,
+    () => endpoints.convertPrice(Number(t.prize_pool_current_amount), sourceCurrency),
+    { enabled: shouldConvertPrize },
+  );
   const [open, setOpen] = useState(false); const [name, setName] = useState(''); const [busy, setBusy] = useState(false);
   if (loading) return <SkeletonList count={3} height={140} />;
   if (error) return <ErrorNote error={error} onRetry={reload} />;
@@ -65,10 +85,24 @@ export default function TournamentDetail() {
         <Typography variant="h4">{t.title}</Typography>
         <Typography color="text.secondary" sx={{ mt: 0.5 }}>{t.game?.name} · {t.country?.name || 'Pan-Africa'}</Typography>
         {t.description && <Typography sx={{ mt: 1.5 }} variant="body2">{t.description}</Typography>}
+        {tournamentCountdownVisible(t, countdown) && <Typography variant="h6" color={countdown.urgent ? 'warning.main' : 'secondary.main'} sx={{ mt: 1.5, fontVariantNumeric: 'tabular-nums' }}>Starts in {countdown.text}</Typography>}
       </Surface>
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
-        {[['Entry', t.requires_entry_fee ? `${fmtPlapo(t.entry_fee_plapo)} Plapo` : 'Free'], ['Prize pool', t.has_prize_pool ? fmtMoney(t.prize_pool_current_amount, t.prize_pool_currency?.code) : '—'], ['Players', `${board.data?.length ?? 0}/${t.max_players ?? '∞'}`], ['Starts', fmtDate(t.starts_at)]].map(([k, v]) => (
-          <Surface key={k} sx={{ p: 1.8 }}><Typography variant="caption" color="text.secondary">{k}</Typography><Typography fontWeight={800} color={k === 'Prize pool' ? 'secondary.main' : 'text.primary'}>{v}</Typography></Surface>
+        {[['Entry', t.requires_entry_fee ? `${fmtPlapo(t.entry_fee_plapo)} Plapo` : 'Free'], ['Prize pool', null], ['Players', `${board.data?.length ?? 0}/${t.max_players ?? '∞'}`], ['Starts', fmtDate(t.starts_at)]].map(([k, v]) => (
+          <Surface key={k} sx={{ p: 1.8 }}>
+            <Typography variant="caption" color="text.secondary">{k}</Typography>
+            <Typography fontWeight={800} color={k === 'Prize pool' ? 'secondary.main' : 'text.primary'}>
+              {k !== 'Prize pool' ? v : !t.has_prize_pool ? '—'
+                : shouldConvertPrize
+                  ? prizeConversion.error ? 'Conversion unavailable'
+                    : prizeConversion.data ? fmtCurrencyAmount(prizeConversion.data.amount, { symbol: prizeConversion.data.currencySymbol, code: prizeConversion.data.currencyCode })
+                      : 'Converting…'
+                  : fmtCurrencyAmount(t.prize_pool_current_amount, t.prize_pool_currency)}
+            </Typography>
+            {k === 'Prize pool' && t.has_prize_pool && shouldConvertPrize && prizeConversion.error && (
+              <Button size="small" onClick={prizeConversion.reload}>Retry conversion</Button>
+            )}
+          </Surface>
         ))}
       </Box>
       <Typography variant="h6">Stages</Typography>
@@ -89,7 +123,13 @@ export default function TournamentDetail() {
       <ActionSheet open={open} onClose={() => setOpen(false)} title="Enter your in-game name">
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Type the exact name {t.game?.name} shows during a match. It is locked for this tournament.</Typography>
         <TextField label={t.game?.in_game_id_label || 'In-game name'} value={name} onChange={(e) => setName(e.target.value)} error={!!name && !valid} helperText={!!name && !valid ? 'This does not match the format for this game.' : ' '} />
-        <Button fullWidth size="large" variant="contained" color="secondary" disabled={!valid || busy} onClick={enter}>{busy ? 'Joining…' : 'Confirm and join'}</Button>
+        <Button fullWidth size="large" variant="contained" color="secondary" disabled={!valid || busy} onClick={enter} sx={{ mt: 1 }}>{busy ? 'Joining…' : 'Confirm and join'}</Button>
+        {mediaUrl(t.game?.in_game_id_example) && (
+          <Box sx={{ mt: 1, mb: 2 }}>
+            <Typography variant="caption" color="text.secondary">Example in-game ID</Typography>
+            <ClickableImage src={mediaUrl(t.game.in_game_id_example)} alt={`${t.game?.name || 'Game'} in-game ID example`} sx={{ display: 'block', width: '100%', maxHeight: 220, objectFit: 'contain', borderRadius: 2, mt: 0.75 }} />
+          </Box>
+        )}
       </ActionSheet>
     </Box>
   );

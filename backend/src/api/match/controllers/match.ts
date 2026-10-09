@@ -13,7 +13,12 @@ async function findMatch(strapi: any, id: string) {
 			? { $or: [{ id: Number(id) }, { documentId: id }] }
 			: { documentId: id },
 		populate: {
-			tournament: { populate: { country: { select: ['id'] } } },
+			tournament: {
+				populate: {
+					country: { select: ['id'] },
+					game: { populate: { screenshotExample: true } },
+				},
+			},
 			tournament_stage: true,
 			player1_entry: { populate: { user: { select: ['id'] } } },
 			player2_entry: { populate: { user: { select: ['id'] } } },
@@ -35,6 +40,12 @@ function participantView(match: any, userId: number) {
 		postponement_count: match.postponement_count,
 		dispute_status: match.dispute_status,
 		is_bye: match.is_bye,
+		screenshot_example: match.tournament?.game?.screenshotExample
+			? {
+				url: match.tournament.game.screenshotExample.url,
+				alternativeText: match.tournament.game.screenshotExample.alternativeText,
+			}
+			: null,
 		opponent_label: opponentEntry?.anon_label ?? 'Opponent',
 		player1_score: isPlayer1 ? match.player1_score : match.player2_score,
 		player2_score: isPlayer1 ? match.player2_score : match.player1_score,

@@ -55,7 +55,7 @@ export default function MatchRoom() {
       {open && <Surface>
         <Typography variant="h6" sx={{ mb: 1.5 }}>Submit your result</Typography>
         {mine && <Chip sx={{ mb: 1.5 }} color={mine.match_submission_status === 'valid' ? 'success' : mine.match_submission_status === 'invalid' ? 'error' : 'warning'} label={SCORE_FLAG[mine.match_submission_status]} />}
-        <ScreenshotUpload onUpload={(f) => endpoints.submitResult(id, f).then(reload)} />
+        <ScreenshotUpload onUpload={(f) => endpoints.submitResult(id, f).then(reload)} example={m.screenshot_example} />
       </Surface>}
 
       {m.dispute_status === 'open' && <Surface accent={AFRICA.red}><Typography fontWeight={800}>Dispute open</Typography><Typography variant="body2" color="text.secondary">An admin is reviewing both screenshots.</Typography></Surface>}

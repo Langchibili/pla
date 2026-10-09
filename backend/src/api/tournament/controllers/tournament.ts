@@ -30,6 +30,8 @@ const PUBLIC_GAME_FIELDS = new Set([
 	'result_type',
 	'in_game_id_format',
 	'in_game_id_label',
+	'in_game_id_example',
+	'screenshotExample',
 	'score_min',
 	'score_max',
 ]);
@@ -46,6 +48,10 @@ const PUBLIC_CURRENCY_FIELDS = new Set([
 ]);
 
 function sanitizeRelation(relation: any, allowedFields: Set<string>): void {
+	if (Array.isArray(relation)) {
+		relation.forEach((item) => sanitizeRelation(item, allowedFields));
+		return;
+	}
 	if (!relation || typeof relation !== 'object') return;
 	const fields = relation.attributes && typeof relation.attributes === 'object'
 		? relation.attributes
@@ -63,6 +69,8 @@ function sanitizeTournament(tournament: any): any {
 	for (const field of PRIVATE_TOURNAMENT_FIELDS) delete fields[field];
 	sanitizeRelation(fields.game, PUBLIC_GAME_FIELDS);
 	sanitizeRelation(fields.country, PUBLIC_COUNTRY_FIELDS);
+	sanitizeRelation(fields.countries, PUBLIC_COUNTRY_FIELDS);
+	sanitizeRelation(fields.prize_pool_currency, PUBLIC_CURRENCY_FIELDS);
 	const countryFields = fields.country?.attributes ?? fields.country;
 	sanitizeRelation(countryFields?.default_currency, PUBLIC_CURRENCY_FIELDS);
 	return tournament;
