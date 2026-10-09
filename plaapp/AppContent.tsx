@@ -65,17 +65,9 @@ export default function AppContent() {
   const [canGoBack, setCanGoBack] = useState(false);
   const [currentUrl, setCurrentUrl] = useState(CONSTANTS.FRONTEND_URLS.player);
 
-  const handleRetry = useCallback(async () => {
+  const handleRetry = useCallback(() => {
     setHasError(false);
-    try {
-      const state = await NetInfo.refresh();
-      const connected = state.isConnected ?? false;
-      setIsConnected(connected);
-      if (connected) webViewRef.current?.reload();
-    } catch (error) {
-      logger.error('Could not refresh PLA network state', error);
-      setHasError(true);
-    }
+    webViewRef.current?.injectJavaScript('window.location = ""; true;');
   }, []);
 
   const renderCustomLoader = useCallback(() => (
@@ -272,8 +264,8 @@ export default function AppContent() {
             const { statusCode, url } = event.nativeEvent;
             logger.error('PLA WebView HTTP error', statusCode, url);
             if (
-              (statusCode >= 400 && url === currentUrl)
-              || url === CONSTANTS.FRONTEND_URLS.player
+              statusCode >= 400
+              && (url === currentUrl || url === CONSTANTS.FRONTEND_URLS.player)
             ) {
               setHasError(true);
             } else {
@@ -296,6 +288,7 @@ export default function AppContent() {
           }}
           javaScriptEnabled
           domStorageEnabled
+          geolocationEnabled
           startInLoadingState
           renderLoading={renderCustomLoader}
           originWhitelist={['*']}

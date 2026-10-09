@@ -1,11 +1,12 @@
 'use client';
 import { Box, CircularProgress } from '@mui/material';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useSocketEvent } from '@/hooks/useSocket';
 import { useToast } from '@/hooks/useToast';
+import { haptic } from '@/lib/haptics';
 import TopBar from './TopBar';
 import BottomNav, { TABS } from './BottomNav';
 import AppDownloadGate from './AppDownloadGate';
@@ -23,6 +24,8 @@ export default function AppShell({ children }) {
   const path = usePathname();
   const router = useRouter();
   const { user, ready, refresh } = useAuth();
+  const [frontendMode, setFrontendMode] = useState(null);
+  const touchStart = useRef(null);
   const nativeUserId = user?.id;
   const toast = useToast();
   const clientReady = useSyncExternalStore(subscribeClient, readClient, readServer);
@@ -31,6 +34,55 @@ export default function AppShell({ children }) {
   const isPublic = PUBLIC.includes(path);
   const isOnboarding = path === '/onboarding';
   const isRoot = TABS.some((t) => t.href === path);
+  const activeTabIndex = TABS.findIndex(({ href }) => (href === '/' ? path === '/' : path.startsWith(href)));
+
+  const handleTouchStart = (event) => {
+    if (event.touches.length !== 1 || activeTabIndex < 0) {
+      touchStart.current = null;
+      return;
+    }
+    const target = event.target;
+    if (target instanceof Element && target.closest('a, button, input, textarea, select, [role="tab"], [data-no-tab-swipe], .MuiDrawer-root')) {
+      touchStart.current = null;
+      return;
+    }
+    for (let node = target instanceof Element ? target : null; node && node !== event.currentTarget; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (node.scrollWidth > node.clientWidth + 4 && ['auto', 'scroll'].includes(style.overflowX)) {
+        touchStart.current = null;
+        return;
+      }
+    }
+    const touch = event.touches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY, tab: activeTabIndex };
+  };
+
+  const handleTouchEnd = (event) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start || !event.changedTouches.length) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+    const nextTab = start.tab + (dx < 0 ? 1 : -1);
+    if (nextTab < 0 || nextTab >= TABS.length) return;
+    haptic('select');
+    router.push(TABS[nextTab].href);
+  };
+
+  useEffect(() => {
+    let active = true;
+    endpoints.frontendMode()
+      .then((mode) => {
+        if (active) setFrontendMode(mode);
+      })
+      .catch((error) => {
+        console.error('Unable to load frontend mode; using native mode', error);
+        if (active) setFrontendMode('native');
+      });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const referralCode = referralCodeFromUrl();
@@ -51,11 +103,11 @@ export default function AppShell({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!ready || !clientReady) return;
-    if (!user && isWebView && !isPublic) router.replace('/login');
+    if (!ready || !clientReady || !frontendMode) return;
+    if (!user && (isWebView || frontendMode === 'web') && !isPublic) router.replace('/login');
     else if (user && !user.has_completed_tutorial && !isOnboarding) router.replace('/onboarding');
     else if (user && isPublic) router.replace('/');
-  }, [ready, clientReady, isWebView, user, isPublic, isOnboarding, router]);
+  }, [ready, clientReady, frontendMode, isWebView, user, isPublic, isOnboarding, router]);
 
   useEffect(() => {
     if (!ready || !window.ReactNativeWebView) return;
@@ -90,15 +142,15 @@ export default function AppShell({ children }) {
   useSocketEvent('wallet:updated', () => { refresh(); });
   useSocketEvent('match:result_ready', () => toast('Match result is in'));
 
-  if (!clientReady || !ready) return <Box sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><CircularProgress color="secondary" /></Box>;
-  if (!user && !isWebView) return <AppDownloadGate />;
+  if (!clientReady || !ready || !frontendMode) return <Box sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><CircularProgress color="secondary" /></Box>;
+  if (!user && !isWebView && frontendMode === 'native') return <AppDownloadGate />;
   if (isPublic || isOnboarding) return <>{children}</>;
   if (!user) return <Box sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><CircularProgress color="secondary" /></Box>;
 
   return (
     <>
       <TopBar title={titleFor(path)} showBack={!isRoot} />
-      <Box component="main" sx={{ maxWidth: 640, mx: 'auto', px: 2, pt: 'calc(env(safe-area-inset-top) + 76px)', pb: 'calc(env(safe-area-inset-bottom) + 112px)', minHeight: '100dvh' }}>{children}</Box>
+      <Box component="main" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} sx={{ maxWidth: 640, mx: 'auto', px: 2, pt: 'calc(env(safe-area-inset-top) + 76px)', pb: 'calc(env(safe-area-inset-bottom) + 112px)', minHeight: '100dvh' }}>{children}</Box>
       <BottomNav />
     </>
   );

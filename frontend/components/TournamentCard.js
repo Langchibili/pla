@@ -15,11 +15,11 @@ export default function TournamentCard({ t }) {
       <Box sx={{ height: 120, position: 'relative', background: `linear-gradient(135deg, ${AFRICA.green}, #003d1f 60%, ${AFRICA.red})` }}>
         {banner && <Image src={banner} alt="" fill sizes="640px" style={{ objectFit: 'cover' }} unoptimized />}
         <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg,#0d1810,transparent 70%)' }} />
-        <Chip size="small" color={STATUS_COLOR[t.tournament_status] || 'default'} label={label(t.tournament_status)} sx={{ position: 'absolute', top: 10, left: 10, boxShadow: 6 }} />
-        {t.has_prize_pool && <Chip size="small" color="secondary" label={`Pool ${fmtMoney(t.prize_pool_current_amount, t.prize_pool_currency?.code)}`} sx={{ position: 'absolute', top: 10, right: 10, boxShadow: 6 }} />}
+        <Chip size="small" color={STATUS_COLOR[t.tournament_status] || 'default'} label={label(t.tournament_status)} sx={{ position: 'absolute', top: 10, left: 10, maxWidth: '48%', borderTopLeftRadius: '22px', boxShadow: 6, '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }} />
+        {t.has_prize_pool && <Chip size="small" color="secondary" label={`Pool ${fmtMoney(t.prize_pool_current_amount, t.prize_pool_currency?.code)}`} sx={{ position: 'absolute', top: 10, right: 10, maxWidth: '48%', borderTopRightRadius: '22px', boxShadow: 6, '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }} />}
       </Box>
       <Box sx={{ p: 2 }}>
-        <Typography variant="h6" noWrap>{t.title}</Typography>
+        <Typography variant="h6" sx={{ overflowWrap: 'anywhere' }}>{t.title}</Typography>
         <Typography variant="body2" color="text.secondary">{t.game?.name} · {t.country?.name || 'Pan-Africa'}</Typography>
         <Box sx={{ mt: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="caption" color="text.secondary">Starts {fmtDate(t.starts_at)}</Typography>

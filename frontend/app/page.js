@@ -26,7 +26,7 @@ export default function Home() {
     <Box sx={{ display: 'grid', gap: 3 }}>
       <Surface sx={{ p: 3, background: `linear-gradient(145deg, #0c4a26, #07100A 70%)` }}>
         <Typography variant="body2" color="text.secondary">Welcome back</Typography>
-        <Typography variant="h4">{user?.username}</Typography>
+        <Typography variant="h4" sx={{ minWidth: 0, fontSize: 'clamp(1.2rem, 6vw, 2.125rem)', lineHeight: 1.2, overflowWrap: 'anywhere' }}>{user?.username}</Typography>
         <KenteStripe sx={{ my: 2, width: 96 }} />
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
           <Box><Typography variant="caption" color="text.secondary">Spendable</Typography><Typography variant="h5" color="secondary.main">{fmtPlapo(user?.spendable_balance)}</Typography></Box>

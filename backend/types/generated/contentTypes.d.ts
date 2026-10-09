@@ -529,6 +529,9 @@ export interface ApiAdmnSettingsAdmnSettings extends Struct.SingleTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'pawapay'>;
     draw_points: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    frontend_mode: Schema.Attribute.Enumeration<['native', 'web']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'native'>;
     initial_free_plapo: Schema.Attribute.Integer &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
@@ -972,28 +975,29 @@ export interface ApiEmailOtpEmailOtp extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    attempts: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<0>;
-    code_hash: Schema.Attribute.String & Schema.Attribute.Required;
-    country_id: Schema.Attribute.Integer;
+    countryId: Schema.Attribute.Integer;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    device_hash: Schema.Attribute.String;
-    email: Schema.Attribute.Email & Schema.Attribute.Required;
-    expires_at: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    last_sent_at: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    deviceHash: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::email-otp.email-otp'
     > &
       Schema.Attribute.Private;
+    otpAttempts: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
+    otpCode: Schema.Attribute.String & Schema.Attribute.Required;
+    otpEmail: Schema.Attribute.Email & Schema.Attribute.Required;
+    otpExpiresAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    otpLastSentAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    otpPurpose: Schema.Attribute.Enumeration<['login', 'signup']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'login'>;
     publishedAt: Schema.Attribute.DateTime;
-    purpose: Schema.Attribute.Enumeration<['login', 'signup']> &
-      Schema.Attribute.Required;
-    referral_code: Schema.Attribute.String;
+    referralCode: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

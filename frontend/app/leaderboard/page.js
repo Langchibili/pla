@@ -21,9 +21,9 @@ function Board() {
   return (
     <Box sx={{ display: 'grid', gap: 1.2 }}>
       {(data || []).map((e, i) => (
-        <Surface key={e.documentId} sx={{ p: 1.5, display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 1.5, alignItems: 'center', ...(i === me && { outline: `2px solid ${AFRICA.green}` }) }}>
+        <Surface key={e.documentId} sx={{ p: 1.5, display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 1.5, alignItems: 'center', ...(i === me && { outline: `2px solid ${AFRICA.green}` }) }}>
           <Avatar sx={{ width: 34, height: 34, fontWeight: 900, bgcolor: i < 3 ? MEDAL[i] : 'background.default', color: i < 3 ? '#1a1200' : 'text.primary' }}>{i + 1}</Avatar>
-          <Box><Typography fontWeight={800} noWrap>{i === me ? 'You' : e.anon_label || `Player ${i + 1}`}</Typography><Typography variant="caption" color="text.secondary">{e.matches_played}P · {e.wins}W {e.draws}D {e.losses}L · GD {e.goals_for - e.goals_against}</Typography></Box>
+          <Box sx={{ minWidth: 0 }}><Typography fontWeight={800} sx={{ overflowWrap: 'anywhere' }}>{i === me ? 'You' : e.anon_label || `Player ${i + 1}`}</Typography><Typography variant="caption" color="text.secondary">{e.matches_played}P · {e.wins}W {e.draws}D {e.losses}L · GD {e.goals_for - e.goals_against}</Typography></Box>
           <Typography variant="h6" color="secondary.main">{e.points}</Typography>
         </Surface>))}
       {me > 9 && <Box sx={{ position: 'sticky', bottom: 'calc(env(safe-area-inset-bottom) + 100px)' }}><Surface accent={AFRICA.green} sx={{ boxShadow: 20 }}>Your position: #{me + 1}</Surface></Box>}

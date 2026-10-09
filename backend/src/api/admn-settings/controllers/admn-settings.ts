@@ -33,6 +33,14 @@ export default factories.createCoreController('api::admn-settings.admn-settings'
 		return hideOverrideCode(await super.update(ctx));
 	},
 
+	async frontendMode(ctx: any) {
+		const settings = await strapi.db.query('api::admn-settings.admn-settings').findOne({
+			select: ['frontend_mode'],
+		});
+		const frontendMode = settings?.frontend_mode === 'web' ? 'web' : 'native';
+		return ctx.send({ data: { frontend_mode: frontendMode } });
+	},
+
 	async publicConfig(ctx: any) {
 		const userId = Number(ctx.state.user?.id);
 		if (!Number.isInteger(userId) || userId < 1) return ctx.unauthorized();

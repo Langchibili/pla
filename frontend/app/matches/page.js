@@ -16,7 +16,7 @@ export default function Matches() {
   const list = (data || []).filter((m) => (tab === 0) === OPEN.includes(m.match_status));
   return (
     <Box sx={{ display: 'grid', gap: 2 }}>
-      <Tabs value={tab} onChange={(_, v) => { haptic('select'); setTab(v); }} variant="fullWidth" textColor="secondary" indicatorColor="secondary" sx={{ bgcolor: 'background.paper', borderRadius: 4, boxShadow: 8 }}>
+      <Tabs value={tab} onChange={(_, v) => { haptic('select'); setTab(v); }} variant="fullWidth" textColor="secondary" indicatorColor="secondary" sx={{ bgcolor: 'background.paper', borderRadius: '16px', boxShadow: 8 }}>
         <Tab label="To play" /><Tab label="History" />
       </Tabs>
       <ErrorNote error={error} onRetry={reload} />

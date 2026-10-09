@@ -21,7 +21,7 @@ export default function Onboarding() {
   return (
     <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', p: 3, pt: 'calc(env(safe-area-inset-top) + 24px)', pb: 'calc(env(safe-area-inset-bottom) + 24px)', maxWidth: 480, mx: 'auto' }}>
       <Box sx={{ flex: 1, display: 'grid', placeItems: 'center', textAlign: 'center' }}>
-        <AnimatePresence mode="wait"><motion.div key={i} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
+        <AnimatePresence mode="wait"><motion.div key={i} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ type: 'spring', stiffness: 600, damping: 42 }}>
           <Typography sx={{ fontSize: 96, filter: 'drop-shadow(0 20px 24px rgba(0,0,0,.6))' }}>{e}</Typography>
           <Typography variant="h4" sx={{ mt: 2 }}>{t}</Typography><Typography color="text.secondary" sx={{ mt: 1.5 }}>{b}</Typography>
         </motion.div></AnimatePresence>

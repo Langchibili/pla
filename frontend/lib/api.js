@@ -35,6 +35,10 @@ const data = (p) => p.then((r) => r.data ?? r);
 // Strapi 5 returns flat documents: { data, meta }
 export const endpoints = {
   countries: () => data(api('/countries?filters[country_status][$eq]=active&populate[default_currency]=true&sort=name:asc', { auth: false })),
+  frontendMode: async () => {
+    const result = await api('/admn-settings/frontend-mode', { auth: false });
+    return result?.data?.frontend_mode === 'web' ? 'web' : 'native';
+  },
   sendEmailOtp: (b) => api('/auth/email-otp/send', { method: 'POST', body: b, auth: false }),
   resendEmailOtp: (b) => api('/auth/email-otp/resend', { method: 'POST', body: b, auth: false }),
   verifyEmailOtp: (b) => api('/auth/email-otp/verify', { method: 'POST', body: b, auth: false }),

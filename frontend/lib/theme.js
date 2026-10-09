@@ -28,9 +28,13 @@ export function buildTheme(fontFamily) {
     shadows,
     typography: {
       fontFamily,
-      h1: { fontWeight: 800, letterSpacing: -1 }, h2: { fontWeight: 800, letterSpacing: -0.8 },
-      h3: { fontWeight: 800, letterSpacing: -0.5 }, h4: { fontWeight: 700 }, h5: { fontWeight: 700 },
-      h6: { fontWeight: 700 }, button: { textTransform: 'none', fontWeight: 700 },
+      h1: { fontWeight: 800, letterSpacing: -1, fontSize: 'clamp(2rem, 8vw, 3rem)' },
+      h2: { fontWeight: 800, letterSpacing: -0.8, fontSize: 'clamp(1.75rem, 7vw, 2.5rem)' },
+      h3: { fontWeight: 800, letterSpacing: -0.5, fontSize: 'clamp(1.5rem, 6vw, 2rem)' },
+      h4: { fontWeight: 700, fontSize: 'clamp(1.3rem, 5.5vw, 2.125rem)' },
+      h5: { fontWeight: 700, fontSize: 'clamp(1.2rem, 4.8vw, 1.5rem)' },
+      h6: { fontWeight: 700, fontSize: 'clamp(1.05rem, 4vw, 1.25rem)' },
+      button: { textTransform: 'none', fontWeight: 700 },
     },
     components: {
       MuiCssBaseline: { styleOverrides: {
@@ -42,7 +46,7 @@ export function buildTheme(fontFamily) {
       } },
       MuiPaper: { styleOverrides: { root: { backgroundImage: 'none', border: `1px solid ${AFRICA.line}` } } },
       MuiButton: { styleOverrides: {
-        root: { borderRadius: 16, padding: '12px 22px', transition: 'transform .15s cubic-bezier(.2,.9,.3,1.4)', '&:active': { transform: 'scale(.96)' } },
+        root: { borderRadius: 16, minWidth: 0, maxWidth: '100%', padding: '12px 22px', whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.25, transition: 'transform .075s cubic-bezier(.2,.9,.3,1.4)', '&:active': { transform: 'scale(.96)' } },
         containedPrimary: { background: `linear-gradient(135deg, ${AFRICA.green}, #00793B)`, boxShadow: '0 10px 24px rgba(0,166,81,.4), 0 2px 0 rgba(255,255,255,.2) inset' },
         containedSecondary: { background: `linear-gradient(135deg, ${AFRICA.gold}, #E39A00)`, boxShadow: '0 10px 24px rgba(253,185,19,.35), 0 2px 0 rgba(255,255,255,.35) inset' },
       } },

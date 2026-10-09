@@ -81,7 +81,7 @@ export default function TournamentDetail() {
           </Surface>))}
       </Box>
       <Button variant="outlined" color="secondary" onClick={() => router.push(`/leaderboard?t=${id}`)}>View leaderboard</Button>
-      <Box sx={{ position: 'sticky', bottom: 'calc(env(safe-area-inset-bottom) + 100px)', zIndex: 5 }}>
+      <Box>
         <Button fullWidth size="large" variant="contained" color={joined ? 'primary' : 'secondary'} disabled={joined || !canEnter} onClick={() => { haptic('medium'); setOpen(true); }}>
           {joined ? 'You are registered' : canEnter ? (t.requires_entry_fee ? `Join for ${fmtPlapo(t.entry_fee_plapo)} Plapo` : 'Join free') : 'Registration closed'}
         </Button>

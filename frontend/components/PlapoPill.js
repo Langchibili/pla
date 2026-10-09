@@ -6,7 +6,7 @@ import { fmtPlapo } from '@/lib/format';
 import { AFRICA } from '@/lib/theme';
 
 export default function PlapoPill({ value = 0, onClick }) {
-  const s = useSpring(value, { stiffness: 90, damping: 18 });
+  const s = useSpring(value, { stiffness: 180, damping: 25 });
   const t = useTransform(s, (v) => fmtPlapo(Math.round(v)));
   useEffect(() => { s.set(value); }, [value, s]);
   return (

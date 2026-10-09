@@ -8,18 +8,19 @@
   },
   "options": { "draftAndPublish": false },
   "attributes": {
-    "email": { "type": "email", "required": true },
-    "code_hash": { "type": "string", "required": true },
-    "purpose": {
+    "otpEmail": { "type": "email", "required": true },
+    "otpCode": { "type": "string", "required": true },
+    "otpPurpose": {
       "type": "enumeration",
       "enum": ["login", "signup"],
+      "default": "login",
       "required": true
     },
-    "expires_at": { "type": "datetime", "required": true },
-    "attempts": { "type": "integer", "default": 0, "required": true },
-    "last_sent_at": { "type": "datetime", "required": true },
-    "referral_code": { "type": "string" },
-    "device_hash": { "type": "string" },
-    "country_id": { "type": "integer" }
+    "otpExpiresAt": { "type": "datetime", "required": true },
+    "otpAttempts": { "type": "integer", "default": 0, "required": true },
+    "otpLastSentAt": { "type": "datetime", "required": true },
+    "referralCode": { "type": "string" },
+    "deviceHash": { "type": "string" },
+    "countryId": { "type": "integer" }
   }
 }

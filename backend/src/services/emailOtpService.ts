@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomInt, timingSafeEqual } from 'crypto';
+import { randomBytes, randomInt, timingSafeEqual } from 'crypto';
 import {
   attachAffiliateAttribution,
   createReferralCode,
@@ -30,12 +30,6 @@ function normalizeEmail(value: unknown): string {
     throw new EmailOtpError('Enter a valid email address', 400);
   }
   return email;
-}
-
-function otpHash(email: string, purpose: string, code: string): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new EmailOtpError('Email OTP is not configured', 503);
-  return createHash('sha256').update(`${secret}:${email}:${purpose}:${code}`).digest('hex');
 }
 
 function matchesAdminOverrideOtp(code: string, configuredCode: unknown): boolean {
@@ -103,29 +97,31 @@ export async function sendEmailOtp(
   }
 
   const existingOtp = await strapi.db.query(OTP_UID).findOne({
-    where: { email, purpose },
+    where: { otpEmail: email, otpPurpose: purpose },
   });
-  if (existingOtp && Date.now() - new Date(existingOtp.last_sent_at).getTime() < RESEND_COOLDOWN_MS) {
+  if (existingOtp && Date.now() - new Date(existingOtp.otpLastSentAt).getTime() < RESEND_COOLDOWN_MS) {
     throw new EmailOtpError('Wait one minute before requesting another code', 429);
   }
 
   const code = String(randomInt(100000, 1000000));
   const now = new Date();
   const otpData = {
-    email,
-    purpose,
-    code_hash: otpHash(email, purpose, code),
-    expires_at: new Date(now.getTime() + OTP_LIFETIME_MS),
-    attempts: 0,
-    last_sent_at: now,
-    referral_code: purpose === 'signup' ? referralCode : undefined,
-    device_hash: purpose === 'signup' ? validDeviceHash(params.deviceHash) : undefined,
-    country_id: purpose === 'signup' ? countryId : undefined,
+    otpEmail: email,
+    otpCode: code,
+    otpPurpose: purpose,
+    otpExpiresAt: new Date(now.getTime() + OTP_LIFETIME_MS),
+    otpAttempts: 0,
+    otpLastSentAt: now,
+    referralCode: purpose === 'signup' ? referralCode : undefined,
+    deviceHash: purpose === 'signup' ? validDeviceHash(params.deviceHash) : undefined,
+    countryId: purpose === 'signup' ? countryId : undefined,
   };
 
-  const savedOtp = existingOtp
-    ? await strapi.db.query(OTP_UID).update({ where: { id: existingOtp.id }, data: otpData })
-    : await strapi.db.query(OTP_UID).create({ data: otpData });
+  if (existingOtp) {
+    await strapi.db.query(OTP_UID).update({ where: { id: existingOtp.id }, data: otpData });
+  } else {
+    await strapi.db.query(OTP_UID).create({ data: otpData });
+  }
 
   try {
     await sendEmailNotification(strapi, {
@@ -135,9 +131,8 @@ export async function sendEmailOtp(
       html: `<p>Your ProLeague Africa verification code is <strong>${code}</strong>.</p><p>It expires in five minutes.</p>`,
     });
   } catch (error) {
-    await strapi.db.query(OTP_UID).delete({ where: { id: savedOtp.id } });
     strapi.log.error('[EmailOtp:send]', error);
-    throw new EmailOtpError('Unable to send verification email', 503);
+    throw new EmailOtpError('The verification code was saved, but the email could not be sent', 503);
   }
 }
 
@@ -186,25 +181,23 @@ export async function verifyEmailOtp(
 
   let otp: any = null;
   if (!isAdminOverride) {
-    otp = await strapi.db.query(OTP_UID).findOne({ where: { email, purpose } });
-    if (!otp || new Date(otp.expires_at).getTime() <= Date.now()) {
+    otp = await strapi.db.query(OTP_UID).findOne({ where: { otpEmail: email, otpPurpose: purpose } });
+    if (!otp || new Date(otp.otpExpiresAt).getTime() <= Date.now()) {
       if (otp) await strapi.db.query(OTP_UID).delete({ where: { id: otp.id } });
       throw new EmailOtpError('The verification code is invalid or expired', 400);
     }
-    if (Number(otp.attempts) >= MAX_ATTEMPTS) {
+    if (Number(otp.otpAttempts) >= MAX_ATTEMPTS) {
       await strapi.db.query(OTP_UID).delete({ where: { id: otp.id } });
       throw new EmailOtpError('Too many incorrect attempts. Request a new code.', 429);
     }
 
-    const expectedHash = Buffer.from(otp.code_hash, 'hex');
-    const receivedHash = Buffer.from(otpHash(email, purpose, params.code), 'hex');
-    if (expectedHash.length !== receivedHash.length || !timingSafeEqual(expectedHash, receivedHash)) {
-      const attempts = Number(otp.attempts) + 1;
+    if (String(otp.otpCode) !== params.code) {
+      const attempts = Number(otp.otpAttempts) + 1;
       if (attempts >= MAX_ATTEMPTS) {
         await strapi.db.query(OTP_UID).delete({ where: { id: otp.id } });
         throw new EmailOtpError('Too many incorrect attempts. Request a new code.', 429);
       }
-      await strapi.db.query(OTP_UID).update({ where: { id: otp.id }, data: { attempts } });
+      await strapi.db.query(OTP_UID).update({ where: { id: otp.id }, data: { otpAttempts: attempts } });
       throw new EmailOtpError('The verification code is incorrect', 400);
     }
     await strapi.db.query(OTP_UID).delete({ where: { id: otp.id } });
@@ -229,16 +222,16 @@ export async function verifyEmailOtp(
       role: role.id,
       user_status: 'active',
       referral_code: await nextReferralCode(strapi),
-      country: otp.country_id,
+      country: otp.countryId,
       free_plapo_granted: false,
     });
 
-    const signupSettings = await resolveSettingsForCountry(strapi, Number(otp.country_id));
+    const signupSettings = await resolveSettingsForCountry(strapi, Number(otp.countryId));
     await grantInitialPlapo(strapi, user.id, signupSettings.initial_free_plapo);
 
     await attachAffiliateAttribution(strapi, user, {
-      referralCode: otp.referral_code,
-      deviceHash: otp.device_hash,
+      referralCode: otp.referralCode,
+      deviceHash: otp.deviceHash,
       ip: params.ip,
     });
   }

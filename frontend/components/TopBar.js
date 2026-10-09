@@ -16,13 +16,13 @@ export default function TopBar({ title, showBack }) {
       <KenteStripe height={3} sx={{ borderRadius: 0 }} />
       <Box sx={{ height: 56, px: 2, display: 'flex', alignItems: 'center', gap: 1.5, maxWidth: 640, mx: 'auto' }}>
         <AnimatePresence mode="wait">
-          <Typography key={title} component={motion.h1} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}
+          <Typography key={title} component={motion.h1} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.09 }}
             variant="h6" noWrap sx={{ flex: 1, fontSize: 20 }}>{title}</Typography>
         </AnimatePresence>
         {user && <PlapoPill value={user.spendable_balance} onClick={() => { haptic('light'); router.push('/wallet'); }} />}
         <AnimatePresence>
           {showBack && (
-            <motion.div initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0 }} transition={{ type: 'spring', stiffness: 500, damping: 24 }}>
+            <motion.div initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0 }} transition={{ type: 'spring', stiffness: 1000, damping: 34 }}>
               <IconButton aria-label="Go back" onClick={() => { haptic('light'); router.back(); }}
                 sx={{ width: 42, height: 42, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', boxShadow: 6, '&:active': { transform: 'scale(.9)' } }}>
                 <ArrowBackIosNewRoundedIcon fontSize="small" sx={{ color: 'secondary.main' }} />

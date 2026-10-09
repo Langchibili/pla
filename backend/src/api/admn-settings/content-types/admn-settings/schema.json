@@ -98,6 +98,12 @@
       "default": "pawapay",
       "required": true
     },
+    "frontend_mode": {
+      "type": "enumeration",
+      "enum": ["native", "web"],
+      "default": "native",
+      "required": true
+    },
     "overideOtpCode": {
       "type": "string",
       "default": "121212"
