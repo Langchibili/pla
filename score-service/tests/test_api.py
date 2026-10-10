@@ -11,6 +11,7 @@ from jobs import sign
 from tests.make_samples import board
 
 settings.api_key, settings.webhook_secret, settings.allow_any_callback = "k", "s3cret", True
+settings.require_clock_for_soccer_games_validity = False
 HDR = {"X-Api-Key": "k"}
 PNG = io.BytesIO(); board("2 - 0").save(PNG, "PNG"); PNG = PNG.getvalue()
 

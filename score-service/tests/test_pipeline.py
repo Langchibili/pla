@@ -7,7 +7,7 @@ from games import get_parser
 from tests.make_samples import board
 
 pytest.importorskip("rapidocr_onnxruntime")
-OCR, S = RapidOcrEngine(), Settings()
+OCR, S = RapidOcrEngine(), Settings(require_clock_for_soccer_games_validity=False)
 
 
 def run(img, names=("KINGSLEY FC", "ZED UNITED"), game="dls"):
