@@ -1,4 +1,7 @@
+import { createUserNotification } from './appNotificationService';
+
 const LEDGER_UID = 'api::plapo-ledger.plapo-ledger';
+const PAYOUT_UID = 'api::prize-payout.prize-payout';
 
 const SPEND_ORDER = ['free', 'earned', 'received', 'purchased'];
 
@@ -103,5 +106,53 @@ export async function grantInitialPlapo(
       idempotency_key: idempotencyKey,
       note: 'Initial signup Plapo',
     },
+  });
+}
+
+export async function creditPlapoTournamentPrize(strapi: any, payoutId: number): Promise<void> {
+  const payout = await strapi.db.query(PAYOUT_UID).findOne({
+    where: { id: payoutId },
+    select: ['id', 'documentId', 'amount', 'place', 'prize_payout_status'],
+    populate: {
+      user: { select: ['id'] },
+      tournament: { select: ['id', 'prize_type', 'title'] },
+    },
+  });
+  if (!payout || payout.prize_payout_status !== 'paid' || payout.tournament?.prize_type !== 'plapo') return;
+
+  const userId = Number(payout.user?.id);
+  const amount = Number(payout.amount);
+  if (!Number.isSafeInteger(userId) || userId < 1) throw new Error('Paid Plapo prize has no valid recipient');
+  if (!Number.isSafeInteger(amount) || amount < 1) throw new Error('Paid Plapo prize must be a positive whole number');
+
+  const idempotencyKey = `tournament-prize:${payout.documentId ?? payout.id}`;
+  try {
+    await strapi.db.query(LEDGER_UID).create({
+      data: {
+        user: userId,
+        amount,
+        ledger_type: 'prize',
+        plapo_source: 'received',
+        plapo_ledger_status: 'posted',
+        tournament: payout.tournament.id,
+        idempotency_key: idempotencyKey,
+        note: `Plapo prize for ${payout.tournament.title}, place ${payout.place ?? '—'}`,
+      },
+    });
+  } catch (error) {
+    const existingCredit = await strapi.db.query(LEDGER_UID).findOne({
+      where: { idempotency_key: idempotencyKey },
+      select: ['id'],
+    });
+    if (!existingCredit) throw error;
+  }
+
+  await createUserNotification(strapi, {
+    userId,
+    title: 'Tournament Plapo prize received',
+    body: `${amount} Plapo has been added to your transferable balance.`,
+    type: 'prize',
+    data: { route: '/wallet', tournamentId: payout.tournament.documentId },
+    idempotencyKey: `tournament-prize-notification:${payout.documentId ?? payout.id}`,
   });
 }

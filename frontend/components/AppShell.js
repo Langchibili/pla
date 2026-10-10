@@ -1,7 +1,7 @@
 'use client';
 import { Box, CircularProgress } from '@mui/material';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useSocketEvent } from '@/hooks/useSocket';
@@ -130,14 +130,39 @@ export default function AppShell({ children }) {
       const message = event.detail;
       if (message?.type === 'NOTIFICATION_TAPPED') {
         const route = message.payload?.route;
+        if (message.payload?.notificationId) {
+          endpoints.readNotification(message.payload.notificationId).catch((error) => {
+            console.error('Unable to mark the tapped notification as read', error);
+          });
+          window.dispatchEvent(new CustomEvent('pla:notification-updated'));
+        }
         if (typeof route === 'string' && route.startsWith('/') && !route.startsWith('//')) {
           router.push(route);
+        }
+      } else if ([
+        'notification:new',
+        'notification:broadcast',
+        'system:announcement',
+        'NOTIFICATION_RECEIVED',
+      ].includes(message?.type)) {
+        window.dispatchEvent(new CustomEvent('pla:notification-updated'));
+        const notification = message.payload;
+        if (typeof notification?.body === 'string') {
+          toast(notification.body);
         }
       }
     };
     window.addEventListener('pla:native-message', handleNativeMessage);
     return () => window.removeEventListener('pla:native-message', handleNativeMessage);
-  }, [router]);
+  }, [router, toast]);
+
+  const handleSocketNotification = useCallback((notification) => {
+    window.dispatchEvent(new CustomEvent('pla:notification-updated'));
+    if (typeof notification?.body === 'string') toast(notification.body);
+  }, [toast]);
+  useSocketEvent('notification:new', handleSocketNotification);
+  useSocketEvent('notification:broadcast', handleSocketNotification);
+  useSocketEvent('system:announcement', handleSocketNotification);
 
   useSocketEvent('wallet:updated', () => { refresh(); });
   useSocketEvent('match:result_ready', () => toast('Match result is in'));

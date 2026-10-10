@@ -198,3 +198,4 @@ plaapp/modules/**/android/build/
 score-service/__pycache__/
 score-service/.pytest_cache/
 score-service/.env
+TestScreenShots

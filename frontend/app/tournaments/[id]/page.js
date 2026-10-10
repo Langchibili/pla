@@ -7,6 +7,7 @@ import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/hooks/useAuth';
 import { useSocketRoom } from '@/hooks/useSocket';
 import { useToast } from '@/hooks/useToast';
+import { useConfirm } from '@/hooks/useConfirm';
 import { fmtCurrencyAmount, fmtDate, fmtPlapo, label } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import Surface from '@/components/Surface';
@@ -53,6 +54,7 @@ function tournamentCountdownVisible(tournament, countdown) {
 
 export default function TournamentDetail() {
   const { id } = useParams(); const router = useRouter(); const toast = useToast();
+  const confirm = useConfirm();
   useSocketRoom('tournament', id);
   const { user, refresh } = useAuth();
   const { data: t, loading, error, reload } = useApi(`t-${id}`, () => endpoints.tournament(id));
@@ -60,7 +62,9 @@ export default function TournamentDetail() {
   const countdown = useCountdown(t?.starts_at);
   const sourceCurrency = t?.prize_pool_currency?.code;
   const viewerCurrency = user?.country?.default_currency?.code;
-  const shouldConvertPrize = Boolean(t?.has_prize_pool && sourceCurrency && viewerCurrency && sourceCurrency !== viewerCurrency);
+  const isPlapoPrize = t?.prize_type === 'plapo';
+  const hasPrize = Boolean(t?.has_prize_pool && t?.prize_type !== 'no-prize');
+  const shouldConvertPrize = Boolean(hasPrize && !isPlapoPrize && sourceCurrency && viewerCurrency && sourceCurrency !== viewerCurrency);
   const prizeConversion = useApi(
     `prize-${id}-${t?.prize_pool_current_amount ?? ''}-${sourceCurrency ?? ''}-${viewerCurrency ?? ''}`,
     () => endpoints.convertPrice(Number(t.prize_pool_current_amount), sourceCurrency),
@@ -74,6 +78,14 @@ export default function TournamentDetail() {
   const joined = (board.data || []).some((e) => e.is_me);
   const canEnter = t.tournament_status === 'registration_open' && t.game?.game_status === 'active';
   const enter = async () => {
+    const accepted = await confirm({
+      title: 'Confirm tournament entry',
+      message: t.requires_entry_fee
+        ? `Join ${t.title} for ${fmtPlapo(t.entry_fee_plapo)} Plapo? The entry fee will be charged now.`
+        : `Join ${t.title}?`,
+      confirmText: 'Join tournament',
+    });
+    if (!accepted) return;
     setBusy(true);
     try { await endpoints.enter(id, name.trim()); haptic('success'); toast('You are in. Good luck!'); setOpen(false); refresh(); board.reload(); }
     catch (e) { toast(e.message, 'error'); } finally { setBusy(false); }
@@ -92,14 +104,15 @@ export default function TournamentDetail() {
           <Surface key={k} sx={{ p: 1.8 }}>
             <Typography variant="caption" color="text.secondary">{k}</Typography>
             <Typography fontWeight={800} color={k === 'Prize pool' ? 'secondary.main' : 'text.primary'}>
-              {k !== 'Prize pool' ? v : !t.has_prize_pool ? '—'
+              {k !== 'Prize pool' ? v : !hasPrize ? (t.prize_type === 'no-prize' ? 'No prize' : '—')
+                : isPlapoPrize ? `${fmtPlapo(t.prize_pool_current_amount)} Plapo`
                 : shouldConvertPrize
                   ? prizeConversion.error ? 'Conversion unavailable'
                     : prizeConversion.data ? fmtCurrencyAmount(prizeConversion.data.amount, { symbol: prizeConversion.data.currencySymbol, code: prizeConversion.data.currencyCode })
                       : 'Converting…'
                   : fmtCurrencyAmount(t.prize_pool_current_amount, t.prize_pool_currency)}
             </Typography>
-            {k === 'Prize pool' && t.has_prize_pool && shouldConvertPrize && prizeConversion.error && (
+            {k === 'Prize pool' && hasPrize && shouldConvertPrize && prizeConversion.error && (
               <Button size="small" onClick={prizeConversion.reload}>Retry conversion</Button>
             )}
           </Surface>

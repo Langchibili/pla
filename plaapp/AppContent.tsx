@@ -111,18 +111,6 @@ export default function AppContent() {
     for (const eventName of SOCKET_EVENTS_TO_FORWARD) {
       DeviceSocketService.on(eventName, (payloadData) => {
         sendToWebView(eventName, payloadData);
-        if (eventName === SOCKET_EVENTS.NOTIFICATION.NEW) {
-          const notification = payloadData as { title?: unknown; body?: unknown; data?: unknown };
-          if (typeof notification?.title === 'string' && typeof notification.body === 'string') {
-            void NotificationService.show({
-              title: notification.title,
-              body: notification.body,
-              data: notification.data && typeof notification.data === 'object'
-                ? notification.data as Record<string, unknown>
-                : undefined,
-            }).catch((error: unknown) => logger.warn('Could not display a PLA notification', error));
-          }
-        }
       });
     }
     DeviceSocketService.on(SOCKET_EVENTS.CONNECTED, () => {

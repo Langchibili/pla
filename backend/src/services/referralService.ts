@@ -1,6 +1,8 @@
 import { createHash, randomBytes } from 'crypto';
 import { resolveSettingsForCountry } from './settingsResolver';
 
+import { createUserNotification } from './appNotificationService';
+
 const USER_UID = 'plugin::users-permissions.user';
 const IMPRESSION_UID = 'api::affiliate-impression.affiliate-impression';
 const REFERRAL_UID = 'api::referral.referral';
@@ -289,5 +291,13 @@ export async function awardReferralAfterTournamentEntry(
       reward_plapo: Number(settings.affiliate_reward_points),
       rewarded_at: new Date(),
     },
+  });
+  await createUserNotification(strapi, {
+    userId: Number(referrerId),
+    title: 'You earned referral Plapo',
+    body: `${Number(settings.affiliate_reward_points)} Plapo was added to your balance.`,
+    type: 'referral_reward',
+    data: { route: '/wallet' },
+    idempotencyKey: `referral-reward-notification:${referredUserId}`,
   });
 }

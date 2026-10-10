@@ -2,7 +2,9 @@ import type { Core } from '@strapi/strapi';
 import { awardReferralAfterTournamentEntry } from './services/referralService';
 import { queueScoreSubmission } from './services/scoreSubmissionService';
 import { publishSocketEvent } from './services/socketRelayService';
-import { sendExpoPushNotification } from './services/notificationService';
+import { createUserNotification } from './services/appNotificationService';
+import { creditPlapoTournamentPrize } from './services/plapoLedgerService';
+import { createTournamentPrizePayouts } from './services/prizePayoutService';
 
 function getRelationReference(value: any): { id?: number; documentId?: string } | null {
   if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) return { id: value };
@@ -48,18 +50,6 @@ async function publishSafely(
   }
 }
 
-async function pushSafely(
-  strapi: Core.Strapi,
-  userId: number,
-  notification: { title: string; body: string; data?: Record<string, unknown> },
-): Promise<void> {
-  try {
-    await sendExpoPushNotification(strapi, userId, notification);
-  } catch (error) {
-    strapi.log.warn(`[PushNotification] Delivery failed for user ${userId}`, error);
-  }
-}
-
 export default {
   /**
    * An asynchronous register function that runs before
@@ -89,6 +79,17 @@ export default {
           }
           await awardReferralAfterTournamentEntry(strapi, userId);
           const tournamentId = getRelationRoomId(event.result?.tournament ?? event.params?.data?.tournament);
+          const entryId = event.result?.documentId ?? event.result?.id;
+          if (entryId) {
+            await createUserNotification(strapi, {
+              userId,
+              title: 'Tournament entry confirmed',
+              body: 'You are registered. Good luck in the tournament!',
+              type: 'tournament_entry',
+              data: { route: tournamentId ? `/tournaments/${tournamentId}` : '/tournaments', tournamentId },
+              idempotencyKey: `tournament-entry-notification:${entryId}`,
+            });
+          }
           if (tournamentId) {
             await publishSafely(strapi, 'leaderboard:updated', { type: 'tournament', id: tournamentId }, {
               tournamentId,
@@ -112,6 +113,43 @@ export default {
           return;
         }
         await publishSafely(strapi, 'wallet:updated', { type: 'user', id: userId }, {});
+      },
+    });
+
+    strapi.db.lifecycles.subscribe({
+      models: ['api::prize-payout.prize-payout'],
+      async afterCreate(event: any) {
+        const payoutId = Number(event.result?.id);
+        if (!Number.isSafeInteger(payoutId) || payoutId < 1) return;
+        try {
+          await creditPlapoTournamentPrize(strapi, payoutId);
+        } catch (error) {
+          strapi.log.error('[PrizePayout] Could not credit a paid Plapo prize', error);
+        }
+      },
+      async afterUpdate(event: any) {
+        const payoutId = Number(event.result?.id ?? event.params?.where?.id);
+        if (!Number.isSafeInteger(payoutId) || payoutId < 1) return;
+        try {
+          await creditPlapoTournamentPrize(strapi, payoutId);
+        } catch (error) {
+          strapi.log.error('[PrizePayout] Could not credit a paid Plapo prize', error);
+        }
+      },
+    });
+
+    strapi.db.lifecycles.subscribe({
+      models: ['api::tournament.tournament'],
+      async afterUpdate(event: any) {
+        const status = event.params?.data?.tournament_status ?? event.result?.tournament_status;
+        if (status !== 'completed') return;
+        const tournamentId = Number(event.result?.id ?? event.params?.where?.id);
+        if (!Number.isSafeInteger(tournamentId) || tournamentId < 1) return;
+        try {
+          await createTournamentPrizePayouts(strapi, tournamentId);
+        } catch (error) {
+          strapi.log.error('[PrizePayout] Could not generate tournament prize payouts', error);
+        }
       },
     });
 
@@ -145,10 +183,13 @@ export default {
             { type: 'user', id: userId },
             { matchId },
           )));
-          await Promise.all([...userIds].map((userId) => pushSafely(strapi, userId, {
+          await Promise.all([...userIds].map((userId) => createUserNotification(strapi, {
+            userId,
             title: 'Match screenshot received',
             body: 'A player submitted a result for your match.',
+            type: 'match_submission',
             data: { route: `/matches/${matchId}`, matchId },
+            idempotencyKey: `match-submission:${submission.documentId ?? submission.id}:user:${userId}`,
           })));
         } catch (error) {
           strapi.log.error('[ScoreSubmission] Could not queue or publish the submission event', error);
@@ -188,10 +229,13 @@ export default {
                 { type: 'user', id: userId },
                 { matchId: matchRoomId },
               )),
-              ...[...userIds].map((userId) => pushSafely(strapi, userId, {
+              ...[...userIds].map((userId) => createUserNotification(strapi, {
+                userId,
                 title: 'Match result ready',
                 body: 'Your match result is ready to view.',
+                type: 'match_result',
                 data: { route: `/matches/${matchRoomId}`, matchId: matchRoomId },
+                idempotencyKey: `match-result:${match.documentId ?? match.id}:user:${userId}`,
               })),
               ...(tournamentRoomId ? [publishSafely(
                 strapi,
@@ -208,10 +252,13 @@ export default {
               { type: 'user', id: userId },
               { matchId: matchRoomId },
             )));
-            await Promise.all([...userIds].map((userId) => pushSafely(strapi, userId, {
+            await Promise.all([...userIds].map((userId) => createUserNotification(strapi, {
+              userId,
               title: 'Match dispute opened',
               body: 'A dispute was opened for your match.',
+              type: 'match_dispute',
               data: { route: `/matches/${matchRoomId}`, matchId: matchRoomId },
+              idempotencyKey: `match-dispute:${match.documentId ?? match.id}:user:${userId}`,
             })));
           }
         } catch (error) {

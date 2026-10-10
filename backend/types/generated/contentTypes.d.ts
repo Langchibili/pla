@@ -723,6 +723,44 @@ export interface ApiAffiliateSettingsAffiliateSettings
   };
 }
 
+export interface ApiAppNotificationAppNotification
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'app_notifications';
+  info: {
+    displayName: 'App Notification';
+    pluralName: 'app-notifications';
+    singularName: 'app-notification';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    body: Schema.Attribute.Text & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    data: Schema.Attribute.JSON;
+    idempotency_key: Schema.Attribute.String & Schema.Attribute.Unique;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::app-notification.app-notification'
+    > &
+      Schema.Attribute.Private;
+    notification_type: Schema.Attribute.String & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    read_at: Schema.Attribute.DateTime;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
 export interface ApiCountryCountry extends Struct.CollectionTypeSchema {
   collectionName: 'countries';
   info: {
@@ -1533,6 +1571,7 @@ export interface ApiPrizePayoutPrizePayout extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     currency: Schema.Attribute.Relation<'manyToOne', 'api::currency.currency'>;
+    idempotency_key: Schema.Attribute.String & Schema.Attribute.Unique;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1875,6 +1914,9 @@ export interface ApiTournamentTournament extends Struct.CollectionTypeSchema {
         number
       > &
       Schema.Attribute.DefaultTo<0>;
+    prize_type: Schema.Attribute.Enumeration<['cash', 'plapo', 'no-prize']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'cash'>;
     publishedAt: Schema.Attribute.DateTime;
     registration_closes_at: Schema.Attribute.DateTime;
     registration_opens_at: Schema.Attribute.DateTime;
@@ -2464,6 +2506,7 @@ declare module '@strapi/strapi' {
       'api::admn-settings.admn-settings': ApiAdmnSettingsAdmnSettings;
       'api::affiliate-impression.affiliate-impression': ApiAffiliateImpressionAffiliateImpression;
       'api::affiliate-settings.affiliate-settings': ApiAffiliateSettingsAffiliateSettings;
+      'api::app-notification.app-notification': ApiAppNotificationAppNotification;
       'api::country.country': ApiCountryCountry;
       'api::currency.currency': ApiCurrencyCurrency;
       'api::device-registry.device-registry': ApiDeviceRegistryDeviceRegistry;

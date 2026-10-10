@@ -56,6 +56,10 @@
     "payout_reference": {
       "type": "string"
     },
+    "idempotency_key": {
+      "type": "string",
+      "unique": true
+    },
     "approved_at": {
       "type": "datetime"
     },

@@ -6,6 +6,7 @@ import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/hooks/useAuth';
 import { useSocketEvent } from '@/hooks/useSocket';
 import { useToast } from '@/hooks/useToast';
+import { useConfirm } from '@/hooks/useConfirm';
 import { fmtDate, fmtPlapo, label } from '@/lib/format';
 import Surface from '@/components/Surface';
 import ActionSheet from '@/components/ActionSheet';
@@ -16,11 +17,21 @@ import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 const STORE = process.env.NEXT_PUBLIC_STORE_URL || 'https://store.proleagueafrica.com';
 export default function Wallet() {
   const { user, refresh } = useAuth(); const toast = useToast();
+  const confirm = useConfirm();
   const { data, loading, reload } = useApi('wallet', endpoints.wallet);
   useSocketEvent('wallet:updated', () => { reload(); refresh(); });
   const [open, setOpen] = useState(false); const [to, setTo] = useState(''); const [amt, setAmt] = useState('');
   const [plapoInfoOpen, setPlapoInfoOpen] = useState(false);
-  const send = async () => { try { await endpoints.transfer({ to, amount: Number(amt) }); toast('Plapo sent'); setOpen(false); reload(); refresh(); } catch (e) { toast(e.message, 'error'); } };
+  const send = async () => {
+    const accepted = await confirm({
+      title: 'Confirm Plapo transfer',
+      message: `Send ${fmtPlapo(Number(amt))} Plapo to ${to.trim()}? This transfer cannot be undone.`,
+      confirmText: 'Send Plapo',
+    });
+    if (!accepted) return;
+    try { await endpoints.transfer({ to, amount: Number(amt) }); toast('Plapo sent'); setOpen(false); reload(); refresh(); }
+    catch (e) { toast(e.message, 'error'); }
+  };
   return (
     <Box sx={{ display: 'grid', gap: 2.5 }}>
       <Typography variant="h6">Plapo (Pro League Africa Points)</Typography>

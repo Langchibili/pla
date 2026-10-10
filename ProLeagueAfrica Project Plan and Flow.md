@@ -76,6 +76,7 @@ The entry has a ready-made JSON template to copy, edit and save. Values here ove
     "maxPlayers": 256,
     "registrationClosesAt": "2026-11-01T18:00:00Z"
   },
+  "prizeType": "cash",
   "prizePool": {
     "enabled": true,
     "currency": "USD",
@@ -136,7 +137,12 @@ The entry has a ready-made JSON template to copy, edit and save. Values here ove
 - The config is validated when saved: stage windows must not overlap, distribution percentages must add to 100, and the game must be active.
 - When a tournament is published, the config is copied into it as a snapshot, so later edits to the template never change a running tournament.
 - `requiresEntryFee` and `prizePool.enabled` decide whether the tournament charges Plapo and whether it shows a prize pool. Both can be off for free events.
-- Prize money is calculated from the pool and the distribution at the end of the final stage and written to `prize_payout` for you to approve and pay.
+- `prizeType` is `cash` by default and may be `cash`, `plapo`, or `no-prize`. A Plapo prize uses the same percentage distribution but is credited to the winner's transferable Plapo balance after the payout is marked paid.
+- Payouts are calculated from final positions, pool and distribution when the tournament is marked complete. Cash payouts are written to `prize_payout` for approval and payment; Plapo payouts are credited to transferable balances.
+
+## In-app notifications
+
+User notifications are persisted with a read timestamp and delivered over the authenticated user socket room. The app shows them in its notification center and snackbar; the Expo app also forwards live notifications to native notification delivery. Match submissions, match results, disputes, tournament entries, referral rewards, and Plapo prizes create notification records. Users can mark one or all notifications read; notification reads are scoped to the signed-in user.
 
 ## Plapo economy, referrals and one account per device
 

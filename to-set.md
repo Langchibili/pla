@@ -78,3 +78,32 @@ Payments (configure the selected provider only):
 Before launch, verify the configured currencies, country assignments, email
 delivery, OTP production behavior, score-service callbacks, payment webhooks,
 and the public URLs from outside the deployment network.
+
+
+tournament settings json example
+{
+  "format": "round_robin",
+  "prizePool": {
+    "enabled": true,
+    "distribution": [
+      {
+        "place": 1,
+        "percent": 50
+      },
+      {
+        "place": 2,
+        "percent": 25
+      },
+      {
+        "place": 3,
+        "percent": 15
+      },
+      {
+        "place": 4,
+        "percent": 10
+      }
+    ]
+  },
+  "demo_fixture": true,
+  "players_per_match": 2
+}

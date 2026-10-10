@@ -63,5 +63,9 @@ export const endpoints = {
   transfer: (b) => api('/me/wallet/transfer', { method: 'POST', body: { ...b, idempotency_key: crypto.randomUUID() } }),
   packages: () => data(api('/plapo-packages?populate=currency&sort=sort_order:asc&filters[plapo_package_status][$eq]=active')),
   referrals: () => data(api('/me/referrals')),
+  notifications: (start = 0) => data(api(`/me/notifications?start=${start}`)),
+  readNotification: (id) => api(`/me/notifications/${encodeURIComponent(id)}/read`, { method: 'POST' }),
+  setNotificationRead: (id, read) => api(`/me/notifications/${encodeURIComponent(id)}/read-state`, { method: 'POST', body: { read } }),
+  readAllNotifications: () => api('/me/notifications/read-all', { method: 'POST' }),
   stageSchedule: (id) => data(api(`/tournament-stages/${encodeURIComponent(id)}/schedule`, { auth: false })),
 };

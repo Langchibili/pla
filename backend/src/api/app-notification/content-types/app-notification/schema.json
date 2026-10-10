@@ -1,0 +1,41 @@
+{
+  "kind": "collectionType",
+  "collectionName": "app_notifications",
+  "info": {
+    "singularName": "app-notification",
+    "pluralName": "app-notifications",
+    "displayName": "App Notification"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    },
+    "notification_type": {
+      "type": "string",
+      "required": true
+    },
+    "data": {
+      "type": "json"
+    },
+    "read_at": {
+      "type": "datetime"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "unique": true
+    }
+  }
+}

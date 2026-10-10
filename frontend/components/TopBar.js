@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { haptic } from '@/lib/haptics';
 import PlapoPill from './PlapoPill';
 import KenteStripe from './KenteStripe';
+import NotificationCenter from './NotificationCenter';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function TopBar({ title, showBack }) {
@@ -20,6 +21,7 @@ export default function TopBar({ title, showBack }) {
             variant="h6" noWrap sx={{ flex: 1, fontSize: 20 }}>{title}</Typography>
         </AnimatePresence>
         {user && <PlapoPill value={user.spendable_balance} onClick={() => { haptic('light'); router.push('/wallet'); }} />}
+        {user && <NotificationCenter />}
         <AnimatePresence>
           {showBack && (
             <motion.div initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0 }} transition={{ type: 'spring', stiffness: 1000, damping: 34 }}>
