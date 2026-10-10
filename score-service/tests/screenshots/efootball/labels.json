@@ -1,0 +1,5 @@
+{
+  "fulltime_0_8.jpg": {"left": 0, "right": 8, "zone": "top_center",    "left_name": "langmer fc"},
+  "banner_0_8.jpg":   {"left": 0, "right": 8, "zone": "bottom_center"},
+  "hud_44_0_3.jpg":   {"reject": "match_not_finished"}
+}

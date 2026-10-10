@@ -17,7 +17,7 @@ from core.ocr import RapidOcrEngine
 from games import get_parser, load_parsers
 from jobs import JobManager, callback_allowed
 
-app = FastAPI(title="ProLeagueAfrica score service", version="1.0.0")
+app = FastAPI(title="ProLeagueAfrica score service", version="4.0.0")
 manager = JobManager(settings, RapidOcrEngine())
 
 
@@ -57,7 +57,9 @@ def health():
 def games():
     return [{"key": k, "display": p.layout.display, "implemented": p.layout.implemented,
              "parser_version": p.layout.parser_version, "result_type": p.layout.result_type,
-             "primary_zone": p.layout.primary_zone} for k, p in load_parsers().items()]
+             "primary_zone": p.layout.primary_zone,
+             "accepted_zones": list(p.layout.accepted_zones) or [p.layout.primary_zone],
+             "calibrated": p.layout.calibrated} for k, p in load_parsers().items()]
 
 
 @app.post("/v1/jobs", status_code=202, dependencies=[Depends(require_key)])

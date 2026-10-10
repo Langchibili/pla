@@ -45,6 +45,23 @@ def parse_with_clock(game, clock, monkeypatch):
     return parser.run(image.getvalue(), ["KINGSLEY", "UNITED"], FixedOcr(clock), Settings())
 
 
+class FullTimeWithoutClock:
+    def __init__(self, game):
+        if game == "ea_fc":
+            self.tokens = [
+                Token("2 - 0", Box(500, 35, 780, 70), 0.99),
+                Token("FULLTIME", Box(500, 90, 780, 125), 0.99),
+            ]
+        else:
+            self.tokens = [
+                Token("FULLTIME", Box(500, 35, 780, 70), 0.99),
+                Token("2 - 0", Box(500, 90, 780, 125), 0.99),
+            ]
+
+    def read(self, rgb, offset=(0, 0), scale=1.0):
+        return self.tokens
+
+
 @pytest.mark.parametrize("game", ["dls", "efootball", "ea_fc"])
 @pytest.mark.parametrize("clock", ["45:00", "89:59"])
 def test_match_clock_below_90_rejects_result(game, clock, monkeypatch):
@@ -94,6 +111,25 @@ def test_missing_clock_behavior_uses_environment_setting(game, require_clock, st
     result = parser.run(image.getvalue(), [], FixedOcr(None, separate=True), Settings())
     assert result.status == status
     assert result.reject_reason == reason
+
+
+@pytest.mark.parametrize("game", ["dls", "efootball", "ea_fc"])
+def test_fulltime_label_satisfies_strict_clock_requirement_without_clock(game):
+    image = io.BytesIO()
+    board().save(image, "PNG")
+
+    result = get_parser(game).run(
+        image.getvalue(),
+        ["KINGSLEY", "UNITED"],
+        FullTimeWithoutClock(game),
+        Settings(require_clock_for_soccer_games_validity=True),
+    )
+
+    assert result.status == "ok"
+    assert result.score == {"left": 2, "right": 0}
+    assert result.clock_text is None
+    assert "fulltime_banner" in result.flags
+    assert "clock_not_shown" in result.flags
 
 
 @pytest.mark.parametrize(

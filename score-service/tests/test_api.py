@@ -27,9 +27,9 @@ def test_sync_read_and_game_list():
                    files={"image": ("a.png", PNG)})
         assert r.status_code == 200 and r.json()["score"] == {"left": 2, "right": 0}
         keys = {g["key"]: g["implemented"] for g in c.get("/v1/games", headers=HDR).json()}
-        assert keys["dls"] is True and keys["ea_fc"] is False
+        assert keys["dls"] is True and keys["ea_fc"] is True and keys["tekken_mk"] is False
         assert c.post("/v1/read", headers=HDR, data={"game_key": "nope"}, files={"image": ("a.png", PNG)}).status_code == 422
-        assert c.post("/v1/jobs", headers=HDR, data={"job_id": "j0", "game_key": "ea_fc", "callback_url": "http://x"},
+        assert c.post("/v1/jobs", headers=HDR, data={"job_id": "j0", "game_key": "tekken_mk", "callback_url": "http://x"},
                       files={"image": ("a.png", PNG)}).status_code == 409
 
 

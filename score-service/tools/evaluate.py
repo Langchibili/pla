@@ -16,6 +16,10 @@ from core.ocr import RapidOcrEngine
 from games import get_parser
 
 
+def norm(s) -> str:
+    return "".join(c for c in (s or "").casefold() if c.isalnum())
+
+
 def main(game: str) -> int:
     folder = pathlib.Path(__file__).resolve().parents[1] / "tests" / "screenshots" / game
     labels_path = folder / "labels.json"
@@ -31,7 +35,7 @@ def main(game: str) -> int:
             good = res.status == "ok"
             if "left" in want:      good &= res.score == {"left": want["left"], "right": want["right"]}
             if "zone" in want:      good &= res.zone == want["zone"]
-            if "left_name" in want: good &= (res.names["left"] or "").casefold() == want["left_name"].casefold()
+            if "left_name" in want: good &= norm(res.names["left"]) == norm(want["left_name"])   # engines differ on spaces
         ok, bad = ok + good, bad + (not good)
         if not good:
             print(f"MISS {name}: got status={res.status} score={res.score} zone={res.zone} conf={res.confidence} flags={res.flags}")

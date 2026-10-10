@@ -1,0 +1,11 @@
+{
+  "stats_2_0.jpeg":      {"left": 2, "right": 0, "zone": "top_center",    "left_name": "langmer"},
+  "stats_1_0.jpeg":      {"left": 1, "right": 0, "zone": "top_center",    "left_name": "langmer"},
+  "stats_2_3.jpeg":      {"left": 2, "right": 3, "zone": "top_center",    "left_name": "langmer"},
+  "banner_1_0.jpeg":     {"left": 1, "right": 0, "zone": "bottom_center", "left_name": "langmer"},
+  "banner_2_3.jpeg":     {"left": 2, "right": 3, "zone": "bottom_center", "left_name": "langmer"},
+  "hud_90_lan_ved.jpeg": {"left": 2, "right": 0, "zone": "top_left"},
+  "hud_45_lan_ved.jpeg": {"reject": "match_not_finished"},
+  "hud_45_lan_kar.jpeg": {"reject": "match_not_finished"},
+  "hud_45_lan_jay.jpeg": {"reject": "match_not_finished"}
+}

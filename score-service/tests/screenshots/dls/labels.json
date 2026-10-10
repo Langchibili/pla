@@ -1,0 +1,23 @@
+{
+  "WhatsApp Image 2026-10-10 at 2.03.53 AM (1).jpeg": {
+    "left": 0,
+    "right": 3,
+    "clock": "90:00"
+  },
+  "WhatsApp Image 2026-10-10 at 2.03.53 AM.jpeg": {
+    "left": 0,
+    "right": 2,
+    "clock": "90:00"
+  },
+  "WhatsApp Image 2026-10-10 at 2.03.54 AM (1).jpeg": {
+    "left": 0,
+    "right": 1,
+    "clock": "90:00"
+  },
+  "WhatsApp Image 2026-10-10 at 2.03.54 AM.jpeg": {
+    "left": 0,
+    "right": 2,
+    "clock": "45:00",
+    "reject": "match_not_finished"
+  }
+}

@@ -65,5 +65,5 @@ def test_bad_file():
 
 
 def test_unimplemented_game_is_not_read():
-    r = get_parser("ea_fc").run(b"x", [], OCR, S)
+    r = get_parser("tekken_mk").run(b"x", [], OCR, S)
     assert r.status == "unsupported_game"

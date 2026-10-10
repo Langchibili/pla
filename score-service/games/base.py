@@ -39,6 +39,10 @@ class Layout:
     names_in_side_thirds: bool = True
     retry_enhanced: bool = True
     minimum_completed_clock_minute: int | None = None
+    accepted_zones: tuple = ()                # zones that count as a final-result screen (empty = primary_zone only)
+    require_completion_screen: bool = False   # True: reject a live HUD that is not a FULLTIME / stats screen
+    fulltime_label_replaces_clock: bool = False  # True: a FULL TIME label is enough when no clock is on screen
+    calibrated: bool = True                   # False: layout never checked on real screenshots; always flagged
     notes: str = ""
 
 
@@ -240,7 +244,7 @@ class GameParser:
                                 expected=expected_names, ctx=ctx, info=info, timings=timings,
                                 match_clock=match_clock,
                                 require_match_clock=settings.require_clock_for_soccer_games_validity)
-        res.zones_with_scores = sorted({p.zone for p in pairs})
+        res.zones_with_scores = sorted({p.zone for p in pairs if p.link != "clock_only"})
         res.candidates = [
             {"score": f"{p.left.text}:{p.right.text}", "zone": p.zone, "link": p.link, "rank_score": p.score}
             for p in sorted(pairs, key=lambda p: p.score, reverse=True)[:3]
