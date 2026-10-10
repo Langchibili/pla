@@ -11,9 +11,10 @@ class DlsParser(GameParser):
     layout = Layout(
         key="dls",
         display="Dream League Soccer",
-        parser_version="dls-v1",
+        parser_version="dls-v2",
         primary_zone="top_center",
         allow_clock=True,
+        minimum_completed_clock_minute=90,
         notes="Football: a match clock may sit between the two numbers.",
     )
 

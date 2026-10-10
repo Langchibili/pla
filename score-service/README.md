@@ -20,6 +20,15 @@ Add as a separate container next to Strapi and Redis; Strapi calls it over the p
 6. If a score exists in the game's primary zone it wins over scores found elsewhere. Two near-equal different readings -> confidence capped at 0.45 and flag `ambiguous_readings`.
 7. Names: text only from the left/right thirds nearest the score; logos and junk are ignored. A similarity hint against the expected names is returned, never a decision.
 
+For DLS, eFootball, and EA Sports FC, a detected match clock below 90 minutes
+rejects the result as `match_not_finished`. A standalone clock-shaped reading
+is never accepted as a score; at or after 90 minutes it still requires a
+separate final score to be detected. Set
+`REQUIRE_CLOCK_FOR_SOCCER_GAMES_VALIDITY=true` to reject a score when OCR cannot
+read any match clock; when false (the default), a missing clock does not prevent
+score acceptance. The service loads a local `.env` file when present, and
+deployment environments may also provide the setting as a process variable.
+
 ## API (all calls need `X-Api-Key`)
 | Call | Use |
 | --- | --- |

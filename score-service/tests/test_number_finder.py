@@ -38,6 +38,21 @@ def test_clock_with_tick_is_dropped():
     assert got == [("2", "0", "clock", "top_center")]
 
 
+def test_stoppage_time_clock_is_dropped():
+    pairs = find_pairs([tok("2", 500), tok("90+1", 560, w=120), tok("0", 720)], R, CFG)
+    assert len(pairs) == 1
+    assert pairs[0].link == "clock"
+    assert pairs[0].clock_text == "90+1"
+
+
+@pytest.mark.parametrize("text", ["5:00", "45:00", "90:00", "45'", "45+1"])
+def test_standalone_match_clock_is_not_reported_as_a_score(text):
+    pairs = find_pairs([tok(text, 590)], R, CFG)
+    assert len(pairs) == 1
+    assert pairs[0].link == "clock_only"
+    assert pairs[0].clock_text == text
+
+
 @pytest.mark.parametrize("text", ["2%", "22%", "2 %"])
 def test_number_touching_percent_is_not_a_score(text):
     assert scores([tok("1", 500), tok(text, 540)]) == []

@@ -13,11 +13,12 @@ class EfootballParser(GameParser):
     layout = Layout(
         key="efootball",
         display="eFootball",
-        parser_version="efootball-v0",
+        parser_version="efootball-v1",
         result_type="head_to_head",
         implemented=False,
         primary_zone="top_left",
         allow_clock=True,
+        minimum_completed_clock_minute=90,
         notes="Football with a match clock. Confirm the scoreboard position from real screenshots.",
     )
 

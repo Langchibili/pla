@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from .splitter import Regions
 from .types import Atom, Box, ScorePair, Token
 
-ATOM_RE = re.compile(r"[0-9]+|[:\-\u2013\u2014]|%|\.|['\u2019\u2032`]|[^\W\d_]+|\S")
+ATOM_RE = re.compile(r"[0-9]+|[:\-\u2013\u2014]|\+|%|\.|['\u2019\u2032`]|[^\W\d_]+|\S")
 
 
 @dataclass
@@ -38,6 +38,8 @@ def atomize(tokens: list[Token]) -> list[Atom]:
                 kind = "NUM"
             elif s in ":-\u2013\u2014":
                 kind = "SEP"
+            elif s == "+":
+                kind = "PLUS"
             elif s == "%":
                 kind = "PCT"
             elif s == ".":
@@ -121,6 +123,13 @@ def _find_clocks(line: list[Atom], bad: set[int], cfg: FinderConfig) -> set[int]
         if (a.kind == "NUM" and t.kind == "TICK" and touching(a, t, cfg.touch_ratio)
                 and num_left(i) and num_right(i + 1)):
             clock |= {i, i + 1}
+    for i in range(n - 2):  # 90+1
+        a, plus, b = line[i], line[i + 1], line[i + 2]
+        if (a.kind == "NUM" and plus.kind == "PLUS" and b.kind == "NUM"
+                and len(a.text) <= 3 and len(b.text) <= 2
+                and touching(a, plus, cfg.touch_ratio) and touching(plus, b, cfg.touch_ratio)
+                and num_left(i) and num_right(i + 2)):
+            clock |= {i, i + 1, i + 2}
     return clock
 
 
@@ -134,14 +143,22 @@ def _pairs_in_line(line: list[Atom], regions: Regions, cfg: FinderConfig) -> lis
         between = range(i + 1, j)
         clock_idx = [k for k in between if k in clock]
         others = [k for k in between if k not in clock]
+        a, b = line[i], line[j]
         if any(line[k].kind != "SEP" for k in others):
             continue                      # a word, number or symbol sits between: not a score
         if len(others) > (2 if clock_idx else 1):
             continue
-        link = "clock" if clock_idx else ("sep" if others else "none")
+        clock_only = (
+            cfg.allow_clock
+            and not clock_idx
+            and len(others) == 1
+            and line[others[0]].text == ":"
+            and len(b.text) == 2
+            and int(b.text) <= 59
+        )
+        link = "clock_only" if clock_only else ("clock" if clock_idx else ("sep" if others else "none"))
         if link == "none" and not cfg.allow_no_separator:
             continue
-        a, b = line[i], line[j]
         va, vb = int(a.text), int(b.text)
         if not (cfg.score_min <= va <= cfg.score_max and cfg.score_min <= vb <= cfg.score_max):
             continue
@@ -157,7 +174,7 @@ def _pairs_in_line(line: list[Atom], regions: Regions, cfg: FinderConfig) -> lis
             gap_score = 1.0
         else:
             gap_score = max(0.0, 1 - (gap_h - limit / 2) / (limit / 2))
-        link_score = {"sep": 1.0, "clock": 0.95, "none": 0.6}[link]
+        link_score = {"sep": 1.0, "clock": 0.95, "clock_only": 1.0, "none": 0.6}[link]
         quality = 0.35 * align + 0.20 * size + 0.20 * gap_score + 0.25 * link_score
 
         used = [a, b] + [line[k] for k in others] + [line[k] for k in clock_idx]
@@ -165,11 +182,36 @@ def _pairs_in_line(line: list[Atom], regions: Regions, cfg: FinderConfig) -> lis
         cx, cy = (a.box.x0 + b.box.x1) / 2, (a.box.cy + b.box.cy) / 2
         out.append(ScorePair(
             left=a, right=b, link=link,
-            clock_text="".join(line[k].text for k in clock_idx) or None,
+            clock_text=("".join(line[k].text for k in clock_idx)
+                        or (f"{a.text}:{b.text}" if clock_only else None)),
             quality=round(quality, 4), score=round(quality * conf, 4),
             zone=regions.zone_of(cx, cy),
             consumed=[(x.src, x.span) for x in used],
         ))
+    if cfg.allow_clock:
+        for i, atom in enumerate(line):
+            if atom.kind != "NUM" or i in bad or i in clock or len(atom.text) > 3:
+                continue
+            clock_atoms: list[Atom] = []
+            clock_text = None
+            if i + 1 < len(line) and line[i + 1].kind == "TICK":
+                clock_atoms = [atom, line[i + 1]]
+                clock_text = f"{atom.text}{line[i + 1].text}"
+            elif (
+                i + 2 < len(line)
+                and line[i + 1].kind == "PLUS"
+                and line[i + 2].kind == "NUM"
+                and len(line[i + 2].text) <= 2
+            ):
+                clock_atoms = [atom, line[i + 1], line[i + 2]]
+                clock_text = f"{atom.text}+{line[i + 2].text}"
+            if clock_text:
+                out.append(ScorePair(
+                    left=atom, right=atom, link="clock_only", clock_text=clock_text,
+                    quality=atom.conf, score=atom.conf,
+                    zone=regions.zone_of(atom.box.cx, atom.box.cy),
+                    consumed=[(item.src, item.span) for item in clock_atoms],
+                ))
     return out
 
 

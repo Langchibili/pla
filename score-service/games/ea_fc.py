@@ -13,11 +13,12 @@ class EaFcParser(GameParser):
     layout = Layout(
         key="ea_fc",
         display="EA Sports FC",
-        parser_version="ea_fc-v0",
+        parser_version="ea_fc-v1",
         result_type="head_to_head",
         implemented=False,
         primary_zone="top_left",
         allow_clock=True,
+        minimum_completed_clock_minute=90,
         notes="Football with a match clock. Confirm the scoreboard position from real screenshots.",
     )
 

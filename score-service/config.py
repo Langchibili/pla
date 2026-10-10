@@ -3,9 +3,13 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 
+from dotenv import load_dotenv
 
 def _env(name, default=None): return os.environ.get(name, default)
 def _bool(name, default=False): return str(_env(name, str(default))).lower() in ("1", "true", "yes")
+
+
+load_dotenv()
 
 
 @dataclass
@@ -15,6 +19,9 @@ class Settings:
     # Hosts the service may call back, e.g. "strapi.internal,api.proleagueafrica.com"
     allowed_callback_hosts: list = field(default_factory=lambda: [h.strip() for h in _env("ALLOWED_CALLBACK_HOSTS", "").split(",") if h.strip()])
     allow_any_callback: bool = field(default_factory=lambda: _bool("ALLOW_ANY_CALLBACK", False))  # dev only
+    require_clock_for_soccer_games_validity: bool = field(
+        default_factory=lambda: _bool("REQUIRE_CLOCK_FOR_SOCCER_GAMES_VALIDITY", False)
+    )
     max_image_bytes: int = field(default_factory=lambda: int(_env("MAX_IMAGE_BYTES", 15_000_000)))
     min_width: int = field(default_factory=lambda: int(_env("MIN_WIDTH", 640)))
     min_height: int = field(default_factory=lambda: int(_env("MIN_HEIGHT", 360)))

@@ -8,6 +8,7 @@ The five contract steps are:
 from __future__ import annotations
 import time
 from dataclasses import dataclass
+import re
 import numpy as np
 from PIL import Image
 
@@ -37,6 +38,7 @@ class Layout:
     name_pattern: str | None = r"^[\w .\-'\[\]|]{2,24}$"
     names_in_side_thirds: bool = True
     retry_enhanced: bool = True
+    minimum_completed_clock_minute: int | None = None
     notes: str = ""
 
 
@@ -99,6 +101,10 @@ class GameParser:
     def choose(self, pairs: list[ScorePair], margin: float):
         """Prefer a score in the game's primary zone; flag two near-equal different readings."""
         primary = [p for p in pairs if p.zone == self.layout.primary_zone]
+        if self.layout.minimum_completed_clock_minute is not None:
+            score_pairs = [p for p in primary if p.link != "clock_only"]
+            if score_pairs:
+                primary = score_pairs
         pool = sorted(primary or pairs, key=lambda p: p.score, reverse=True)
         best = pool[0]
         ambiguous = any(
@@ -113,8 +119,63 @@ class GameParser:
                                  side_thirds_only=self.layout.names_in_side_thirds)
         return {"left": left, "right": right}
 
-    def build_result(self, *, best, ambiguous, in_primary, names, expected, ctx, info, timings) -> ReadResult:
+    @staticmethod
+    def _clock_minute(clock_text: str | None) -> int | None:
+        match = re.fullmatch(
+            r"\s*(\d{1,3})(?::\d{2}|\+(\d{1,2}))?\s*['\u2019\u2032`]?\s*",
+            clock_text or "",
+        )
+        if not match:
+            return None
+        return int(match.group(1)) + int(match.group(2) or 0)
+
+    def build_result(
+        self, *, best, ambiguous, in_primary, names, expected, ctx, info, timings,
+        match_clock: ScorePair | None = None, require_match_clock: bool = False,
+    ) -> ReadResult:
         flags = ctx.flags
+        minimum_clock = self.layout.minimum_completed_clock_minute
+        clock_pair = match_clock or (best if best.link in ("clock", "clock_only") else None)
+        if minimum_clock is not None and require_match_clock and clock_pair is None:
+            return ReadResult(
+                status="rejected", game_key=self.layout.key, parser_version=self.layout.parser_version,
+                reject_reason="match_clock_missing",
+                message="The match clock could not be read; submit a screenshot that shows the clock.",
+                score=None if best.link == "clock_only" else {
+                    "left": int(best.left.text), "right": int(best.right.text),
+                },
+                score_text=None if best.link == "clock_only" else f"{best.left.text}:{best.right.text}",
+                link=best.link, zone=best.zone, flags=["match_clock_missing"],
+                image=info, timings_ms=timings,
+            )
+        if minimum_clock is not None and clock_pair:
+            clock_minute = self._clock_minute(clock_pair.clock_text)
+            if clock_minute is None:
+                return ReadResult(
+                    status="rejected", game_key=self.layout.key, parser_version=self.layout.parser_version,
+                    reject_reason="match_clock_unreadable",
+                    message="The match clock could not be read to confirm that the match is complete.",
+                    clock_text=clock_pair.clock_text, zone=best.zone, image=info, timings_ms=timings,
+                )
+            if clock_minute < minimum_clock:
+                return ReadResult(
+                    status="rejected", game_key=self.layout.key, parser_version=self.layout.parser_version,
+                    reject_reason="match_not_finished",
+                    message=f"The match clock shows {clock_pair.clock_text}; submit the result after 90 minutes.",
+                    score=None if best.link == "clock_only" else {
+                        "left": int(best.left.text), "right": int(best.right.text),
+                    },
+                    score_text=None if best.link == "clock_only" else f"{best.left.text}:{best.right.text}",
+                    link=best.link, clock_text=clock_pair.clock_text, zone=best.zone,
+                    flags=["match_incomplete"], image=info, timings_ms=timings,
+                )
+            if best.link == "clock_only":
+                return ReadResult(
+                    status="no_score_found", game_key=self.layout.key, parser_version=self.layout.parser_version,
+                    message="The match clock was found, but no final score was detected.",
+                    clock_text=clock_pair.clock_text, zone=best.zone, flags=["clock_without_score"],
+                    image=info, timings_ms=timings,
+                )
         if ambiguous:
             flags.append("ambiguous_readings")
         if not in_primary:
@@ -163,10 +224,22 @@ class GameParser:
                               flags=sorted(set(flags)), image=info, timings_ms=timings)
 
         best, ambiguous, in_primary = self.choose(pairs, settings.ambiguity_margin)
+        clocks = [pair for pair in pairs if pair.link in ("clock", "clock_only")]
+        match_clock = next(
+            (
+                pair for pair in clocks
+                if L.minimum_completed_clock_minute is not None
+                and self._clock_minute(pair.clock_text) is not None
+                and self._clock_minute(pair.clock_text) < L.minimum_completed_clock_minute
+            ),
+            clocks[0] if clocks else None,
+        )
         names = self.read_names(ctx, best)
         timings["total"] = round((time.perf_counter() - t0) * 1000)
         res = self.build_result(best=best, ambiguous=ambiguous, in_primary=in_primary, names=names,
-                                expected=expected_names, ctx=ctx, info=info, timings=timings)
+                                expected=expected_names, ctx=ctx, info=info, timings=timings,
+                                match_clock=match_clock,
+                                require_match_clock=settings.require_clock_for_soccer_games_validity)
         res.zones_with_scores = sorted({p.zone for p in pairs})
         res.candidates = [
             {"score": f"{p.left.text}:{p.right.text}", "zone": p.zone, "link": p.link, "rank_score": p.score}
