@@ -70,7 +70,7 @@ export async function queueScoreSubmission(strapi: any, submissionId: number): P
     if (!jobId) throw new Error('Score service response did not include a job ID');
 
     await strapi.db.query('api::match-submission.match-submission').update({
-      where: { id: submissionId },
+      where: { id: submissionId, match_submission_status: 'pending' },
       data: { score_job_id: String(jobId), match_submission_status: 'processing' },
     });
   } catch (error) {

@@ -2,6 +2,7 @@ import { factories } from '@strapi/strapi';
 import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { readFile } from 'fs/promises';
 import { resolveSettingsForCountry } from '../../../services/settingsResolver';
+import { saveAndAdjudicateScoreResult } from '../../../services/matchResultService';
 
 const UNPARSED_BODY = Symbol.for('unparsedBody');
 
@@ -146,8 +147,13 @@ export default factories.createCoreController('api::match-submission.match-submi
 		const secret = process.env.WEBHOOK_SECRET;
 		const timestamp = String(ctx.request.headers['x-timestamp'] ?? '');
 		const signature = String(ctx.request.headers['x-signature'] ?? '');
-		const rawBody = ctx.request.body?.[UNPARSED_BODY];
-		if (!secret || !timestamp || !signature || !Buffer.isBuffer(rawBody)) {
+		const rawBodyValue = ctx.request.body?.[UNPARSED_BODY];
+		const rawBody = Buffer.isBuffer(rawBodyValue)
+			? rawBodyValue
+			: typeof rawBodyValue === 'string'
+				? Buffer.from(rawBodyValue, 'utf8')
+				: null;
+		if (!secret || !timestamp || !signature || !rawBody) {
 			return ctx.unauthorized('Invalid score webhook signature');
 		}
 		const timestampSeconds = Number(timestamp);
@@ -187,7 +193,6 @@ export default factories.createCoreController('api::match-submission.match-submi
 		if (!submission) return ctx.notFound('Submission not found');
 		if (submission.extracted_json) return ctx.send({ received: true, duplicate: true });
 
-		const result = payload.result;
 		const gameId = submission.match?.tournament?.game?.id;
 		const zones = gameId
 			? await strapi.db.query('api::game-score-zone.game-score-zone').findMany({
@@ -198,26 +203,22 @@ export default factories.createCoreController('api::match-submission.match-submi
 		const allowedZones = zones.map((zone: any) => zone.allowed_zone);
 		const settings = await resolveSettingsForCountry(strapi, submission.match?.tournament?.country?.id);
 		const confidenceThreshold = Number(settings.min_ocr_confidence ?? 0.8);
-		const status = result.status === 'rejected' || result.status === 'no_score_found'
-			? 'invalid'
-			: !allowedZones.includes(result.zone)
-				? 'invalid'
-				: Number(result.confidence) < confidenceThreshold || !result.score
-					? 'needs_review'
-					: 'valid';
-
+		const requireCompletedClock = !['0', 'false', 'no', 'off'].includes(
+			String(process.env.REQUIRE_CLOCK_FOR_SOCCER_GAMES_VALIDITY ?? 'true').trim().toLowerCase(),
+		);
 		await strapi.db.query('api::match-submission.match-submission').update({
 			where: { id: submission.id },
-			data: {
-				score_job_id: String(payload.job_id),
-				extracted_json: result,
-				ocr_confidence: Number.isFinite(Number(result.confidence)) ? Number(result.confidence) : null,
-				score_zone_found: typeof result.zone === 'string' ? result.zone : null,
-				match_submission_status: status,
-				rejection_reason: status === 'invalid' ? (result.reject_reason ?? 'Score was not found in the permitted game zone.') : null,
-			},
+			data: { score_job_id: String(payload.job_id) },
 		});
+		const status = await saveAndAdjudicateScoreResult(
+			strapi,
+			Number(submission.id),
+			payload.result,
+			allowedZones,
+			confidenceThreshold,
+			requireCompletedClock,
+		);
 
-		return ctx.send({ received: true });
+		return ctx.send({ received: true, status });
 	},
 }));
