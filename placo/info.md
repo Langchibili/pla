@@ -4,3 +4,7 @@ and the placo players, who are owners of the clubs cannot name their players or 
 players will have default names and looks, or can be customized as well
 there shall be premuim players too
 and the placo players shall play in tournaments and win actual cash, not just virtue points, but actual cash prices
+
+use 
+https://www.babylonjs.com/community/ for demos and get their source codes via inspect, use them as guides to the ai to use as the base level depth to ui, and stuff like facial expressions, for example, the one below
+https://punkoffice.com/
