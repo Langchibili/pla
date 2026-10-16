@@ -1,0 +1,93 @@
+{
+  "kind": "collectionType",
+  "collectionName": "match_events",
+  "info": {
+    "singularName": "match-event",
+    "pluralName": "match-events",
+    "displayName": "Match Event",
+    "description": "Timestamped authoritative match event stream for goals, cards, substitutions, shots, referee decisions and replay markers."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "match": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::match.match",
+      "required": true
+    },
+    "event_sequence": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "event_type": {
+      "type": "enumeration",
+      "enum": [
+        "kickoff",
+        "goal",
+        "own_goal",
+        "shot",
+        "save",
+        "pass",
+        "tackle",
+        "foul",
+        "yellow_card",
+        "red_card",
+        "offside",
+        "corner",
+        "free_kick",
+        "penalty",
+        "substitution",
+        "injury",
+        "post_hit",
+        "bar_hit",
+        "line_cross",
+        "half_time",
+        "full_time",
+        "review_marker",
+        "other"
+      ],
+      "required": true,
+      "default": "other"
+    },
+    "simulation_time_seconds": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "period_number": {
+      "type": "integer",
+      "default": 1,
+      "min": 1,
+      "max": 5
+    },
+    "team_side": {
+      "type": "enumeration",
+      "enum": [
+        "home",
+        "away",
+        "neutral"
+      ],
+      "default": "neutral"
+    },
+    "actor_player_id": {
+      "type": "string"
+    },
+    "target_player_id": {
+      "type": "string"
+    },
+    "position_payload": {
+      "type": "json",
+      "default": {}
+    },
+    "event_payload": {
+      "type": "json",
+      "default": {}
+    },
+    "event_hash": {
+      "type": "string"
+    }
+  }
+}

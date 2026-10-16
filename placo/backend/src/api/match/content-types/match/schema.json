@@ -1,0 +1,170 @@
+{
+  "kind": "collectionType",
+  "collectionName": "matches",
+  "info": {
+    "singularName": "match",
+    "pluralName": "matches",
+    "displayName": "Match",
+    "description": "Canonical online, ranked, training or PLA fixture match. Stores immutable roster/rules/physics snapshots and the authoritative final score/metrics."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "match_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "match_mode": {
+      "type": "enumeration",
+      "enum": [
+        "casual",
+        "ranked",
+        "training",
+        "pla_tournament"
+      ],
+      "required": true,
+      "default": "casual"
+    },
+    "match_status": {
+      "type": "enumeration",
+      "enum": [
+        "created",
+        "ready",
+        "in_progress",
+        "awaiting_verification",
+        "verified",
+        "rejected",
+        "abandoned",
+        "cancelled"
+      ],
+      "required": true,
+      "default": "created"
+    },
+    "home_player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "away_player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile"
+    },
+    "home_club": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club.club",
+      "required": true
+    },
+    "away_club": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club.club"
+    },
+    "home_score": {
+      "type": "integer",
+      "min": 0
+    },
+    "away_score": {
+      "type": "integer",
+      "min": 0
+    },
+    "match_started_at": {
+      "type": "datetime"
+    },
+    "match_ended_at": {
+      "type": "datetime"
+    },
+    "verified_at": {
+      "type": "datetime"
+    },
+    "game_ruleset": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-ruleset.game-ruleset"
+    },
+    "physics_profile": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::physics-profile.physics-profile"
+    },
+    "physics_curve_set": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::physics-curve-set.physics-curve-set"
+    },
+    "ai_behaviour_profile": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::ai-behaviour-profile.ai-behaviour-profile"
+    },
+    "roster_snapshot": {
+      "type": "json",
+      "required": true,
+      "default": {}
+    },
+    "roster_snapshot_hash": {
+      "type": "string",
+      "required": true
+    },
+    "rules_snapshot": {
+      "type": "json",
+      "default": {}
+    },
+    "physics_snapshot": {
+      "type": "json",
+      "default": {}
+    },
+    "physics_snapshot_hash": {
+      "type": "string"
+    },
+    "ai_snapshot": {
+      "type": "json",
+      "default": {}
+    },
+    "simulation_seed": {
+      "type": "string",
+      "required": true
+    },
+    "simulation_build": {
+      "type": "string"
+    },
+    "result_metrics": {
+      "type": "json",
+      "default": {}
+    },
+    "result_digest": {
+      "type": "string"
+    },
+    "result_validation_status": {
+      "type": "enumeration",
+      "enum": [
+        "not_submitted",
+        "pending",
+        "verified",
+        "rejected"
+      ],
+      "required": true,
+      "default": "not_submitted"
+    },
+    "xp_granted": {
+      "type": "boolean",
+      "default": false
+    },
+    "coin_rewards_granted": {
+      "type": "boolean",
+      "default": false
+    },
+    "finalisation_idempotency_key": {
+      "type": "string",
+      "unique": true
+    },
+    "match_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

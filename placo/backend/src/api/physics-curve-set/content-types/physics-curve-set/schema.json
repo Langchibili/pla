@@ -1,0 +1,108 @@
+{
+  "kind": "collectionType",
+  "collectionName": "physics_curve_sets",
+  "info": {
+    "singularName": "physics-curve-set",
+    "pluralName": "physics-curve-sets",
+    "displayName": "Physics Curve Set",
+    "description": "Versioned piecewise-linear attribute-to-physics curves. Match snapshots freeze curve version and hash at kickoff."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "curve_set_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "curve_set_version": {
+      "type": "string",
+      "required": true
+    },
+    "curve_definitions": {
+      "type": "json",
+      "required": true,
+      "default": {
+        "topSpeed": [
+          [
+            1,
+            7.627
+          ],
+          [
+            50,
+            8.95
+          ],
+          [
+            100,
+            10.3
+          ]
+        ],
+        "accelerationTau": [
+          [
+            1,
+            1.5425
+          ],
+          [
+            50,
+            1.175
+          ],
+          [
+            100,
+            0.8
+          ]
+        ],
+        "lateralAcceleration": [
+          [
+            1,
+            5.6
+          ],
+          [
+            50,
+            7.1
+          ],
+          [
+            100,
+            8.9
+          ]
+        ],
+        "firstTouchQuality": [
+          [
+            1,
+            0.31
+          ],
+          [
+            50,
+            0.65
+          ],
+          [
+            100,
+            0.95
+          ]
+        ]
+      }
+    },
+    "global_scales": {
+      "type": "json",
+      "default": {
+        "paceScale": 1,
+        "agilityScale": 1,
+        "staminaScale": 1,
+        "errorScale": 1
+      }
+    },
+    "curve_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "draft",
+        "active",
+        "deprecated"
+      ],
+      "required": true,
+      "default": "draft"
+    },
+    "notes": {
+      "type": "text"
+    }
+  }
+}

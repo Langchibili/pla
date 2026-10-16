@@ -1,3 +1,4 @@
+//pla\backend\src\services\settingsResolver.ts
 const COUNTRY_SETTINGS_UID = 'api::country.country';
 const ADMIN_SETTINGS_UID = 'api::admn-settings.admn-settings';
 

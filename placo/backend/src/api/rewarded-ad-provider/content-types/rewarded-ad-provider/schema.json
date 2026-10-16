@@ -1,0 +1,80 @@
+{
+  "kind": "collectionType",
+  "collectionName": "rewarded_ad_providers",
+  "info": {
+    "singularName": "rewarded-ad-provider",
+    "pluralName": "rewarded-ad-providers",
+    "displayName": "Rewarded Ad Provider",
+    "description": "Provider configuration for AdMob/Unity/AppLovin/IronSource/custom rewarded ads; secrets remain in environment/secret storage, never in this content type."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "provider_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "provider_name": {
+      "type": "string",
+      "required": true
+    },
+    "provider_type": {
+      "type": "enumeration",
+      "enum": [
+        "admob",
+        "unity_ads",
+        "applovin",
+        "iron_source",
+        "custom"
+      ],
+      "required": true,
+      "default": "admob"
+    },
+    "provider_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "required": true,
+      "default": "inactive"
+    },
+    "server_verification_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "environment_secret_key_name": {
+      "type": "string"
+    },
+    "allowed_ad_unit_ids": {
+      "type": "json",
+      "default": []
+    },
+    "bronze_reward_amount": {
+      "type": "integer",
+      "default": 20,
+      "min": 0
+    },
+    "diamond_reward_amount": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "max_rewards_per_player_day": {
+      "type": "integer",
+      "default": 10,
+      "min": 0
+    },
+    "minimum_interval_seconds": {
+      "type": "integer",
+      "default": 30,
+      "min": 0
+    },
+    "provider_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

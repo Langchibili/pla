@@ -1,0 +1,86 @@
+{
+  "kind": "collectionType",
+  "collectionName": "abuse_reports",
+  "info": {
+    "singularName": "abuse-report",
+    "pluralName": "abuse-reports",
+    "displayName": "Abuse Report",
+    "description": "Moderation and anti-cheat queue for suspicious match telemetry, names, suspected tampering, abuse and provider reward fraud."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "report_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "reporter": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile"
+    },
+    "reported_player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile"
+    },
+    "match": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::match.match"
+    },
+    "report_type": {
+      "type": "enumeration",
+      "enum": [
+        "cheating",
+        "name_violation",
+        "harassment",
+        "reward_fraud",
+        "match_fixing",
+        "other"
+      ],
+      "required": true,
+      "default": "other"
+    },
+    "severity": {
+      "type": "enumeration",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "required": true,
+      "default": "medium"
+    },
+    "description": {
+      "type": "text"
+    },
+    "evidence_metadata": {
+      "type": "json",
+      "default": {}
+    },
+    "moderation_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "open",
+        "under_review",
+        "actioned",
+        "dismissed"
+      ],
+      "required": true,
+      "default": "open"
+    },
+    "reviewed_by_admin_user_id": {
+      "type": "string"
+    },
+    "resolution_note": {
+      "type": "text"
+    },
+    "resolved_at": {
+      "type": "datetime"
+    }
+  }
+}

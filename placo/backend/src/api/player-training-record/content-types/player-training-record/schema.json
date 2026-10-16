@@ -1,0 +1,69 @@
+{
+  "kind": "collectionType",
+  "collectionName": "player_training_records",
+  "info": {
+    "singularName": "player-training-record",
+    "pluralName": "player-training-records",
+    "displayName": "Player Training Record",
+    "description": "Player-level training drill outcome, skill focus, coach/AI session reference and progression deltas."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "club_player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club-player.club-player",
+      "required": true
+    },
+    "training_session": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::training-session.training-session"
+    },
+    "training_focus": {
+      "type": "enumeration",
+      "enum": [
+        "pace",
+        "shooting",
+        "passing",
+        "dribbling",
+        "defending",
+        "goalkeeping",
+        "stamina",
+        "balanced"
+      ],
+      "required": true,
+      "default": "balanced"
+    },
+    "performance_score": {
+      "type": "decimal",
+      "min": 0,
+      "max": 100
+    },
+    "attribute_deltas": {
+      "type": "json",
+      "default": {}
+    },
+    "xp_earned": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "completed_at": {
+      "type": "datetime"
+    },
+    "record_idempotency_key": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    }
+  }
+}

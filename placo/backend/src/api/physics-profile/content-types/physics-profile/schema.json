@@ -1,0 +1,139 @@
+{
+  "kind": "collectionType",
+  "collectionName": "physics_profiles",
+  "info": {
+    "singularName": "physics-profile",
+    "pluralName": "physics-profiles",
+    "displayName": "Physics Profile",
+    "description": "Versioned physics constants consumed by Babylon.js: pitch, ball forces/spin, contacts, ground, locomotion, tackling, keeper and camera defaults."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "profile_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "profile_name": {
+      "type": "string",
+      "required": true
+    },
+    "profile_version": {
+      "type": "string",
+      "required": true,
+      "default": "1.0.0"
+    },
+    "realism_preset": {
+      "type": "enumeration",
+      "enum": [
+        "arcade",
+        "contextual",
+        "weighty"
+      ],
+      "default": "contextual"
+    },
+    "pitch_spec": {
+      "type": "json",
+      "default": {
+        "lengthM": 105,
+        "widthM": 68,
+        "goalWidthM": 7.32,
+        "goalHeightM": 2.44,
+        "penaltySpotM": 11,
+        "penaltyAreaDepthM": 16.5,
+        "penaltyAreaWidthM": 40.32,
+        "wallDistanceM": 9.15
+      }
+    },
+    "ball_spec": {
+      "type": "json",
+      "default": {
+        "radiusM": 0.11,
+        "massKg": 0.43,
+        "inertiaKgM2": 0.00347,
+        "gravityMps2": 9.81,
+        "airDensity": 1.225,
+        "dragCoefficient": 0.25,
+        "magnusScale": 1,
+        "spinDecayPerSecond": 0.15,
+        "groundRestitution": 0.57,
+        "grassFriction": 0.5,
+        "rollingResistanceMps2": 1.5,
+        "substepsPerTick": 4,
+        "tickRateHz": 60
+      }
+    },
+    "player_motion_spec": {
+      "type": "json",
+      "default": {
+        "jogMps": 3.5,
+        "runMps": 6,
+        "sprintMps": 9,
+        "longitudinalAccelMps2": 7,
+        "brakingMps2": 11,
+        "lateralAccelMps2": 10,
+        "turnRateDegPerSecond": 720,
+        "capsuleRadiusM": 0.3,
+        "capsuleHeightM": 1.8,
+        "staminaSpeedFloor": 0.85
+      }
+    },
+    "contact_spec": {
+      "type": "json",
+      "default": {
+        "postRadiusM": 0.06,
+        "footRestitution": 0.5,
+        "thighRestitution": 0.2,
+        "chestRestitution": 0.15,
+        "headRestitution": 0.4,
+        "netRestitution": 0.05,
+        "sweptCollisionEnabled": true
+      }
+    },
+    "camera_spec": {
+      "type": "json",
+      "default": {
+        "defaultMode": "tv",
+        "availableModes": [
+          "tv",
+          "sideline",
+          "ball",
+          "goal_to_goal",
+          "top_down",
+          "set_piece",
+          "replay"
+        ],
+        "springDamping": 1,
+        "tuning": {}
+      }
+    },
+    "global_scales": {
+      "type": "json",
+      "default": {
+        "paceScale": 1,
+        "agilityScale": 1,
+        "ballSpeedScale": 1,
+        "staminaScale": 1,
+        "errorScale": 1
+      }
+    },
+    "profile_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "draft",
+        "active",
+        "deprecated"
+      ],
+      "required": true,
+      "default": "draft"
+    },
+    "effective_from": {
+      "type": "datetime"
+    },
+    "notes": {
+      "type": "text"
+    }
+  }
+}

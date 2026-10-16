@@ -1,0 +1,54 @@
+{
+  "kind": "collectionType",
+  "collectionName": "notifications",
+  "info": {
+    "singularName": "notification",
+    "pluralName": "notifications",
+    "displayName": "Notification",
+    "description": "In-app notification delivery for match invites/results, rewards, store receipts and PLA fixture changes."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    },
+    "notification_type": {
+      "type": "string",
+      "required": true
+    },
+    "payload": {
+      "type": "json",
+      "default": {}
+    },
+    "read_at": {
+      "type": "datetime"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "unique": true
+    },
+    "delivery_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "sent",
+        "failed"
+      ],
+      "required": true,
+      "default": "sent"
+    }
+  }
+}

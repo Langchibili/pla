@@ -1,0 +1,73 @@
+{
+  "kind": "collectionType",
+  "collectionName": "match_result_verifications",
+  "info": {
+    "singularName": "match-result-verification",
+    "pluralName": "match-result-verifications",
+    "displayName": "Match Result Verification",
+    "description": "Audit record for trusted match-engine result assertions, signature verification, replay/snapshot hash checks and rejection reasons."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "match": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::match.match",
+      "required": true
+    },
+    "result_submission_id": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "result_validation_status": {
+      "type": "enumeration",
+      "enum": [
+        "received",
+        "verified",
+        "rejected"
+      ],
+      "required": true,
+      "default": "received"
+    },
+    "signature_key_id": {
+      "type": "string"
+    },
+    "signature_digest": {
+      "type": "string",
+      "required": true
+    },
+    "received_at": {
+      "type": "datetime",
+      "required": true
+    },
+    "verified_at": {
+      "type": "datetime"
+    },
+    "submitted_result": {
+      "type": "json",
+      "required": true
+    },
+    "computed_result_digest": {
+      "type": "string"
+    },
+    "roster_hash_match": {
+      "type": "boolean",
+      "default": false
+    },
+    "snapshot_hash_match": {
+      "type": "boolean",
+      "default": false
+    },
+    "event_sequence_valid": {
+      "type": "boolean",
+      "default": false
+    },
+    "validation_errors": {
+      "type": "json",
+      "default": []
+    }
+  }
+}

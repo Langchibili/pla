@@ -1,0 +1,69 @@
+{
+  "kind": "collectionType",
+  "collectionName": "coin_products",
+  "info": {
+    "singularName": "coin-product",
+    "pluralName": "coin-products",
+    "displayName": "Coin Product",
+    "description": "Catalog package for in-game coins. Contains coin counts and platform product identifiers; all monetary checkout is performed by the store."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "product_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "product_name": {
+      "type": "string",
+      "required": true
+    },
+    "product_description": {
+      "type": "text"
+    },
+    "bronze_coins": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "diamond_coins": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "bonus_bronze_coins": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "bonus_diamond_coins": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "google_play_product_id": {
+      "type": "string"
+    },
+    "apple_store_product_id": {
+      "type": "string"
+    },
+    "web_store_product_id": {
+      "type": "string"
+    },
+    "product_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "required": true,
+      "default": "active"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    }
+  }
+}

@@ -1,0 +1,259 @@
+{
+  "kind": "singleType",
+  "collectionName": "admn_settings",
+  "info": {
+    "singularName": "admn-settings",
+    "pluralName": "admn-settings-entries",
+    "displayName": "Admn Settings",
+    "description": "Global game, economy, safety and tuning defaults resolved after country-specific overrides."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "initial_bronze_coins": {
+      "type": "integer",
+      "required": true,
+      "default": 500,
+      "min": 0
+    },
+    "initial_diamond_coins": {
+      "type": "integer",
+      "required": true,
+      "default": 0,
+      "min": 0
+    },
+    "max_xp_win": {
+      "type": "integer",
+      "required": true,
+      "default": 100,
+      "min": 0
+    },
+    "max_xp_draw": {
+      "type": "integer",
+      "required": true,
+      "default": 65,
+      "min": 0
+    },
+    "max_xp_loss": {
+      "type": "integer",
+      "required": true,
+      "default": 35,
+      "min": 0
+    },
+    "max_xp_training": {
+      "type": "integer",
+      "required": true,
+      "default": 40,
+      "min": 0
+    },
+    "xp_base_win": {
+      "type": "integer",
+      "default": 45,
+      "min": 0
+    },
+    "xp_base_draw": {
+      "type": "integer",
+      "default": 25,
+      "min": 0
+    },
+    "xp_base_loss": {
+      "type": "integer",
+      "default": 10,
+      "min": 0
+    },
+    "xp_goal_scored_weight": {
+      "type": "decimal",
+      "default": 3,
+      "min": 0
+    },
+    "xp_goal_conceded_penalty": {
+      "type": "decimal",
+      "default": 1.5,
+      "min": 0
+    },
+    "xp_possession_weight": {
+      "type": "decimal",
+      "default": 0.15,
+      "min": 0
+    },
+    "xp_pass_accuracy_weight": {
+      "type": "decimal",
+      "default": 0.08,
+      "min": 0
+    },
+    "xp_clean_sheet_bonus": {
+      "type": "integer",
+      "default": 8,
+      "min": 0
+    },
+    "xp_goal_difference_weight": {
+      "type": "decimal",
+      "default": 2,
+      "min": 0
+    },
+    "bronze_win_reward": {
+      "type": "integer",
+      "default": 35,
+      "min": 0
+    },
+    "bronze_draw_reward": {
+      "type": "integer",
+      "default": 15,
+      "min": 0
+    },
+    "bronze_loss_reward": {
+      "type": "integer",
+      "default": 5,
+      "min": 0
+    },
+    "training_bronze_reward": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "max_training_rewards_per_day": {
+      "type": "integer",
+      "default": 5,
+      "min": 0
+    },
+    "max_rewarded_ads_per_day": {
+      "type": "integer",
+      "default": 10,
+      "min": 0
+    },
+    "rewarded_ad_bronze_coins": {
+      "type": "integer",
+      "default": 20,
+      "min": 0
+    },
+    "rewarded_ad_diamond_coins": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "custom_player_naming_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "custom_manager_naming_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "restricted_name_match_mode": {
+      "type": "enumeration",
+      "enum": [
+        "exact",
+        "normalized",
+        "fuzzy"
+      ],
+      "default": "normalized"
+    },
+    "online_matches_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "ranked_matches_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "store_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "rewarded_ads_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "cash_tournaments_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "base_currency": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::currency.currency"
+    },
+    "default_game_ruleset": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-ruleset.game-ruleset"
+    },
+    "default_physics_profile": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::physics-profile.physics-profile"
+    },
+    "default_ai_behaviour_profile": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::ai-behaviour-profile.ai-behaviour-profile"
+    },
+    "pla_result_callback_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "match_engine_signing_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "store_verification_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "ad_server_verification_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "snapshot_retention_days": {
+      "type": "integer",
+      "default": 180,
+      "min": 1
+    },
+    "telemetry_retention_days": {
+      "type": "integer",
+      "default": 90,
+      "min": 1
+    },
+    "matchmaking_ticket_ttl_seconds": {
+      "type": "integer",
+      "default": 120,
+      "min": 15
+    },
+    "max_active_training_sessions": {
+      "type": "integer",
+      "default": 1,
+      "min": 1
+    },
+    "player_upgrade_base_coin_cost": {
+      "type": "integer",
+      "default": 50,
+      "min": 1
+    },
+    "player_upgrade_cost_growth": {
+      "type": "decimal",
+      "default": 1.35,
+      "min": 1,
+      "max": 2
+    },
+    "player_upgrade_attribute_step": {
+      "type": "integer",
+      "default": 1,
+      "min": 1,
+      "max": 5
+    },
+    "api_config_revision": {
+      "type": "integer",
+      "default": 1,
+      "min": 1
+    },
+    "economy_rules": {
+      "type": "json",
+      "default": {
+        "diamond_coins_non_farmable": true,
+        "xp_is_not_currency": true,
+        "purchased_items_non_refundable_after_use": true
+      }
+    }
+  }
+}

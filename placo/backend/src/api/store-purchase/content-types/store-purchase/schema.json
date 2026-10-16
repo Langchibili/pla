@@ -1,0 +1,106 @@
+{
+  "kind": "collectionType",
+  "collectionName": "store_purchases",
+  "info": {
+    "singularName": "store-purchase",
+    "pluralName": "store-purchases",
+    "displayName": "Store Purchase",
+    "description": "Purchase-intent and receipt-verification state machine. Fulfilment only follows a trusted platform-store receipt verification; no payment gateway runs here."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "purchase_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "coin_product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::coin-product.coin-product",
+      "required": true
+    },
+    "store_product_offer": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::store-product-offer.store-product-offer"
+    },
+    "store_provider": {
+      "type": "enumeration",
+      "enum": [
+        "google_play",
+        "apple_app_store",
+        "web_store",
+        "other"
+      ],
+      "required": true,
+      "default": "google_play"
+    },
+    "provider_purchase_id": {
+      "type": "string"
+    },
+    "provider_transaction_id": {
+      "type": "string",
+      "unique": true
+    },
+    "purchase_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "intent_created",
+        "awaiting_receipt",
+        "verifying",
+        "fulfilled",
+        "rejected",
+        "refunded",
+        "cancelled"
+      ],
+      "required": true,
+      "default": "intent_created"
+    },
+    "display_price": {
+      "type": "decimal",
+      "min": 0
+    },
+    "currency": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::currency.currency"
+    },
+    "receipt_hash": {
+      "type": "string"
+    },
+    "verification_reference": {
+      "type": "string"
+    },
+    "bronze_coins_granted": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "diamond_coins_granted": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "idempotency_key": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "verified_at": {
+      "type": "datetime"
+    },
+    "purchase_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

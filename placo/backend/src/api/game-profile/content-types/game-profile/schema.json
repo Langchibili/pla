@@ -1,0 +1,100 @@
+{
+  "kind": "collectionType",
+  "collectionName": "game_profiles",
+  "info": {
+    "singularName": "game-profile",
+    "pluralName": "game-profiles",
+    "displayName": "Game Profile",
+    "description": "PLACO game identity linked to the Strapi user and optionally mapped to PLA identity; stores XP and aggregate football stats."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "required": true
+    },
+    "pla_user_id": {
+      "type": "string",
+      "unique": true
+    },
+    "pla_username": {
+      "type": "string"
+    },
+    "public_handle": {
+      "type": "string",
+      "unique": true
+    },
+    "country": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::country.country"
+    },
+    "preferred_currency": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::currency.currency"
+    },
+    "profile_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "suspended",
+        "restricted",
+        "deleted"
+      ],
+      "required": true,
+      "default": "active"
+    },
+    "app_xp": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "matches_played": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "wins": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "draws": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "losses": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "goals_scored": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "goals_conceded": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "clean_sheets": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "last_match_at": {
+      "type": "datetime"
+    },
+    "onboarding_complete": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

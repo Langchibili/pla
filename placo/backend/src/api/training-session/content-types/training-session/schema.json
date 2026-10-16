@@ -1,0 +1,92 @@
+{
+  "kind": "collectionType",
+  "collectionName": "training_sessions",
+  "info": {
+    "singularName": "training-session",
+    "pluralName": "training-sessions",
+    "displayName": "Training Session",
+    "description": "A single-player training fixture against a selected AI team and difficulty; reward caps prevent unlimited daily XP/coin farming."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "session_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "ai_team": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::ai-team.ai-team",
+      "required": true
+    },
+    "difficulty_profile": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::ai-difficulty-profile.ai-difficulty-profile",
+      "required": true
+    },
+    "game_ruleset": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-ruleset.game-ruleset"
+    },
+    "physics_profile": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::physics-profile.physics-profile"
+    },
+    "player_club": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club.club"
+    },
+    "training_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "created",
+        "ready",
+        "in_progress",
+        "completed",
+        "abandoned",
+        "expired"
+      ],
+      "required": true,
+      "default": "created"
+    },
+    "match": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::match.match"
+    },
+    "started_at": {
+      "type": "datetime"
+    },
+    "completed_at": {
+      "type": "datetime"
+    },
+    "training_day_key": {
+      "type": "string"
+    },
+    "rewards_granted": {
+      "type": "boolean",
+      "default": false
+    },
+    "session_metadata": {
+      "type": "json",
+      "default": {}
+    },
+    "idempotency_key": {
+      "type": "string",
+      "unique": true
+    }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "kind": "collectionType",
+  "collectionName": "market_purchases",
+  "info": {
+    "singularName": "market-purchase",
+    "pluralName": "market-purchases",
+    "displayName": "Market Purchase",
+    "description": "Idempotent marketplace purchase and grant record, tying a single coin debit to the resulting owned item."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "purchase_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "market_offer": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::market-offer.market-offer",
+      "required": true
+    },
+    "coin_type_paid": {
+      "type": "enumeration",
+      "enum": [
+        "bronze",
+        "diamond"
+      ],
+      "required": true
+    },
+    "coins_paid": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "purchase_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "created",
+        "paid",
+        "granted",
+        "failed",
+        "reversed"
+      ],
+      "default": "created",
+      "required": true
+    },
+    "idempotency_key": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "granted_club_player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club-player.club-player"
+    },
+    "granted_club_manager": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club-manager.club-manager"
+    },
+    "purchase_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

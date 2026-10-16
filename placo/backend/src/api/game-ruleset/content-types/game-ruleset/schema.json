@@ -1,0 +1,97 @@
+{
+  "kind": "collectionType",
+  "collectionName": "game_rulesets",
+  "info": {
+    "singularName": "game-ruleset",
+    "pluralName": "game-rulesets",
+    "displayName": "Game Ruleset",
+    "description": "Versioned match rule configuration: periods, clock, offside/fouls, substitutions, restart logic and permitted modes."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "ruleset_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "ruleset_name": {
+      "type": "string",
+      "required": true
+    },
+    "ruleset_version": {
+      "type": "string",
+      "default": "1.0.0"
+    },
+    "match_length_minutes": {
+      "type": "integer",
+      "default": 90,
+      "min": 1,
+      "max": 120
+    },
+    "period_count": {
+      "type": "integer",
+      "default": 2,
+      "min": 1,
+      "max": 4
+    },
+    "added_time_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "offside_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "fouls_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "cards_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "substitution_limit": {
+      "type": "integer",
+      "default": 5,
+      "min": 0,
+      "max": 15
+    },
+    "restart_rules": {
+      "type": "json",
+      "default": {
+        "kickoff": true,
+        "throwIn": true,
+        "goalKick": true,
+        "corner": true,
+        "freeKick": true,
+        "penalty": true,
+        "droppedBall": true
+      }
+    },
+    "referee_profile": {
+      "type": "json",
+      "default": {}
+    },
+    "allowed_modes": {
+      "type": "json",
+      "default": [
+        "casual",
+        "ranked",
+        "training",
+        "pla_tournament"
+      ]
+    },
+    "ruleset_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "draft",
+        "active",
+        "deprecated"
+      ],
+      "required": true,
+      "default": "draft"
+    }
+  }
+}

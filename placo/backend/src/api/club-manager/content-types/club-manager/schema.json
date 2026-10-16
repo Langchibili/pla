@@ -1,0 +1,63 @@
+{
+  "kind": "collectionType",
+  "collectionName": "club_managers",
+  "info": {
+    "singularName": "club-manager",
+    "pluralName": "club-managers",
+    "displayName": "Club Manager",
+    "description": "Manager instance selected/owned by one PLACO profile; MVP display name is templated unless naming is enabled."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "manager_template": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::manager-template.manager-template",
+      "required": true
+    },
+    "club": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club.club"
+    },
+    "default_name": {
+      "type": "string",
+      "required": true
+    },
+    "custom_name": {
+      "type": "string"
+    },
+    "manager_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "owned",
+        "active",
+        "retired"
+      ],
+      "required": true,
+      "default": "owned"
+    },
+    "is_selected": {
+      "type": "boolean",
+      "default": false
+    },
+    "experience_level": {
+      "type": "integer",
+      "default": 1,
+      "min": 1,
+      "max": 100
+    },
+    "manager_progression": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

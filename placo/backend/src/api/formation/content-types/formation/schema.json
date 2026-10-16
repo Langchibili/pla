@@ -1,0 +1,57 @@
+{
+  "kind": "collectionType",
+  "collectionName": "formations",
+  "info": {
+    "singularName": "formation",
+    "pluralName": "formations",
+    "displayName": "Formation",
+    "description": "Versioned tactical formation and coordinates/roles for all 11 pitch slots. Coordinates are normalized 0–1 and mirrored by the client when needed."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "formation_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "formation_name": {
+      "type": "string",
+      "required": true
+    },
+    "formation_description": {
+      "type": "text"
+    },
+    "formation_layout": {
+      "type": "json",
+      "required": true,
+      "default": {
+        "coordinateSystem": "normalized-0-1",
+        "players": []
+      }
+    },
+    "tactical_tags": {
+      "type": "json",
+      "default": []
+    },
+    "formation_version": {
+      "type": "integer",
+      "default": 1,
+      "min": 1
+    },
+    "formation_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "required": true,
+      "default": "active"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    }
+  }
+}

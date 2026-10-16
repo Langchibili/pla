@@ -1,0 +1,84 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pla_outbox_events",
+  "info": {
+    "singularName": "pla-outbox-event",
+    "pluralName": "pla-outbox-events",
+    "displayName": "Pla Outbox Event",
+    "description": "Durable outbox to send signed verified results and lifecycle events to PLA with retries and idempotent event keys."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "event_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "event_type": {
+      "type": "enumeration",
+      "enum": [
+        "fixture_accepted",
+        "match_started",
+        "match_verified",
+        "match_rejected",
+        "player_profile_sync"
+      ],
+      "required": true,
+      "default": "match_verified"
+    },
+    "pla_fixture_link": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pla-fixture-link.pla-fixture-link"
+    },
+    "match": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::match.match"
+    },
+    "event_payload": {
+      "type": "json",
+      "required": true
+    },
+    "event_payload_hash": {
+      "type": "string",
+      "required": true
+    },
+    "delivery_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "sending",
+        "delivered",
+        "retryable_error",
+        "dead_letter"
+      ],
+      "required": true,
+      "default": "pending"
+    },
+    "attempt_count": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "next_attempt_at": {
+      "type": "datetime"
+    },
+    "last_attempt_at": {
+      "type": "datetime"
+    },
+    "delivered_at": {
+      "type": "datetime"
+    },
+    "last_error": {
+      "type": "text"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    }
+  }
+}

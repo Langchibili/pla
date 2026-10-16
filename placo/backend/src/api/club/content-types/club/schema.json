@@ -1,0 +1,72 @@
+{
+  "kind": "collectionType",
+  "collectionName": "clubs",
+  "info": {
+    "singularName": "club",
+    "pluralName": "clubs",
+    "displayName": "Club",
+    "description": "User-owned football club; links squad, manager, formation, stadium and kit presets."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "owner": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "club_name": {
+      "type": "string",
+      "required": true
+    },
+    "club_slug": {
+      "type": "string",
+      "unique": true
+    },
+    "club_badge_url": {
+      "type": "string"
+    },
+    "club_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "suspended",
+        "archived"
+      ],
+      "required": true,
+      "default": "active"
+    },
+    "selected_formation": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::formation.formation"
+    },
+    "selected_stadium": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::stadium-preset.stadium-preset"
+    },
+    "selected_kit": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::kit-preset.kit-preset"
+    },
+    "club_rating": {
+      "type": "decimal",
+      "default": 50,
+      "min": 0,
+      "max": 100
+    },
+    "club_metadata": {
+      "type": "json",
+      "default": {}
+    },
+    "selected_manager": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club-manager.club-manager"
+    }
+  }
+}

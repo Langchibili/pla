@@ -1,0 +1,173 @@
+{
+  "kind": "collectionType",
+  "collectionName": "club_players",
+  "info": {
+    "singularName": "club-player",
+    "pluralName": "club-players",
+    "displayName": "Club Player",
+    "description": "Owned player-card instance. MVP shows labels like P-1/P-9; backend keeps unique internal/default names for future customisation."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "club": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club.club",
+      "required": true
+    },
+    "player_template": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::player-template.player-template",
+      "required": true
+    },
+    "internal_player_name": {
+      "type": "string",
+      "required": true
+    },
+    "display_position_number": {
+      "type": "string",
+      "required": true
+    },
+    "custom_name": {
+      "type": "string"
+    },
+    "primary_position": {
+      "type": "enumeration",
+      "enum": [
+        "GK",
+        "CB",
+        "FB",
+        "DM",
+        "CM",
+        "AM",
+        "W",
+        "ST"
+      ],
+      "required": true,
+      "default": "CM"
+    },
+    "squad_role": {
+      "type": "enumeration",
+      "enum": [
+        "starter",
+        "substitute",
+        "reserve"
+      ],
+      "default": "reserve"
+    },
+    "player_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "owned",
+        "listed",
+        "injured",
+        "suspended",
+        "retired"
+      ],
+      "required": true,
+      "default": "owned"
+    },
+    "is_premium": {
+      "type": "boolean",
+      "default": false
+    },
+    "player_tier": {
+      "type": "enumeration",
+      "enum": [
+        "standard",
+        "premium",
+        "elite"
+      ],
+      "default": "standard",
+      "required": true
+    },
+    "current_attributes": {
+      "type": "json",
+      "default": {
+        "sprintSpeed": 65,
+        "acceleration": 65,
+        "agility": 60,
+        "balance": 60,
+        "strength": 60,
+        "stamina": 65,
+        "jumping": 60,
+        "dribbling": 55,
+        "ballControl": 55,
+        "shortPassing": 55,
+        "longPassing": 50,
+        "crossing": 45,
+        "finishing": 45,
+        "shotPower": 60,
+        "longShots": 45,
+        "volleys": 40,
+        "curve": 45,
+        "freeKickAccuracy": 40,
+        "penalties": 50,
+        "headingAccuracy": 50,
+        "standingTackle": 45,
+        "slideTackle": 40,
+        "interceptions": 45,
+        "marking": 45,
+        "aggression": 55,
+        "vision": 50,
+        "composure": 50,
+        "reactions": 55,
+        "attackPositioning": 50,
+        "defendPositioning": 45,
+        "anticipation": 50,
+        "decisions": 50,
+        "workRate": 60,
+        "weakFoot": 50,
+        "reflexes": 30,
+        "diving": 30,
+        "handling": 30,
+        "kicking": 30,
+        "throwing": 30,
+        "gkPositioning": 30,
+        "oneOnOnes": 30,
+        "commandOfArea": 30,
+        "aerialReach": 30,
+        "penaltySaving": 30,
+        "sweepingSpeed": 30
+      }
+    },
+    "appearance_config": {
+      "type": "json",
+      "default": {}
+    },
+    "player_xp": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "development_level": {
+      "type": "integer",
+      "default": 1,
+      "min": 1,
+      "max": 100
+    },
+    "acquisition_source": {
+      "type": "enumeration",
+      "enum": [
+        "starter",
+        "market",
+        "store",
+        "reward",
+        "admin"
+      ],
+      "default": "starter"
+    },
+    "last_trained_at": {
+      "type": "datetime"
+    }
+  }
+}

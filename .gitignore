@@ -200,3 +200,15 @@ score-service/.pytest_cache/
 score-service/.env
 TestScreenShots
 code_collection.js
+
+
+
+placo/backend/node_modules
+placo/backend/src-old
+placo/backend-err
+placo/backend-old-stuff
+placo/backend/.strapi
+placo/backend/.strapi-updater.json
+placo/backend/build
+placo/backend/.env
+placo/backend/config-old

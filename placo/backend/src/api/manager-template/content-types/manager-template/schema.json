@@ -1,0 +1,82 @@
+{
+  "kind": "collectionType",
+  "collectionName": "manager_templates",
+  "info": {
+    "singularName": "manager-template",
+    "pluralName": "manager-templates",
+    "displayName": "Manager Template",
+    "description": "Admin-authored manager archetypes and tactical bonuses, not licensed-person identities."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "internal_name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "display_name": {
+      "type": "string",
+      "required": true
+    },
+    "manager_archetype": {
+      "type": "enumeration",
+      "enum": [
+        "balanced",
+        "possession",
+        "counter_attack",
+        "pressing",
+        "defensive",
+        "direct",
+        "youth_development"
+      ],
+      "required": true,
+      "default": "balanced"
+    },
+    "attribute_modifiers": {
+      "type": "json",
+      "default": {
+        "tacticalAwareness": 50,
+        "motivation": 50,
+        "adaptability": 50,
+        "trainingQuality": 50
+      }
+    },
+    "tactical_preferences": {
+      "type": "json",
+      "default": {}
+    },
+    "premium_tier": {
+      "type": "enumeration",
+      "enum": [
+        "standard",
+        "premium",
+        "elite"
+      ],
+      "default": "standard"
+    },
+    "unlock_currency": {
+      "type": "enumeration",
+      "enum": [
+        "bronze",
+        "diamond",
+        "none"
+      ],
+      "default": "bronze"
+    },
+    "unlock_price_coins": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "template_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    }
+  }
+}

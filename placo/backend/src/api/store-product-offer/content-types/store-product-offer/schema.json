@@ -1,0 +1,75 @@
+{
+  "kind": "collectionType",
+  "collectionName": "store_product_offers",
+  "info": {
+    "singularName": "store-product-offer",
+    "pluralName": "store-product-offers",
+    "displayName": "Store Product Offer",
+    "description": "Country/currency specific display-price offer mapped to a store product SKU. A price quote is not a charge and never issues coins."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "coin_product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::coin-product.coin-product",
+      "required": true
+    },
+    "country": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::country.country",
+      "required": true
+    },
+    "currency": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::currency.currency",
+      "required": true
+    },
+    "store_provider": {
+      "type": "enumeration",
+      "enum": [
+        "google_play",
+        "apple_app_store",
+        "web_store",
+        "other"
+      ],
+      "required": true,
+      "default": "google_play"
+    },
+    "provider_product_id": {
+      "type": "string",
+      "required": true
+    },
+    "display_price": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "display_price_label": {
+      "type": "string"
+    },
+    "offer_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "required": true,
+      "default": "active"
+    },
+    "effective_from": {
+      "type": "datetime"
+    },
+    "effective_until": {
+      "type": "datetime"
+    },
+    "offer_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

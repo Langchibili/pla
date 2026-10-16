@@ -1,0 +1,83 @@
+{
+  "kind": "collectionType",
+  "collectionName": "stadium_presets",
+  "info": {
+    "singularName": "stadium-preset",
+    "pluralName": "stadium-presets",
+    "displayName": "Stadium Preset",
+    "description": "Selectable lightweight stadium/pitch visual preset; MVP presets omit crowds/seating for mobile performance."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "stadium_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "stadium_name": {
+      "type": "string",
+      "required": true
+    },
+    "visual_asset_key": {
+      "type": "string"
+    },
+    "pitch_surface": {
+      "type": "enumeration",
+      "enum": [
+        "dry_grass",
+        "wet_grass",
+        "heavy_grass",
+        "artificial"
+      ],
+      "default": "dry_grass"
+    },
+    "pitch_width_m": {
+      "type": "decimal",
+      "default": 68,
+      "min": 60,
+      "max": 75
+    },
+    "pitch_length_m": {
+      "type": "decimal",
+      "default": 105,
+      "min": 95,
+      "max": 115
+    },
+    "lighting_profile": {
+      "type": "json",
+      "default": {}
+    },
+    "stadium_features": {
+      "type": "json",
+      "default": {
+        "crowdEnabled": false,
+        "standsEnabled": false,
+        "advertisingText": "PRO LEAGUE AFRICA"
+      }
+    },
+    "unlock_currency": {
+      "type": "enumeration",
+      "enum": [
+        "bronze",
+        "diamond",
+        "none"
+      ],
+      "default": "bronze"
+    },
+    "unlock_price_coins": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "stadium_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    }
+  }
+}

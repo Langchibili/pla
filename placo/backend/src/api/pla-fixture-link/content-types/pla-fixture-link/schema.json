@@ -1,0 +1,96 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pla_fixture_links",
+  "info": {
+    "singularName": "pla-fixture-link",
+    "pluralName": "pla-fixture-links",
+    "displayName": "Pla Fixture Link",
+    "description": "Idempotent cross-backend mapping between a PLA tournament fixture and one PLACO match. PLA owns standings and cash-prize eligibility/payouts."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "pla_fixture_id": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "pla_tournament_id": {
+      "type": "string",
+      "required": true
+    },
+    "pla_stage_id": {
+      "type": "string"
+    },
+    "home_pla_user_id": {
+      "type": "string",
+      "required": true
+    },
+    "away_pla_user_id": {
+      "type": "string",
+      "required": true
+    },
+    "home_player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "away_player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "fixture_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "assigned",
+        "ready",
+        "in_progress",
+        "result_pending",
+        "result_sent",
+        "cancelled",
+        "rejected"
+      ],
+      "required": true,
+      "default": "assigned"
+    },
+    "match": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::match.match"
+    },
+    "assignment_idempotency_key": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "pla_signed_payload_hash": {
+      "type": "string",
+      "required": true
+    },
+    "match_rules": {
+      "type": "json",
+      "default": {}
+    },
+    "scheduled_at": {
+      "type": "datetime"
+    },
+    "result_sent_at": {
+      "type": "datetime"
+    },
+    "last_sync_error": {
+      "type": "text"
+    },
+    "cash_prize_managed_by_pla": {
+      "type": "boolean",
+      "default": true
+    },
+    "fixture_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

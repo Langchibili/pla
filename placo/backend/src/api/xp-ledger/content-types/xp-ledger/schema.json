@@ -1,0 +1,62 @@
+{
+  "kind": "collectionType",
+  "collectionName": "xp_ledgers",
+  "info": {
+    "singularName": "xp-ledger",
+    "pluralName": "xp-ledgers",
+    "displayName": "Xp Ledger",
+    "description": "Append-only record of app XP changes; XP ranks leaderboards and cannot be spent as a coin currency."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "match": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::match.match"
+    },
+    "xp_delta": {
+      "type": "integer",
+      "required": true
+    },
+    "balance_after": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "xp_reason": {
+      "type": "enumeration",
+      "enum": [
+        "match_win",
+        "match_draw",
+        "match_loss",
+        "training",
+        "admin_adjustment",
+        "season_bonus",
+        "reversal"
+      ],
+      "required": true,
+      "default": "match_win"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "calculation_breakdown": {
+      "type": "json",
+      "default": {}
+    },
+    "created_by_system": {
+      "type": "string",
+      "default": "placo"
+    }
+  }
+}

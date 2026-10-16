@@ -1,0 +1,66 @@
+{
+  "kind": "collectionType",
+  "collectionName": "match_replays",
+  "info": {
+    "singularName": "match-replay",
+    "pluralName": "match-replays",
+    "displayName": "Match Replay",
+    "description": "Replay index for approved deterministic event replays; store large replay blobs in object storage and save a URI plus cryptographic hashes here."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "match": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::match.match",
+      "required": true
+    },
+    "replay_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "replay_uri": {
+      "type": "string"
+    },
+    "replay_format_version": {
+      "type": "string",
+      "default": "1.0.0"
+    },
+    "simulation_seed": {
+      "type": "string",
+      "required": true
+    },
+    "roster_snapshot_hash": {
+      "type": "string",
+      "required": true
+    },
+    "event_stream_hash": {
+      "type": "string",
+      "required": true
+    },
+    "replay_blob_hash": {
+      "type": "string"
+    },
+    "replay_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "available",
+        "purged",
+        "invalid"
+      ],
+      "required": true,
+      "default": "pending"
+    },
+    "retention_until": {
+      "type": "datetime"
+    },
+    "replay_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

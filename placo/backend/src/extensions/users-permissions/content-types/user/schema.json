@@ -1,0 +1,18 @@
+{
+  "attributes": {
+    "country": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::country.country"
+    },
+    "preferred_currency": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::currency.currency"
+    },
+    "pla_external_user_id": {
+      "type": "string",
+      "unique": true
+    }
+  }
+}

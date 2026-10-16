@@ -1,0 +1,125 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ai_behaviour_profiles",
+  "info": {
+    "singularName": "ai-behaviour-profile",
+    "pluralName": "ai-behaviour-profiles",
+    "displayName": "Ai Behaviour Profile",
+    "description": "Versioned AI behavior policy covering layered team/player brains, decision weights, perception, role anchors, keeper and referee logic, deterministic RNG and action timing."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "profile_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "profile_name": {
+      "type": "string",
+      "required": true
+    },
+    "profile_version": {
+      "type": "string",
+      "default": "1.0.0"
+    },
+    "team_brain_config": {
+      "type": "json",
+      "default": {
+        "teamDecisionHz": 5,
+        "playerDecisionHz": 15,
+        "urgentPlayerDecisionHz": 30,
+        "reactionDelayMs": [
+          120,
+          350
+        ],
+        "phases": [
+          "build_up",
+          "progression",
+          "final_third",
+          "attacking_transition",
+          "defensive_transition",
+          "defensive_block"
+        ]
+      }
+    },
+    "decision_weights": {
+      "type": "json",
+      "default": {
+        "shoot": 1,
+        "pass": 1,
+        "throughBall": 1,
+        "dribble": 1,
+        "clearance": 0.6,
+        "press": 1,
+        "intercept": 1
+      }
+    },
+    "perception_config": {
+      "type": "json",
+      "default": {
+        "scanHz": 4,
+        "awarenessConeDeg": 140,
+        "maxAwarenessDistanceM": 35,
+        "pressureRadiusM": 4
+      }
+    },
+    "role_behaviours": {
+      "type": "json",
+      "default": {
+        "GK": {},
+        "CB": {},
+        "FB": {},
+        "DM": {},
+        "CM": {},
+        "AM": {},
+        "W": {},
+        "ST": {}
+      }
+    },
+    "keeper_config": {
+      "type": "json",
+      "default": {
+        "dangerDecisionMs": 33,
+        "normalDecisionMs": 100,
+        "reactionSeconds": [
+          0.15,
+          0.35
+        ],
+        "perceptionSigmaM": [
+          0.1,
+          0.8
+        ]
+      }
+    },
+    "referee_config": {
+      "type": "json",
+      "default": {
+        "leniency": 0.5,
+        "advantageDelaySeconds": 2,
+        "reviewLineCrossing": true
+      }
+    },
+    "determinism_config": {
+      "type": "json",
+      "default": {
+        "fixedTimestep": true,
+        "seededRandom": true,
+        "stableIterationOrder": true,
+        "simulationTickHz": 60,
+        "ballSubsteps": 4
+      }
+    },
+    "profile_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "draft",
+        "active",
+        "deprecated"
+      ],
+      "required": true,
+      "default": "draft"
+    }
+  }
+}

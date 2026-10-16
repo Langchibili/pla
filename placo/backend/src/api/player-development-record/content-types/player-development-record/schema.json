@@ -1,0 +1,86 @@
+{
+  "kind": "collectionType",
+  "collectionName": "player_development_records",
+  "info": {
+    "singularName": "player-development-record",
+    "pluralName": "player-development-records",
+    "displayName": "Player Development Record",
+    "description": "Append-only player progression audit record for upgrades, skill-point changes, premium unlocks or recovery from admin corrections."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "club_player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club-player.club-player",
+      "required": true
+    },
+    "development_type": {
+      "type": "enumeration",
+      "enum": [
+        "training",
+        "level_up",
+        "attribute_upgrade",
+        "premium_unlock",
+        "admin_adjustment",
+        "reversal"
+      ],
+      "required": true,
+      "default": "training"
+    },
+    "attributes_before": {
+      "type": "json",
+      "default": {}
+    },
+    "attributes_after": {
+      "type": "json",
+      "default": {}
+    },
+    "coin_type_spent": {
+      "type": "enumeration",
+      "enum": [
+        "bronze",
+        "diamond",
+        "none"
+      ],
+      "default": "none"
+    },
+    "coins_spent": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "xp_spent": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "development_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "completed",
+        "failed"
+      ],
+      "required": true,
+      "default": "pending"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "development_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

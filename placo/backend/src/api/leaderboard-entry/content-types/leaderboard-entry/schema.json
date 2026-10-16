@@ -1,0 +1,64 @@
+{
+  "kind": "collectionType",
+  "collectionName": "leaderboard_entries",
+  "info": {
+    "singularName": "leaderboard-entry",
+    "pluralName": "leaderboard-entries",
+    "displayName": "Leaderboard Entry",
+    "description": "Materialized ranking row by app XP with deterministic tie breakers and optional season/region/PLA public profile grouping."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "leaderboard_code": {
+      "type": "string",
+      "required": true
+    },
+    "season_key": {
+      "type": "string",
+      "default": "all_time"
+    },
+    "country": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::country.country"
+    },
+    "rank_position": {
+      "type": "integer",
+      "min": 1
+    },
+    "app_xp": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "matches_played": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "wins": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "goal_difference": {
+      "type": "integer",
+      "default": 0
+    },
+    "last_calculated_at": {
+      "type": "datetime"
+    },
+    "leaderboard_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

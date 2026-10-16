@@ -1,0 +1,103 @@
+{
+  "kind": "collectionType",
+  "collectionName": "market_offers",
+  "info": {
+    "singularName": "market-offer",
+    "pluralName": "market-offers",
+    "displayName": "Market Offer",
+    "description": "Coin-priced marketplace offer for a player, manager or stadium. Diamond and bronze balances remain distinct and cannot be interchanged."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "offer_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "offer_name": {
+      "type": "string",
+      "required": true
+    },
+    "offer_type": {
+      "type": "enumeration",
+      "enum": [
+        "player",
+        "manager",
+        "stadium",
+        "kit"
+      ],
+      "required": true,
+      "default": "player"
+    },
+    "player_template": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::player-template.player-template"
+    },
+    "manager_template": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::manager-template.manager-template"
+    },
+    "stadium_preset": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::stadium-preset.stadium-preset"
+    },
+    "kit_preset": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::kit-preset.kit-preset"
+    },
+    "price_coin_type": {
+      "type": "enumeration",
+      "enum": [
+        "bronze",
+        "diamond"
+      ],
+      "required": true,
+      "default": "bronze"
+    },
+    "price_coins": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "offer_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive",
+        "sold_out",
+        "scheduled"
+      ],
+      "required": true,
+      "default": "active"
+    },
+    "stock_limit": {
+      "type": "integer",
+      "min": 0
+    },
+    "stock_sold": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "available_from": {
+      "type": "datetime"
+    },
+    "available_until": {
+      "type": "datetime"
+    },
+    "per_player_limit": {
+      "type": "integer",
+      "min": 1
+    },
+    "offer_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

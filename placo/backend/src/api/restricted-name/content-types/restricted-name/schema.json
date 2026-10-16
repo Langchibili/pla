@@ -1,0 +1,68 @@
+{
+  "kind": "collectionType",
+  "collectionName": "restricted_names",
+  "info": {
+    "singularName": "restricted-name",
+    "pluralName": "restricted-names",
+    "displayName": "Restricted Name",
+    "description": "Curated and expandable blocked names/aliases for famous people, clubs, player personas or protected names; MVP custom naming remains disabled."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "display_term": {
+      "type": "string",
+      "required": true
+    },
+    "normalized_term": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "term_category": {
+      "type": "enumeration",
+      "enum": [
+        "person",
+        "footballer",
+        "club",
+        "manager",
+        "brand",
+        "other"
+      ],
+      "required": true,
+      "default": "person"
+    },
+    "matching_mode": {
+      "type": "enumeration",
+      "enum": [
+        "exact",
+        "normalized",
+        "token",
+        "fuzzy"
+      ],
+      "required": true,
+      "default": "normalized"
+    },
+    "aliases": {
+      "type": "json",
+      "default": []
+    },
+    "locale": {
+      "type": "string",
+      "default": "*"
+    },
+    "reason": {
+      "type": "text"
+    },
+    "term_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "required": true,
+      "default": "active"
+    }
+  }
+}

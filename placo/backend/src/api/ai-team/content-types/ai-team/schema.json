@@ -1,0 +1,124 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ai_teams",
+  "info": {
+    "singularName": "ai-team",
+    "pluralName": "ai-teams",
+    "displayName": "Ai Team",
+    "description": "Admin-authored AI opponent team for training mode, with roster template references and base player/team quality."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "team_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "team_name": {
+      "type": "string",
+      "required": true
+    },
+    "team_description": {
+      "type": "text"
+    },
+    "base_team_rating": {
+      "type": "integer",
+      "default": 50,
+      "min": 1,
+      "max": 100
+    },
+    "base_player_attributes": {
+      "type": "json",
+      "default": {
+        "sprintSpeed": 65,
+        "acceleration": 65,
+        "agility": 60,
+        "balance": 60,
+        "strength": 60,
+        "stamina": 65,
+        "jumping": 60,
+        "dribbling": 55,
+        "ballControl": 55,
+        "shortPassing": 55,
+        "longPassing": 50,
+        "crossing": 45,
+        "finishing": 45,
+        "shotPower": 60,
+        "longShots": 45,
+        "volleys": 40,
+        "curve": 45,
+        "freeKickAccuracy": 40,
+        "penalties": 50,
+        "headingAccuracy": 50,
+        "standingTackle": 45,
+        "slideTackle": 40,
+        "interceptions": 45,
+        "marking": 45,
+        "aggression": 55,
+        "vision": 50,
+        "composure": 50,
+        "reactions": 55,
+        "attackPositioning": 50,
+        "defendPositioning": 45,
+        "anticipation": 50,
+        "decisions": 50,
+        "workRate": 60,
+        "weakFoot": 50,
+        "reflexes": 30,
+        "diving": 30,
+        "handling": 30,
+        "kicking": 30,
+        "throwing": 30,
+        "gkPositioning": 30,
+        "oneOnOnes": 30,
+        "commandOfArea": 30,
+        "aerialReach": 30,
+        "penaltySaving": 30,
+        "sweepingSpeed": 30
+      }
+    },
+    "roster_template": {
+      "type": "json",
+      "default": {
+        "formationCode": "4-3-3",
+        "players": []
+      }
+    },
+    "preferred_formation": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::formation.formation"
+    },
+    "tactical_profile": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tactical-profile.tactical-profile"
+    },
+    "ai_behaviour_profile": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::ai-behaviour-profile.ai-behaviour-profile"
+    },
+    "difficulty_profiles": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::ai-difficulty-profile.ai-difficulty-profile",
+      "mappedBy": "ai_team"
+    },
+    "team_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "required": true,
+      "default": "active"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    }
+  }
+}

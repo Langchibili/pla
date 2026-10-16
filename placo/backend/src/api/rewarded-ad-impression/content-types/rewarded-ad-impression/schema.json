@@ -1,0 +1,100 @@
+{
+  "kind": "collectionType",
+  "collectionName": "rewarded_ad_impressions",
+  "info": {
+    "singularName": "rewarded-ad-impression",
+    "pluralName": "rewarded-ad-impressions",
+    "displayName": "Rewarded Ad Impression",
+    "description": "One rewarded-ad attempt with a server nonce, provider callback identity, replay prevention and final coin reward ledger reference."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "impression_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "provider": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::rewarded-ad-provider.rewarded-ad-provider",
+      "required": true
+    },
+    "ad_unit_id": {
+      "type": "string",
+      "required": true
+    },
+    "client_session_hash": {
+      "type": "string"
+    },
+    "server_nonce_hash": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "impression_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "started",
+        "completed_client_side",
+        "server_verified",
+        "rewarded",
+        "rejected",
+        "expired"
+      ],
+      "required": true,
+      "default": "started"
+    },
+    "provider_transaction_id": {
+      "type": "string",
+      "unique": true
+    },
+    "provider_callback_hash": {
+      "type": "string"
+    },
+    "coin_type_rewarded": {
+      "type": "enumeration",
+      "enum": [
+        "bronze",
+        "diamond"
+      ],
+      "default": "bronze"
+    },
+    "coin_amount_rewarded": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "coin_ledger": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::coin-ledger.coin-ledger"
+    },
+    "started_at": {
+      "type": "datetime",
+      "required": true
+    },
+    "verified_at": {
+      "type": "datetime"
+    },
+    "expires_at": {
+      "type": "datetime",
+      "required": true
+    },
+    "rejection_reason": {
+      "type": "string"
+    },
+    "impression_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

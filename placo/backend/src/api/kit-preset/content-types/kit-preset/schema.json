@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "kit_presets",
+  "info": {
+    "singularName": "kit-preset",
+    "pluralName": "kit-presets",
+    "displayName": "Kit Preset",
+    "description": "Admin-managed home/away kit colors and asset keys."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "kit_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "kit_name": {
+      "type": "string",
+      "required": true
+    },
+    "primary_color": {
+      "type": "string",
+      "default": "#FFFFFF"
+    },
+    "secondary_color": {
+      "type": "string",
+      "default": "#111111"
+    },
+    "trim_color": {
+      "type": "string",
+      "default": "#00AA55"
+    },
+    "pattern_key": {
+      "type": "string"
+    },
+    "kit_metadata": {
+      "type": "json",
+      "default": {}
+    },
+    "kit_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    }
+  }
+}

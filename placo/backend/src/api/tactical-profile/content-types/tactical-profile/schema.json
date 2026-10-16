@@ -1,0 +1,91 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tactical_profiles",
+  "info": {
+    "singularName": "tactical-profile",
+    "pluralName": "tactical-profiles",
+    "displayName": "Tactical Profile",
+    "description": "Manager/team tactical preset for mentality, pressing, build-up, width, line height, tempo and role instructions."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "tactical_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "tactical_name": {
+      "type": "string",
+      "required": true
+    },
+    "mentality": {
+      "type": "enumeration",
+      "enum": [
+        "very_defensive",
+        "defensive",
+        "balanced",
+        "attacking",
+        "very_attacking"
+      ],
+      "default": "balanced"
+    },
+    "pressing_style": {
+      "type": "enumeration",
+      "enum": [
+        "low_block",
+        "mid_block",
+        "high_press",
+        "counter_press",
+        "balanced"
+      ],
+      "default": "balanced"
+    },
+    "build_up_style": {
+      "type": "enumeration",
+      "enum": [
+        "short_passing",
+        "balanced",
+        "direct",
+        "long_ball"
+      ],
+      "default": "balanced"
+    },
+    "attacking_width": {
+      "type": "decimal",
+      "default": 0.5,
+      "min": 0,
+      "max": 1
+    },
+    "defensive_line_height": {
+      "type": "decimal",
+      "default": 0.5,
+      "min": 0,
+      "max": 1
+    },
+    "tempo": {
+      "type": "decimal",
+      "default": 0.5,
+      "min": 0,
+      "max": 1
+    },
+    "counter_attack_enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "role_instructions": {
+      "type": "json",
+      "default": {}
+    },
+    "tactical_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "required": true,
+      "default": "active"
+    }
+  }
+}

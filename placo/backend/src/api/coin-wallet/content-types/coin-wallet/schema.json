@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "coin_wallets",
+  "info": {
+    "singularName": "coin-wallet",
+    "pluralName": "coin-wallets",
+    "displayName": "Coin Wallet",
+    "description": "Server-owned bronze/diamond coin balances. No client write permissions; all changes require ledger entries and idempotency keys."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "player": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "bronze_balance": {
+      "type": "integer",
+      "required": true,
+      "default": 0,
+      "min": 0
+    },
+    "diamond_balance": {
+      "type": "integer",
+      "required": true,
+      "default": 0,
+      "min": 0
+    },
+    "wallet_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "locked",
+        "closed"
+      ],
+      "required": true,
+      "default": "active"
+    },
+    "last_ledger_at": {
+      "type": "datetime"
+    },
+    "wallet_revision": {
+      "type": "integer",
+      "default": 1,
+      "min": 1
+    }
+  }
+}

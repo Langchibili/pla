@@ -1,0 +1,80 @@
+{
+  "kind": "collectionType",
+  "collectionName": "coin_ledgers",
+  "info": {
+    "singularName": "coin-ledger",
+    "pluralName": "coin-ledgers",
+    "displayName": "Coin Ledger",
+    "description": "Append-only wallet transaction ledger for earned, spent, granted, reversed and admin-adjusted PLACO Coins."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "wallet": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::coin-wallet.coin-wallet",
+      "required": true
+    },
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "coin_type": {
+      "type": "enumeration",
+      "enum": [
+        "bronze",
+        "diamond"
+      ],
+      "required": true,
+      "default": "bronze"
+    },
+    "amount_delta": {
+      "type": "integer",
+      "required": true
+    },
+    "balance_after": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "ledger_type": {
+      "type": "enumeration",
+      "enum": [
+        "welcome_grant",
+        "match_reward",
+        "training_reward",
+        "rewarded_ad",
+        "market_purchase",
+        "store_purchase",
+        "refund",
+        "admin_adjustment",
+        "reversal"
+      ],
+      "required": true,
+      "default": "match_reward"
+    },
+    "source_type": {
+      "type": "string",
+      "required": true
+    },
+    "source_reference": {
+      "type": "string"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "ledger_note": {
+      "type": "text"
+    },
+    "ledger_metadata": {
+      "type": "json",
+      "default": {}
+    }
+  }
+}

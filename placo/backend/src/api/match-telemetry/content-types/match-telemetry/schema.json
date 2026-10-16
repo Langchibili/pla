@@ -1,0 +1,64 @@
+{
+  "kind": "collectionType",
+  "collectionName": "match_telemetry",
+  "info": {
+    "singularName": "match-telemetry",
+    "pluralName": "match-telemetry-records",
+    "displayName": "Match Telemetry",
+    "description": "Compact aggregated in-match telemetry for balance calibration and suspicious-result review, avoiding large per-frame uploads."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "match": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::match.match",
+      "required": true
+    },
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile"
+    },
+    "team_side": {
+      "type": "enumeration",
+      "enum": [
+        "home",
+        "away",
+        "neutral"
+      ],
+      "default": "neutral"
+    },
+    "telemetry_schema_version": {
+      "type": "string",
+      "default": "1.0.0"
+    },
+    "telemetry_payload": {
+      "type": "json",
+      "required": true,
+      "default": {}
+    },
+    "client_fps_avg": {
+      "type": "decimal",
+      "min": 0,
+      "max": 240
+    },
+    "simulation_ticks": {
+      "type": "integer",
+      "min": 0
+    },
+    "event_count": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "payload_hash": {
+      "type": "string"
+    },
+    "received_at": {
+      "type": "datetime"
+    }
+  }
+}

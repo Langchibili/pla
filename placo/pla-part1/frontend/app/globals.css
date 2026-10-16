@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+html, body { height: 100%; background: #07110b; color: #eaf5ee; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+body { -webkit-font-smoothing: antialiased; }
+/* Match screen: never let the browser scroll/zoom/select while playing */
+.no-touch-actions { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }

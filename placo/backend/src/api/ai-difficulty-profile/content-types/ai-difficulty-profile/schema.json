@@ -1,0 +1,109 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ai_difficulty_profiles",
+  "info": {
+    "singularName": "ai-difficulty-profile",
+    "pluralName": "ai-difficulty-profiles",
+    "displayName": "Ai Difficulty Profile",
+    "description": "Difficulty-specific AI overrides: harder levels improve reaction/decision/execution, not football laws or hidden rubber-banding."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "difficulty_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "difficulty_name": {
+      "type": "string",
+      "required": true
+    },
+    "difficulty_level": {
+      "type": "integer",
+      "required": true,
+      "min": 1,
+      "max": 10
+    },
+    "ai_team": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::ai-team.ai-team",
+      "inversedBy": "difficulty_profiles"
+    },
+    "reaction_time_ms": {
+      "type": "integer",
+      "default": 200,
+      "min": 50,
+      "max": 1000
+    },
+    "decision_temperature_multiplier": {
+      "type": "decimal",
+      "default": 1,
+      "min": 0.1,
+      "max": 5
+    },
+    "pass_shot_error_multiplier": {
+      "type": "decimal",
+      "default": 1,
+      "min": 0.1,
+      "max": 5
+    },
+    "first_touch_quality_shift": {
+      "type": "decimal",
+      "default": 0,
+      "min": -1,
+      "max": 1
+    },
+    "pressing_intensity_cap": {
+      "type": "decimal",
+      "default": 0.8,
+      "min": 0,
+      "max": 1
+    },
+    "defensive_line_coordination": {
+      "type": "decimal",
+      "default": 0.9,
+      "min": 0,
+      "max": 1
+    },
+    "off_ball_run_timing_jitter_seconds": {
+      "type": "decimal",
+      "default": 0.2,
+      "min": 0,
+      "max": 2
+    },
+    "awareness_adjustment_percent": {
+      "type": "decimal",
+      "default": 0,
+      "min": -100,
+      "max": 100
+    },
+    "goalkeeper_perception_multiplier": {
+      "type": "decimal",
+      "default": 1,
+      "min": 0.1,
+      "max": 5
+    },
+    "tackle_probability_threshold": {
+      "type": "decimal",
+      "default": 0.52,
+      "min": 0,
+      "max": 1
+    },
+    "team_attribute_overrides": {
+      "type": "json",
+      "default": {}
+    },
+    "difficulty_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "required": true,
+      "default": "active"
+    }
+  }
+}

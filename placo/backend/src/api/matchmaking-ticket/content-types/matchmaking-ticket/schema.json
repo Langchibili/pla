@@ -1,0 +1,88 @@
+{
+  "kind": "collectionType",
+  "collectionName": "matchmaking_tickets",
+  "info": {
+    "singularName": "matchmaking-ticket",
+    "pluralName": "matchmaking-tickets",
+    "displayName": "Matchmaking Ticket",
+    "description": "Short-lived queue ticket for online versus matchmaking. Filters on mode, region and rating; paired ticket IDs are consumed idempotently."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "ticket_code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "player": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::game-profile.game-profile",
+      "required": true
+    },
+    "club": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club.club",
+      "required": true
+    },
+    "match_mode": {
+      "type": "enumeration",
+      "enum": [
+        "casual",
+        "ranked",
+        "pla_tournament"
+      ],
+      "required": true,
+      "default": "casual"
+    },
+    "region_code": {
+      "type": "string"
+    },
+    "country": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::country.country"
+    },
+    "rating_at_queue": {
+      "type": "integer",
+      "default": 0,
+      "min": 0
+    },
+    "search_range": {
+      "type": "integer",
+      "default": 200,
+      "min": 0
+    },
+    "ticket_game_status": {
+      "type": "enumeration",
+      "enum": [
+        "queued",
+        "paired",
+        "cancelled",
+        "expired"
+      ],
+      "required": true,
+      "default": "queued"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "match": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::match.match"
+    },
+    "expires_at": {
+      "type": "datetime",
+      "required": true
+    },
+    "queued_at": {
+      "type": "datetime"
+    }
+  }
+}
