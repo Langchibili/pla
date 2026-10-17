@@ -17,7 +17,9 @@ PLACO (Pro League Africa Club Owners) is the football game backend. This reposit
 2. Create a database named `placo` and a database user with the necessary schema/table privileges.
 3. Copy `.env.example` to `.env`. Generate independent, long random secrets for the Strapi secrets and each integration HMAC secret. Do not reuse production PLA, store, ad, or game-engine secrets.
    Configure `PLA_API_URL` to the PLA backend's `/api` base URL so PLACO can validate account handoffs.
-   Include the deployed PLACO frontend origin in `CORS_ORIGINS` (local default `http://localhost:3013`).
+   Include the exact PLACO frontend origin in `CORS_ORIGINS`. For LAN testing,
+   add the frontend's full origin (for example, `http://192.168.43.207:3013`);
+   browser requests are rejected if the host or port is missing.
 4. Run `npm install`, `npm run check:schemas`, `npm run ts:check`, and `npm run build`. Start the built backend with `npm start` and `NODE_ENV=production`.
 5. Configure Content API roles and permissions according to [`docs/PERMISSIONS_MATRIX.md`](docs/PERMISSIONS_MATRIX.md). The supplied allowlist synchroniser and its backup-first runbook are documented in [`docs/RUN_PERMISSIONS_SYNC.md`](docs/RUN_PERMISSIONS_SYNC.md). Do not enable general CRUD for coins, ledgers, match verification, store fulfilment or PLA integration content types.
 6. The bootstrap hook creates baseline catalogues once. Verify all single-type settings and active profiles in the Admin panel before opening the API to users.

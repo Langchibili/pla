@@ -11,7 +11,7 @@
 
 Set:
 
-- `PLA_API_URL=http://localhost:1357/api` for local PLA account validation
+- `PLA_API_URL=http://localhost:1377/api` for local PLA account validation
   (use the HTTPS API base URL in deployed environments).
 - `PLA_BASE_URL=https://<real-pla-domain>`
 - `PLA_RESULT_PATH=/api/integration/placo/results` (adjust to the real PLA route agreed by both teams)
@@ -83,8 +83,12 @@ The exchange endpoint validates the bearer token by requesting
 user details submitted by the browser and does not share JWT signing secrets
 between the two Strapi instances. It maps the PLA account ID, username, email,
 country and preferred/default currency into the PLACO Users & Permissions user, and
-rejects blocked, suspended, banned or unconfirmed PLA accounts. It then issues
-a PLACO JWT for game APIs. This local game JWT is necessary because the two
-backends have independent signing keys. Existing PLACO accounts are never
-linked by email alone; a conflicting email requires a separate, verified
-account-linking process.
+rejects blocked, suspended, banned or unconfirmed PLA accounts. Country matching
+uses the populated PLA country ISO code and matches active PLACO country codes
+case-insensitively. If multiple active PLACO countries share a code, the country
+name must also match case-insensitively; missing or unmatched country details
+stop the exchange before a PLACO user is created. The matched PLACO country is
+stored as the user/profile country relation. It then issues a PLACO JWT for game
+APIs. This local game JWT is necessary because the two backends have independent
+signing keys. Existing PLACO accounts are never linked by email alone; a
+conflicting email requires a separate, verified account-linking process.
