@@ -75,8 +75,19 @@ export function AuthProvider({ children }) {
     }, [clearSession]);
 
     useEffect(() => {
-        setCurrentToken(getToken());
-        void load().finally(() => setReady(true));
+        let active = true;
+        queueMicrotask(() => {
+            if (!active)
+                return;
+            setCurrentToken(getToken());
+            void load().finally(() => {
+                if (active)
+                    setReady(true);
+            });
+        });
+        return () => {
+            active = false;
+        };
     }, [load]);
 
     const value = useMemo(() => ({

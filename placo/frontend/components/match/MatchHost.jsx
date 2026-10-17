@@ -41,6 +41,8 @@ export default function MatchHost({ matchId }) {
     const [fps, setFps] = useState(0);
     const [paused, setPaused] = useState(false);
     const [cam, setCam] = useState('tv');
+    const [controlledSide, setControlledSide] = useState('home');
+    const [matchResult, setMatchResult] = useState(null);
     const [camOpen, setCamOpen] = useState(false);
     const [rewards, setRewards] = useState(null);
     const [submitErr, setSubmitErr] = useState(null);
@@ -83,6 +85,7 @@ export default function MatchHost({ matchId }) {
                 const cfg = buildMatchConfig(issued);
                 cfgRef.current = cfg;
                 setCam(cfg.camera);
+                setControlledSide(cfg.controlledSide);
                 const create = await loadEngine();
                 if (disposed || !canvasRef.current)
                     return;
@@ -92,7 +95,7 @@ export default function MatchHost({ matchId }) {
                     return;
                 }
                 engineRef.current = eng;
-                offs.push(eng.on('score', setScore), eng.on('clock', c => setClock(c)), eng.on('fps', setFps), eng.on('goal', () => { setGoal(true); setTimeout(() => setGoal(false), 2600); }), eng.on('banner', t => { setBanner(t); clearTimeout(bannerT.current); bannerT.current = setTimeout(() => setBanner(null), 1800); }), eng.on('error', m => { setError(m); setPhase('error'); }), eng.on('finished', r => { lastResult.current = r; setScore({ home: r.home_score, away: r.away_score }); submit(); }));
+                offs.push(eng.on('score', setScore), eng.on('clock', c => setClock(c)), eng.on('fps', setFps), eng.on('goal', () => { setGoal(true); setTimeout(() => setGoal(false), 2600); }), eng.on('banner', t => { setBanner(t); clearTimeout(bannerT.current); bannerT.current = setTimeout(() => setBanner(null), 1800); }), eng.on('error', m => { setError(m); setPhase('error'); }), eng.on('finished', r => { lastResult.current = r; setMatchResult(r); setScore({ home: r.home_score, away: r.away_score }); submit(); }));
                 eng.start();
                 setPhase('playing');
                 try {
@@ -176,9 +179,9 @@ export default function MatchHost({ matchId }) {
         if (!held)
             input.current.action = null;
     };
-    const youHome = cfgRef.current?.controlledSide !== 'away';
-    const won = lastResult.current && (youHome ? lastResult.current.home_score > lastResult.current.away_score : lastResult.current.away_score > lastResult.current.home_score);
-    const drew = lastResult.current && lastResult.current.home_score === lastResult.current.away_score;
+    const youHome = controlledSide !== 'away';
+    const won = matchResult && (youHome ? matchResult.home_score > matchResult.away_score : matchResult.away_score > matchResult.home_score);
+    const drew = matchResult && matchResult.home_score === matchResult.away_score;
     return (<Box className="no-touch-actions" sx={{ position: 'fixed', inset: 0, bgcolor: '#000', overflow: 'hidden' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', outline: 'none' }}/>
 

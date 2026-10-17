@@ -51,7 +51,14 @@ export default function CustomisePage() {
     }, [clubId]);
 
     useEffect(() => {
-        void load();
+        let active = true;
+        queueMicrotask(() => {
+            if (active)
+                void load();
+        });
+        return () => {
+            active = false;
+        };
     }, [load]);
 
     async function choose(fn, successMessage) {

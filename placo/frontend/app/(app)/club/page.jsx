@@ -55,7 +55,14 @@ export default function ClubPage() {
     }, [clubId]);
 
     useEffect(() => {
-        void load();
+        let active = true;
+        queueMicrotask(() => {
+            if (active)
+                void load();
+        });
+        return () => {
+            active = false;
+        };
     }, [load]);
 
     if (!clubId)
