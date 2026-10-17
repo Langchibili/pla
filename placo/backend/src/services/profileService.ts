@@ -23,15 +23,16 @@ export async function initializeProfile(strapi: any, userId: number, input: { pu
   const handle = existing?.public_handle || requestedHandle || `player-${crypto.randomUUID().slice(0, 8)}`;
   const profile = existing ?? await strapi.db.query(UID.profile).create({
     data: {
-      user: userId, pla_user_id: user.pla_external_user_id || undefined, public_handle: handle,
+      user: userId, pla_user_id: user.pla_external_user_id || undefined, pla_username: user.pla_external_username || undefined, public_handle: handle,
       country: countryId || undefined, preferred_currency: currencyId || undefined,
       profile_game_status: 'active', app_xp: 0, matches_played: 0, wins: 0, draws: 0, losses: 0,
       goals_scored: 0, goals_conceded: 0, clean_sheets: 0, onboarding_complete: false,
     },
   });
-  if (existing && (!existing.pla_user_id || !existing.country || !existing.preferred_currency)) {
+  if (existing && (!existing.pla_user_id || !existing.pla_username || !existing.country || !existing.preferred_currency)) {
     await strapi.db.query(UID.profile).update({ where: { id: existing.id }, data: {
       pla_user_id: existing.pla_user_id || user.pla_external_user_id || undefined,
+      pla_username: existing.pla_username || user.pla_external_username || undefined,
       country: existing.country?.id ?? countryId ?? undefined,
       preferred_currency: existing.preferred_currency?.id ?? currencyId ?? undefined,
     } });

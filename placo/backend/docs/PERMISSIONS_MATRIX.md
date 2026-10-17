@@ -6,7 +6,7 @@ The executable allowlist is in [`src/services/apiPermissionSeeder.ts`](../src/se
 |---|---|---|---|
 | `country`, `currency` | `find/findOne`; controllers return curated active records | Same, plus currency conversion | Full management |
 | `leaderboard-entry` | Curated `/leaderboards/xp` custom route (`auth:false`); no generic CRUD | Same | Full management |
-| `game-profile` | Public-summary custom route (`auth:false`); no generic CRUD | `/me/game-profile` and `/initialise` custom actions only | Full management with audit |
+| `game-profile` | Public-summary route and `/auth/pla/exchange` (exchange validates a PLA bearer token server-to-server); no generic CRUD | `/me/game-profile` and `/initialise` custom actions only | Full management with audit |
 | `club` | No generic CRUD | Own-club squad and custom formation/manager/stadium/kit selections only | Full management |
 | `club-player`, `club-manager` | No generic CRUD | `/me/managers` and owned-item develop/rename custom actions only; no generic list or direct mutation | Full management |
 | Formation, kit, manager/player templates, stadium presets | No generic CRUD | Read-only `find/findOne` for game selection and client config | Full catalogue management |

@@ -11,6 +11,8 @@
 
 Set:
 
+- `PLA_API_URL=http://localhost:1357/api` for local PLA account validation
+  (use the HTTPS API base URL in deployed environments).
 - `PLA_BASE_URL=https://<real-pla-domain>`
 - `PLA_RESULT_PATH=/api/integration/placo/results` (adjust to the real PLA route agreed by both teams)
 - `PLA_INTEGRATION_HMAC_SECRET=<independent random server secret>`
@@ -67,3 +69,22 @@ PLA should store processed `Idempotency-Key` / event ID and ignore duplicates. I
 - Monitor pending age, attempts, dead-letter count, mismatched fixture IDs and HMAC failures.
 - Build a scheduled worker/queue (e.g. platform cron) that invokes the signed outbox flush internally; do not depend on a player tapping a screen to dispatch results.
 - Cash prize/tournament activation remains `cash_tournaments_enabled` plus country override and final PLA-side policy; default global setting is off.
+
+## PLA account sign-in
+
+The PLACO frontend returns to the PLA frontend after OTP verification with the
+PLA JWT in the URL fragment (never a query parameter). The PLA JWT is saved in
+PLA local storage before navigation and is removed from the PLACO URL as soon
+as the game frontend handles the callback. PLACO stores that original token
+separately and sends it only to `POST /api/auth/pla/exchange`.
+
+The exchange endpoint validates the bearer token by requesting
+`GET /users/me` from the server-configured `PLA_API_URL`; it does not trust
+user details submitted by the browser and does not share JWT signing secrets
+between the two Strapi instances. It maps the PLA account ID, username, email,
+country and preferred/default currency into the PLACO Users & Permissions user, and
+rejects blocked, suspended, banned or unconfirmed PLA accounts. It then issues
+a PLACO JWT for game APIs. This local game JWT is necessary because the two
+backends have independent signing keys. Existing PLACO accounts are never
+linked by email alone; a conflicting email requires a separate, verified
+account-linking process.

@@ -1,4 +1,4 @@
-import { API_URL, TOKEN_KEY } from './config';
+import { API_URL, PLA_TOKEN_KEY, TOKEN_KEY } from './config';
 export class ApiError extends Error {
     status;
     constructor(status, message) {
@@ -11,15 +11,38 @@ export const setToken = (t) => { if (t)
     localStorage.setItem(TOKEN_KEY, t);
 else
     localStorage.removeItem(TOKEN_KEY); };
+export const getPlaToken = () => (typeof window === 'undefined' ? null : localStorage.getItem(PLA_TOKEN_KEY));
+export const setPlaToken = (token) => {
+    if (typeof window === 'undefined')
+        return;
+    if (token)
+        localStorage.setItem(PLA_TOKEN_KEY, token);
+    else
+        localStorage.removeItem(PLA_TOKEN_KEY);
+};
+export function consumePlaTokenFromHash() {
+    if (typeof window === 'undefined')
+        return null;
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    if (!params.has('pla_jwt'))
+        return null;
+    const token = params.get('pla_jwt');
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    if (!token)
+        return null;
+    setPlaToken(token);
+    return token;
+}
 export const newKey = () => (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 async function request(path, init = {}) {
-    const headers = { 'content-type': 'application/json', ...init.headers };
+    const { auth = true, ...requestOptions } = init;
+    const headers = { 'content-type': 'application/json', ...requestOptions.headers };
     const token = getToken();
-    if (token)
+    if (token && auth)
         headers.authorization = `Bearer ${token}`;
     if (init.idempotent)
         headers['x-idempotency-key'] = init.idempotent;
-    const res = await fetch(`${API_URL}${path}`, { ...init, headers });
+    const res = await fetch(`${API_URL}${path}`, { ...requestOptions, headers });
     const text = await res.text();
     let body = {};
     if (text) {
@@ -38,8 +61,7 @@ async function request(path, init = {}) {
 const unwrap = async (p) => (await p).data;
 const post = (path, body, idempotent) => request(path, { method: 'POST', body: JSON.stringify(body ?? {}), idempotent });
 export const api = {
-    login: async (identifier, password) => request('/auth/local', { method: 'POST', body: JSON.stringify({ identifier, password }) }),
-    register: async (username, email, password) => request('/auth/local/register', { method: 'POST', body: JSON.stringify({ username, email, password }) }),
+    exchangePlaToken: (pla_jwt) => request('/auth/pla/exchange', { method: 'POST', body: JSON.stringify({ pla_jwt }), auth: false }),
     profile: () => unwrap(request('/me/game-profile')),
     initialise: (club_name, public_handle) => unwrap(post('/me/game-profile/initialise', { club_name, public_handle })),
     wallet: () => unwrap(request('/me/coin-wallet')),

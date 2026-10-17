@@ -6,6 +6,7 @@ All paths below are relative to Strapi's `/api` prefix unless deployment routing
 
 | Method | Path | Auth | What it does |
 |---|---|---|---|
+| `POST` | `/auth/pla/exchange` | PLA bearer token (verified server-to-server) | Validates the PLA session against `PLA_API_URL`, provisions/updates the linked PLACO user and issues a PLACO JWT. |
 | `GET` | `/me/game-profile` | JWT | Returns the authenticated user's PLACO profile, country and progression summary. |
 | `GET` | `/me/club` | JWT | Returns the authenticated user's own club identifier and display name. |
 | `GET` | `/me/managers` | JWT | Returns only managers owned by the authenticated profile, including selection state and display modifiers. |
@@ -84,7 +85,7 @@ Internal signed requests use `X-PLACO-Timestamp` and `X-PLACO-Signature`; see `P
 
 ## Typical lifecycles
 
-1. User signs in through Strapi Users & Permissions and obtains a PLACO profile via `/me/game-profile/initialise`. Bootstrap creates 11 numbered players P-1…P-11, a default manager/club/kit/stadium, and a Bronze Coin welcome grant.
+1. User signs in to PLA, then PLACO validates the PLA JWT at `/auth/pla/exchange` and issues a PLACO JWT. The player obtains a PLACO profile via `/me/game-profile/initialise`. Bootstrap creates 11 numbered players P-1…P-11, a default manager/club/kit/stadium, and a Bronze Coin welcome grant.
 2. For training, client requests an AI team/difficulty. The backend creates a match with snapshots and a deterministic seed. Babylon.js consumes the snapshot; training rewards are awarded server-side only after trusted finalisation and caps apply.
 3. For online versus, two matchmaking tickets are paired into one canonical match with frozen config. Avoid client-selected outcomes.
 4. For PLA, PLA sends fixture assignment and both PLA IDs. PLACO creates a linked match. After trusted result validation, an outbox event is signed and delivered/retried; PLA decides tournament standings, eligibility and any cash-prize payout.

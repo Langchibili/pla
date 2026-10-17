@@ -16,6 +16,8 @@ PLACO (Pro League Africa Club Owners) is the football game backend. This reposit
 1. Use Node.js 24 LTS (the package engine allows supported Strapi-compatible Node 22/24/26 versions) and MySQL 8.0 or newer; MySQL 8.4 is the preferred baseline.
 2. Create a database named `placo` and a database user with the necessary schema/table privileges.
 3. Copy `.env.example` to `.env`. Generate independent, long random secrets for the Strapi secrets and each integration HMAC secret. Do not reuse production PLA, store, ad, or game-engine secrets.
+   Configure `PLA_API_URL` to the PLA backend's `/api` base URL so PLACO can validate account handoffs.
+   Include the deployed PLACO frontend origin in `CORS_ORIGINS` (local default `http://localhost:3013`).
 4. Run `npm install`, `npm run check:schemas`, `npm run ts:check`, and `npm run build`. Start the built backend with `npm start` and `NODE_ENV=production`.
 5. Configure Content API roles and permissions according to [`docs/PERMISSIONS_MATRIX.md`](docs/PERMISSIONS_MATRIX.md). The supplied allowlist synchroniser and its backup-first runbook are documented in [`docs/RUN_PERMISSIONS_SYNC.md`](docs/RUN_PERMISSIONS_SYNC.md). Do not enable general CRUD for coins, ledgers, match verification, store fulfilment or PLA integration content types.
 6. The bootstrap hook creates baseline catalogues once. Verify all single-type settings and active profiles in the Admin panel before opening the API to users.
@@ -25,6 +27,7 @@ Full setup and complete package list: [`docs/INSTALLATION_AND_PACKAGES.md`](docs
 ## Important architecture contract
 
 - **PLACO game coins are not PLA Plapo.** Only `bronze` and `diamond` coin types exist in the PLACO wallet; XP is a separate ranking/progression value. The project does not create a `plapo` wallet or treat Plapo as a purchasable game currency.
+- **Player accounts authenticate through PLA.** PLACO validates the incoming PLA JWT against `PLA_API_URL`, maps the verified identity and country/currency, then issues a separate PLACO JWT. Local username/password registration, login, password-reset login and refresh routes are disabled.
 - **No direct payments are processed by Strapi.** Mobile/desktop store billing and receipts remain with Apple App Store, Google Play or the selected platform store. Strapi stores the SKU, receipt reference and fulfilment outcome only.
 - **Cash tournament administration/payout remains in PLA.** PLACO sends a cryptographically authenticated result callback/outbox event; it does not create a new payout rail or mark money as paid.
 - **Do not put HMAC secrets in the Babylon.js client.** As a browser/mobile client can be inspected, its result payload cannot become trustworthy just because the same app owns both sides. Production competitive matches need a server-side match authority/verifier or replay/telemetry review service that alone holds `MATCH_ENGINE_HMAC_SECRET`, checks simulation/build rules and emits a signed final result. The current route is an integration seam for that trusted service.

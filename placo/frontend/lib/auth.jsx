@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api, getToken, setToken, ApiError } from './api';
+import { api, consumePlaTokenFromHash, getPlaToken, getToken, setPlaToken, setToken, ApiError } from './api';
 
 const AuthContext = createContext(null);
 
@@ -76,14 +76,35 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         let active = true;
-        queueMicrotask(() => {
+        queueMicrotask(async () => {
             if (!active)
                 return;
-            setCurrentToken(getToken());
-            void load().finally(() => {
+            try {
+                const incomingPlaToken = consumePlaTokenFromHash();
+                const plaToken = incomingPlaToken ?? (!getToken() ? getPlaToken() : null);
+                if (incomingPlaToken) {
+                    setToken(null);
+                    setCurrentToken(null);
+                }
+                if (plaToken) {
+                    const result = await api.exchangePlaToken(plaToken);
+                    if (!active)
+                        return;
+                    setToken(result.jwt);
+                }
+                if (!active)
+                    return;
+                setCurrentToken(getToken());
+                await load();
+            }
+            catch (error) {
+                if (active)
+                    setLoadError(errorMessage(error));
+            }
+            finally {
                 if (active)
                     setReady(true);
-            });
+            }
         });
         return () => {
             active = false;
@@ -97,20 +118,9 @@ export function AuthProvider({ children }) {
         clubId,
         needsOnboarding,
         loadError,
-        login: async (identifier, password) => {
-            const result = await api.login(identifier, password);
-            setToken(result.jwt);
-            setCurrentToken(result.jwt);
-            await load();
-        },
-        register: async (username, email, password) => {
-            const result = await api.register(username, email, password);
-            setToken(result.jwt);
-            setCurrentToken(result.jwt);
-            await load();
-        },
         logout: () => {
             clearSession();
+            setPlaToken(null);
             setLoadError(null);
         },
         refresh: load,

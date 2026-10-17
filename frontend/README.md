@@ -3,6 +3,12 @@
 Install dependencies with `npm install`, set the `NEXT_PUBLIC_*` values in `.env.local`,
 then run `npm run build` and `npm start` for a production-mode local run on port 3011.
 
+PLACO sign-in links to `/login?redirectTo=placo&mode=login` or
+`/login?redirectTo=placo&mode=signup`. After OTP verification, the PLA JWT is
+saved in this frontend and handed to the configured
+`NEXT_PUBLIC_PLACO_FRONTEND_URL` in the URL fragment. Set that public URL in
+`.env.local` for the target deployment.
+
 ## Custom Strapi routes this frontend expects
 
 - `POST /auth/email-otp/send`, `/resend`, and `/verify` for email-based registration and sign-in.

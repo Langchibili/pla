@@ -5,6 +5,22 @@ export const tokenStore = {
   set: (t) => localStorage.setItem(KEY, t),
   clear: () => localStorage.removeItem(KEY),
 };
+export const isPlacoRedirectRequested = () => (
+  typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).get('redirectTo') === 'placo'
+);
+export function placoHandoffUrl() {
+  const jwt = tokenStore.get();
+  if (!jwt) throw new Error('Your PLA session is unavailable. Please sign in again.');
+  const configured = process.env.NEXT_PUBLIC_PLACO_FRONTEND_URL || 'http://localhost:3013';
+  const base = new URL(configured);
+  if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password) {
+    throw new Error('The PLACO address is not configured correctly.');
+  }
+  const target = new URL('/login', base.origin);
+  target.hash = new URLSearchParams({ pla_jwt: jwt }).toString();
+  return target.toString();
+}
 export const mediaUrl = (media) => {
   if (!media?.url) return null;
   if (/^https?:\/\//i.test(media.url)) return media.url;

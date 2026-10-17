@@ -11,7 +11,7 @@ import TopBar from './TopBar';
 import BottomNav, { TABS } from './BottomNav';
 import AppDownloadGate from './AppDownloadGate';
 import { createDeviceHash, notifyReferralCodeChange, referralCodeFromUrl } from '@/lib/device';
-import { endpoints, tokenStore } from '@/lib/api';
+import { endpoints, isPlacoRedirectRequested, placoHandoffUrl, tokenStore } from '@/lib/api';
 
 const subscribeClient = () => () => {};
 const readClient = () => true;
@@ -104,10 +104,18 @@ export default function AppShell({ children }) {
 
   useEffect(() => {
     if (!ready || !clientReady || !frontendMode) return;
-    if (!user && (isWebView || frontendMode === 'web') && !isPublic) router.replace('/login');
+    if (user && isPublic && isPlacoRedirectRequested()) {
+      try {
+        window.location.assign(placoHandoffUrl());
+      } catch (error) {
+        console.error('Unable to return to PLACO after PLA sign-in', error);
+        toast(error instanceof Error ? error.message : 'Could not return to PLACO.');
+      }
+    }
+    else if (!user && (isWebView || frontendMode === 'web') && !isPublic) router.replace('/login');
     else if (user && !user.has_completed_tutorial && !isOnboarding) router.replace('/onboarding');
     else if (user && isPublic) router.replace('/');
-  }, [ready, clientReady, frontendMode, isWebView, user, isPublic, isOnboarding, router]);
+  }, [ready, clientReady, frontendMode, isWebView, user, isPublic, isOnboarding, router, toast]);
 
   useEffect(() => {
     if (!ready || !window.ReactNativeWebView) return;

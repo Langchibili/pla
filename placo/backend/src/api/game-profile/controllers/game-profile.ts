@@ -3,8 +3,27 @@ import { requireUserId } from '../../../services/security';
 import { getProfileForUser, getWalletForProfile } from '../../../services/walletService';
 import { initializeProfile } from '../../../services/profileService';
 import { resolveSettingsForCountry } from '../../../services/settingsResolver';
+import { exchangePlaToken, PlaAuthError } from '../../../services/plaAuthService';
 
 export default factories.createCoreController('api::game-profile.game-profile', ({ strapi }) => ({
+  async exchangePla(ctx:any) {
+    try {
+      const result = await exchangePlaToken(strapi, ctx.request.body?.pla_jwt);
+      return ctx.send(result);
+    } catch (error:any) {
+      const status = error instanceof PlaAuthError ? error.status : 500;
+      if (status === 500) strapi.log.error('[game-profile.exchangePla]', error);
+      ctx.status = status;
+      ctx.body = {
+        data: null,
+        error: {
+          status,
+          name: status === 500 ? 'InternalServerError' : 'PlaAuthError',
+          message: status === 500 ? 'PLA sign-in could not be completed' : error.message,
+        },
+      };
+    }
+  },
   async mine(ctx:any) {
     const userId=requireUserId(ctx); if(!userId) return ctx.unauthorized();
     const profile=await getProfileForUser(strapi,userId); if(!profile) return ctx.notFound('PLACO profile not initialised');

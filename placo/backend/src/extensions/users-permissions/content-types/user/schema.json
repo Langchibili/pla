@@ -13,6 +13,9 @@
     "pla_external_user_id": {
       "type": "string",
       "unique": true
+    },
+    "pla_external_username": {
+      "type": "string"
     }
   }
 }

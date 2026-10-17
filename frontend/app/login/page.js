@@ -1,6 +1,7 @@
 'use client';
 import { Box, Button, MenuItem, Tab, Tabs, TextField, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useApi } from '@/hooks/useApi';
@@ -12,13 +13,15 @@ import { createDeviceHash, useReferralCode } from '@/lib/device';
 
 export default function Login() {
   const { requestOtp, resendOtp, verifyOtp } = useAuth(); const toast = useToast();
+  const searchParams = useSearchParams();
   const countries = useApi('active-countries', endpoints.countries);
   const attributedCode = useReferralCode();
   const [mode, setMode] = useState(null); const [email, setEmail] = useState(''); const [code, setCode] = useState('');
   const [manualReferralCode, setManualReferralCode] = useState(''); const [countryId, setCountryId] = useState('');
   const [stage, setStage] = useState('email'); const [busy, setBusy] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(30);
-  const selectedMode = mode ?? (attributedCode ? 1 : 0);
+  const initialMode = searchParams.get('mode');
+  const selectedMode = mode ?? (initialMode === 'signup' ? 1 : initialMode === 'login' ? 0 : attributedCode ? 1 : 0);
   const referralCode = manualReferralCode || attributedCode;
   const purpose = selectedMode === 0 ? 'login' : 'signup';
 
