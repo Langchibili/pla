@@ -9,7 +9,7 @@ export const isPlacoRedirectRequested = () => (
   typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('redirectTo') === 'placo'
 );
-export function placoHandoffUrl() {
+export function placoHandoffUrl(returnTo = '/') {
   const jwt = tokenStore.get();
   if (!jwt) throw new Error('Your PLA session is unavailable. Please sign in again.');
   const configured = process.env.NEXT_PUBLIC_PLACO_FRONTEND_URL || 'http://localhost:3013';
@@ -17,7 +17,8 @@ export function placoHandoffUrl() {
   if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password) {
     throw new Error('The PLACO address is not configured correctly.');
   }
-  const target = new URL('/login', base.origin);
+  const target = new URL('/auth/pla/callback', base.origin);
+  target.searchParams.set('returnTo', returnTo);
   target.hash = new URLSearchParams({ pla_jwt: jwt }).toString();
   return target.toString();
 }
@@ -42,7 +43,14 @@ export async function api(path, { method = 'GET', body, form, auth = true, signa
   } catch { throw new ApiError('No connection. Check your data and retry.', 0); }
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
-    if (res.status === 401 && auth) { tokenStore.clear(); if (typeof window !== 'undefined' && !location.pathname.startsWith('/login')) location.href = '/login'; }
+    if ((res.status === 401 || res.status === 403) && auth) {
+      tokenStore.clear();
+      if (typeof window !== 'undefined'
+        && !location.pathname.startsWith('/login')
+        && location.pathname !== '/check-login-status') {
+        location.href = '/login';
+      }
+    }
     throw new ApiError(json?.error?.message || 'Something went wrong', res.status, json?.error?.details);
   }
   return json;

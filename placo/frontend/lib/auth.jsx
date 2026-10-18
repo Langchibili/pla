@@ -17,6 +17,7 @@ const errorMessage = error => error instanceof Error ? error.message : 'The requ
 export function AuthProvider({ children }) {
     const [ready, setReady] = useState(false);
     const [token, setCurrentToken] = useState(null);
+    const [plaExchangeComplete, setPlaExchangeComplete] = useState(false);
     const [profile, setProfile] = useState(null);
     const [clubId, setClubId] = useState(null);
     const [needsOnboarding, setNeedsOnboarding] = useState(false);
@@ -25,6 +26,7 @@ export function AuthProvider({ children }) {
     const clearSession = useCallback(() => {
         setToken(null);
         setCurrentToken(null);
+        setPlaExchangeComplete(false);
         setProfile(null);
         setClubId(null);
         setNeedsOnboarding(false);
@@ -73,6 +75,12 @@ export function AuthProvider({ children }) {
             setLoadError(errorMessage(error));
         }
     }, [clearSession]);
+    const logout = useCallback(() => {
+        clearSession();
+        setPlaToken(null);
+        setPlaExchangeComplete(false);
+        setLoadError(null);
+    }, [clearSession]);
 
     useEffect(() => {
         let active = true;
@@ -80,17 +88,28 @@ export function AuthProvider({ children }) {
             if (!active)
                 return;
             try {
+                if (window.location.pathname === '/logout') {
+                    setToken(null);
+                    setPlaToken(null);
+                    setCurrentToken(null);
+                    setPlaExchangeComplete(false);
+                    await load();
+                    return;
+                }
                 const incomingPlaToken = consumePlaTokenFromHash();
-                const plaToken = incomingPlaToken ?? (!getToken() ? getPlaToken() : null);
+                const isPlaCallback = window.location.pathname === '/auth/pla/callback';
+                const plaToken = incomingPlaToken ?? (!getToken() || isPlaCallback ? getPlaToken() : null);
                 if (incomingPlaToken) {
                     setToken(null);
                     setCurrentToken(null);
+                    setPlaExchangeComplete(false);
                 }
                 if (plaToken) {
                     const result = await api.exchangePlaToken(plaToken);
                     if (!active)
                         return;
                     setToken(result.jwt);
+                    setPlaExchangeComplete(true);
                 }
                 if (!active)
                     return;
@@ -114,17 +133,14 @@ export function AuthProvider({ children }) {
     const value = useMemo(() => ({
         ready,
         token,
+        plaExchangeComplete,
         profile,
         clubId,
         needsOnboarding,
         loadError,
-        logout: () => {
-            clearSession();
-            setPlaToken(null);
-            setLoadError(null);
-        },
+        logout,
         refresh: load,
-    }), [ready, token, profile, clubId, needsOnboarding, loadError, load, clearSession]);
+    }), [ready, token, plaExchangeComplete, profile, clubId, needsOnboarding, loadError, load, logout]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

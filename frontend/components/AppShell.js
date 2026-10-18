@@ -16,7 +16,7 @@ import { endpoints, isPlacoRedirectRequested, placoHandoffUrl, tokenStore } from
 const subscribeClient = () => () => {};
 const readClient = () => true;
 const readServer = () => false;
-const PUBLIC = ['/login'];
+const PUBLIC = ['/login', '/check-login-status'];
 const TITLES = { '/': 'ProLeague Africa', '/tournaments': 'Tournaments', '/matches': 'My matches', '/wallet': 'Wallet', '/profile': 'Profile', '/leaderboard': 'Leaderboard' };
 const titleFor = (p) => TITLES[p] || (p.startsWith('/tournaments/') ? 'Tournament' : p.startsWith('/matches/') ? 'Match room' : 'ProLeague Africa');
 
@@ -104,6 +104,7 @@ export default function AppShell({ children }) {
 
   useEffect(() => {
     if (!ready || !clientReady || !frontendMode) return;
+    if (path === '/check-login-status') return;
     if (user && isPublic && isPlacoRedirectRequested()) {
       try {
         window.location.assign(placoHandoffUrl());
@@ -115,7 +116,7 @@ export default function AppShell({ children }) {
     else if (!user && (isWebView || frontendMode === 'web') && !isPublic) router.replace('/login');
     else if (user && !user.has_completed_tutorial && !isOnboarding) router.replace('/onboarding');
     else if (user && isPublic) router.replace('/');
-  }, [ready, clientReady, frontendMode, isWebView, user, isPublic, isOnboarding, router, toast]);
+  }, [ready, clientReady, frontendMode, isWebView, user, isPublic, isOnboarding, path, router, toast]);
 
   useEffect(() => {
     if (!ready || !window.ReactNativeWebView) return;
@@ -176,6 +177,7 @@ export default function AppShell({ children }) {
   useSocketEvent('match:result_ready', () => toast('Match result is in'));
 
   if (!clientReady || !ready || !frontendMode) return <Box sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><CircularProgress color="secondary" /></Box>;
+  if (path === '/check-login-status') return <>{children}</>;
   if (!user && !isWebView && frontendMode === 'native') return <AppDownloadGate />;
   if (isPublic || isOnboarding) return <>{children}</>;
   if (!user) return <Box sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><CircularProgress color="secondary" /></Box>;

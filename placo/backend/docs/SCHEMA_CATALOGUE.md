@@ -345,7 +345,7 @@ Currency catalogue patterned after PLA, including ISO code, symbol, base convers
 | `code` | string | Code. | Yes | — | unique; minLength 3; maxLength 3 |
 | `name` | string | Name. | Yes | — | — |
 | `symbol` | string | Symbol. | No | — | — |
-| `rate_to_base` | decimal | Rate to base. | Yes | `1` | min 1e-07 |
+| `rate_to_base` | decimal | Cached rate to base; `0` means no cached rate is configured. | Yes | `1` | min 0 |
 | `rate_updated_at` | datetime | Rate updated at. | No | — | — |
 | `is_base` | boolean | Is base. | No | `False` | — |
 | `currency_status` | enum (active, inactive) | Currency status. | Yes | `active` | — |
@@ -1108,4 +1108,3 @@ Append-only XP award record, calculation breakdown and idempotency key. XP is pr
 | `idempotency_key` | string | Unique retry key that prevents duplicate processing. | Yes | — | unique |
 | `calculation_breakdown` | JSON | Calculation breakdown. | No | `{}` | — |
 | `created_by_system` | string | Created by system. | No | `placo` | — |
-

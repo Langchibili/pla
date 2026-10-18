@@ -114,7 +114,12 @@ export const createEngine = async (canvas, config) => {
             }
             else {
                 rig.setMode(rig.mode); // keep
-                world.setCamBasis(rig.forward.x, rig.forward.z);
+                if (rig.mode === 'ball')
+                    world.setCamBasis(rig.forward.x, rig.forward.z);
+                else if (rig.mode === 'goal_to_goal' || rig.mode === 'top_down')
+                    world.setCamBasis(world.dir(world.humanSide), 0);
+                else
+                    world.setCamBasis(0, 1);
                 acc += dt;
                 let steps = 0;
                 while (acc >= DT && steps < MAX_STEPS) {

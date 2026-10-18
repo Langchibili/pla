@@ -1,4 +1,5 @@
 import { Color3, DynamicTexture, MeshBuilder, Quaternion, StandardMaterial, TransformNode, } from '@babylonjs/core';
+import { createPlayerSphereGeometry, createSkinnedPlayer, setBonePitch } from './skinnedPlayer';
 /**
  * Pose buffers: the renderer never reads the live sim directly. Each sim tick (or replay frame) writes
  * into `cur` and the previous tick is kept in `prev`, so drawing at any display rate interpolates smoothly.
@@ -34,7 +35,8 @@ export class Pose {
     }
 }
 const hex = (s, fb) => Color3.FromHexString(/^#[0-9a-f]{6}$/i.test(s ?? '') ? s : fb);
-const SKIN = ['#8d5a3b', '#6b4029', '#b27a53'];
+const SKIN = ['#8d5a3b', '#6b4029', '#b27a53', '#c58b64', '#714732', '#a56c4c'];
+const HAIR = ['#17130f', '#251710', '#100f0e', '#342016', '#181512', '#21150f'];
 export class Actors {
     scene;
     P;
@@ -54,11 +56,10 @@ export class Actors {
             m.emissiveColor = col.scale(emi);
             return m;
         };
-        // shared geometry
-        const torsoSrc = MeshBuilder.CreateCapsule('torso', { height: 0.72, radius: 0.2, tessellation: 8, subdivisions: 1 }, scene);
-        const headSrc = MeshBuilder.CreateSphere('head', { diameter: 0.27, segments: 6 }, scene);
-        const legSrc = MeshBuilder.CreateCylinder('leg', { height: 0.84, diameterTop: 0.15, diameterBottom: 0.11, tessellation: 6 }, scene);
-        const armSrc = MeshBuilder.CreateCylinder('arm', { height: 0.6, diameter: 0.09, tessellation: 5 }, scene);
+        const sphere = createPlayerSphereGeometry(scene);
+        const playerMaterial = mat('playerM', Color3.White(), 0.07);
+        playerMaterial.useVertexColors = true;
+        playerMaterial.vertexAlpha = false;
         const sh = MeshBuilder.CreateDisc('shadow', { radius: 0.5, tessellation: 14 }, scene);
         sh.rotation.x = Math.PI / 2;
         const shM = new StandardMaterial('shM', scene);
@@ -71,53 +72,30 @@ export class Actors {
         sh.material = shM;
         sh.isVisible = false;
         sh.bakeCurrentTransformIntoVertices();
-        [torsoSrc, headSrc, legSrc, armSrc].forEach(m => (m.isVisible = false));
         const kits = [home.kit, away.kit];
         const defaults = [{ primary: '#18a04a', secondary: '#ffffff', trim: '#f4cb34' }, { primary: '#ffffff', secondary: '#17202a', trim: '#147a3b' }];
         const gkCols = ['#f4cb34', '#2dd4ee'];
-        // one source mesh per (team, part) so every player is a hardware instance
-        const srcs = [0, 1].map(s => {
-            const k = kits[s] ?? defaults[s];
-            const prim = hex(k.primary, defaults[s].primary), sec = hex(k.secondary, defaults[s].secondary);
-            const mk = (base, name, col) => { const m = base.clone(`${name}${s}`); m.material = mat(`${name}${s}`, col); m.isVisible = false; return m; };
-            return {
-                torso: mk(torsoSrc, 'torso', prim), torsoGK: mk(torsoSrc, 'torsoGK', hex(gkCols[s], '#f4cb34')),
-                leg: mk(legSrc, 'leg', sec), arm: mk(armSrc, 'arm', prim), armGK: mk(armSrc, 'armGK', hex(gkCols[s], '#f4cb34')),
-            };
-        });
-        const heads = SKIN.map((c, i) => { const m = headSrc.clone(`head${i}`); m.material = mat(`skin${i}`, hex(c, '#8d5a3b'), 0.2); m.isVisible = false; return m; });
         for (let i = 0; i < 22; i++) {
-            const side = i < 11 ? 0 : 1, S = srcs[side], isGK = (i % 11) === 0;
+            const side = i < 11 ? 0 : 1, isGK = (i % 11) === 0;
+            const kit = kits[side] ?? defaults[side];
             const root = new TransformNode(`p${i}`, scene);
             const body = new TransformNode(`b${i}`, scene);
             body.parent = root;
-            const torso = (isGK ? S.torsoGK : S.torso).createInstance(`t${i}`);
-            torso.parent = body;
-            torso.position.y = 1.2;
-            const head = heads[i % 3].createInstance(`h${i}`);
-            head.parent = body;
-            head.position.y = 1.72;
-            const mkHip = (x) => {
-                const hip = new TransformNode(`hip${i}`, scene);
-                hip.parent = body;
-                hip.position.set(x, 0.86, 0);
-                const leg = S.leg.createInstance(`l${i}`);
-                leg.parent = hip;
-                leg.position.y = -0.42;
-                return hip;
-            };
-            const mkArm = (x) => {
-                const a = new TransformNode(`sh${i}`, scene);
-                a.parent = body;
-                a.position.set(x, 1.45, 0);
-                const m = (isGK ? S.armGK : S.arm).createInstance(`a${i}`);
-                m.parent = a;
-                m.position.y = -0.28;
-                return a;
-            };
+            const player = createSkinnedPlayer(scene, `p${i}`, sphere, {
+                jersey: hex(kit.primary, defaults[side].primary),
+                shorts: hex(kit.secondary, defaults[side].secondary),
+                trim: hex(kit.trim, defaults[side].trim),
+                skin: hex(SKIN[i % SKIN.length], '#8d5a3b'),
+                hair: hex(HAIR[i % HAIR.length], '#17130f'),
+                sock: hex(kit.secondary, defaults[side].secondary),
+                boot: hex('#111820', '#111820'),
+                eye: hex('#17130f', '#17130f'),
+                keeper: isGK ? hex(gkCols[side], '#f4cb34') : null,
+            }, playerMaterial);
+            player.mesh.parent = body;
             const shadow = sh.createInstance(`s${i}`);
             shadow.position.y = 0.02;
-            this.rigs.push({ root, body, hipL: mkHip(-0.12), hipR: mkHip(0.12), armL: mkArm(-0.28), armR: mkArm(0.28), shadow });
+            this.rigs.push({ root, body, bones: player.bones, skeleton: player.skeleton, shadow });
         }
         // ball
         this.ball = MeshBuilder.CreateSphere('ball', { diameter: P.ballRadius * 2, segments: 12 }, scene);
@@ -170,18 +148,27 @@ export class Actors {
             const spd = lerp(a.spd[i], b.spd[i]);
             const amp = Math.min(1, spd / 6) * 0.95, ph = lerp(a.ph[i], b.ph[i]);
             const sw = Math.sin(ph) * amp;
-            r.hipL.rotation.x = -sw;
-            r.hipR.rotation.x = sw;
-            r.armL.rotation.x = sw * 0.9;
-            r.armR.rotation.x = -sw * 0.9;
+            setBonePitch(r.bones.thighL, -sw);
+            setBonePitch(r.bones.thighR, sw);
+            setBonePitch(r.bones.calfL, Math.max(0, sw) * 0.75);
+            setBonePitch(r.bones.calfR, Math.max(0, -sw) * 0.75);
+            setBonePitch(r.bones.footL, -Math.max(0, sw) * 0.35);
+            setBonePitch(r.bones.footR, -Math.max(0, -sw) * 0.35);
+            setBonePitch(r.bones.upperArmL, sw * 0.9);
+            setBonePitch(r.bones.upperArmR, -sw * 0.9);
+            setBonePitch(r.bones.forearmL, -0.08 - Math.max(0, -sw) * 0.2);
+            setBonePitch(r.bones.forearmR, -0.08 - Math.max(0, sw) * 0.2);
             const k = b.kick[i];
             if (k > 0) { // the single kick clip: plant, swing through
                 const u = 1 - k / 0.32;
-                r.hipR.rotation.x = u < 0.35 ? 0.9 * (u / 0.35) : 0.9 - 2.5 * ((u - 0.35) / 0.65);
-                r.armL.rotation.x = -0.6;
-                r.armR.rotation.x = 0.5;
+                const swing = u < 0.35 ? 0.9 * (u / 0.35) : 0.9 - 2.5 * ((u - 0.35) / 0.65);
+                setBonePitch(r.bones.thighR, swing);
+                setBonePitch(r.bones.calfR, -Math.max(0, swing) * 0.65);
+                setBonePitch(r.bones.upperArmL, -0.6);
+                setBonePitch(r.bones.upperArmR, 0.5);
             }
             r.body.rotation.x = Math.min(0.28, spd * 0.03);
+            const bob = spd > 0.4 ? 0.025 + Math.abs(Math.sin(ph * 2)) * 0.025 : 0;
             // goalkeeper dive pose
             const dv = b.dive[i];
             if (dv !== 0) {
@@ -191,7 +178,7 @@ export class Actors {
             }
             else {
                 r.body.rotation.z = 0;
-                r.body.position.y = 0;
+                r.body.position.y = bob;
             }
             r.shadow.position.set(x, 0.02, z);
         }

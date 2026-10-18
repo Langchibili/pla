@@ -6,6 +6,7 @@ The `country` and `currency` content types emulate the supplied PLA naming and f
 
 - `country`: unique name, ISO code, dial code, one default currency, `country_status`, and nullable country overrides for starter coin grants, XP caps, Bronze Coin reward levels, rewarded-ad coin caps, store/ad availability and cash-tournament allowance.
 - `currency`: unique 3-letter code, name, symbol, `rate_to_base`, `rate_updated_at`, `is_base`, `currency_status`, and inverse countries relation.
+- Nigeria is seeded as an active country (`NG`, `+234`) with active NGN (`Nigerian Naira`, `N`, non-base) to match PLA's currency configuration. PLA currently has `rate_to_base=0` for NGN, so PLACO permits zero to mean no cached rate is configured. Price conversion still uses the configured server-side exchange-rate provider and fails closed when no live rate is available; it does not treat zero as a usable conversion rate.
 - `admn-settings`: singleton global defaults, intentionally spelled this way with collection `admn_settings` to match PLA's existing backend conventions.
 - `settingsResolver.ts`: country override wins when the field is set; otherwise global `admn_settings` applies. Base currency resolves from country default currency then global base currency.
 - `currencyConversion.ts`: exchange-rate cache TTL 1 hour, request timeout 10 seconds, validates provider result and fails closed with a service-unavailable error if current conversion is unavailable. Rate lookup is for display pricing only and is not a store transaction.

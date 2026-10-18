@@ -33,6 +33,21 @@ const required = ['admn-settings','country','currency','game-profile','club','cl
 for (const slug of required) if (!schemas.some(x => x.slug === slug)) errors.push(`Required schema missing: ${slug}`);
 if (!schemas.some(x => x.slug === 'admn-settings' && x.schema.kind === 'singleType' && x.schema.collectionName === 'admn_settings')) errors.push('PLA admin settings compatibility schema must be singleType with collectionName admn_settings');
 if (schemas.some(x => x.schema.attributes?.plapo)) errors.push('PLACO backend should not store PLA Plapo as its game currency');
+const userExtensionPath = path.resolve(__dirname, '..', 'src', 'extensions', 'users-permissions', 'content-types', 'user', 'schema.json');
+if (fs.existsSync(userExtensionPath)) {
+  try {
+    const userSchema = JSON.parse(fs.readFileSync(userExtensionPath, 'utf8'));
+    const requiredUserAttributes = ['username', 'email', 'provider', 'password', 'resetPasswordToken', 'confirmationToken', 'confirmed', 'blocked', 'role'];
+    const missingUserAttributes = requiredUserAttributes.filter(attribute => !userSchema.attributes?.[attribute]);
+    if (missingUserAttributes.length) {
+      errors.push(`Users & Permissions user extension must preserve core attributes: ${missingUserAttributes.join(', ')}`);
+    }
+  } catch (error) {
+    errors.push(`${userExtensionPath}: invalid JSON: ${error.message}`);
+  }
+} else {
+  errors.push('Users & Permissions user extension schema is missing');
+}
 console.log(`Validated ${schemas.length} Strapi content-type schemas.`);
 if (warnings.length) { console.warn(`Warnings (${warnings.length}):\n- ${warnings.join('\n- ')}`); }
 if (errors.length) { console.error(`Errors (${errors.length}):\n- ${errors.join('\n- ')}`); process.exitCode = 1; }

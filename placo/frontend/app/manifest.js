@@ -4,7 +4,7 @@ export default function manifest() {
         short_name: 'PLA Club Owners',
         start_url: '/',
         display: 'standalone',
-        orientation: 'any',
+        orientation: 'landscape',
         background_color: '#07110b',
         theme_color: '#07110b',
     };

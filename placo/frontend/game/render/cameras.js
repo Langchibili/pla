@@ -1,4 +1,4 @@
-import { FreeCamera, Vector3 } from '@babylonjs/core';
+import { Camera, FreeCamera, Vector3 } from '@babylonjs/core';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 /**
  * One camera, six smoothed rigs. The rig also exposes its ground-plane forward vector so the sim can map the
@@ -21,6 +21,7 @@ export class CameraRig {
         this.hx = hx;
         this.hz = hz;
         this.cam = new FreeCamera('cam', this.pos.clone(), scene);
+        this.cam.fovMode = Camera.FOVMODE_HORIZONTAL_FIXED;
         this.cam.minZ = 0.5;
         this.cam.maxZ = 400;
         this.cam.fov = 0.75;

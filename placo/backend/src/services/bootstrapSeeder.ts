@@ -44,6 +44,22 @@ export async function seedDefaults(strapi: any) {
     name: 'Zambia', iso_code: 'ZM', dial_code: '+260', default_currency: currency.id, country_status: 'active',
     initial_bronze_coins: 500, initial_diamond_coins: 0, cash_tournaments_allowed: false,
   });
+  const nairaData = {
+    code: 'NGN', name: 'Nigerian Naira', symbol: 'N', rate_to_base: 0,
+    is_base: false, currency_status: 'active',
+  };
+  const existingNaira = await strapi.db.query(UID.currency).findOne({ where: { code: nairaData.code } });
+  const naira = existingNaira
+    ? await strapi.db.query(UID.currency).update({ where: { id: existingNaira.id }, data: nairaData })
+    : await strapi.db.query(UID.currency).create({ data: nairaData });
+  const nigeriaData = {
+    name: 'Nigeria', iso_code: 'NG', dial_code: '+234',
+    default_currency: naira.id, country_status: 'active',
+  };
+  const existingNigeria = await strapi.db.query(UID.country).findOne({ where: { iso_code: nigeriaData.iso_code } });
+  const nigeria = existingNigeria
+    ? await strapi.db.query(UID.country).update({ where: { id: existingNigeria.id }, data: nigeriaData })
+    : await strapi.db.query(UID.country).create({ data: nigeriaData });
   const ruleset = await findOrCreate(strapi, UID.ruleset, { ruleset_code: 'pla-standard-v1' }, {
     ruleset_code: 'pla-standard-v1', ruleset_name: 'PLA Standard Football Rules', ruleset_version: '1.0.0',
     match_length_minutes: 90, period_count: 2, added_time_enabled: true, offside_enabled: true,
@@ -222,5 +238,5 @@ export async function seedDefaults(strapi: any) {
       display_term,normalized_term:normalized,term_category:display_term.includes('FC')||display_term.includes('Real Madrid')?'club':'person',matching_mode:'normalized',aliases,locale:'*',reason:'Protected/famous name; custom naming policy must be checked before acceptance.',term_game_status:'active',
     });
   }
-  strapi.log.info(`[PLACO bootstrap] Seeded defaults; currency ${currency.code}, country ${country.iso_code}, ${formations.length} formations and ${difficulties.length} AI difficulties are available.`);
+  strapi.log.info(`[PLACO bootstrap] Seeded defaults; currencies ${currency.code}/${naira.code}, countries ${country.iso_code}/${nigeria.iso_code}, ${formations.length} formations and ${difficulties.length} AI difficulties are available.`);
 }

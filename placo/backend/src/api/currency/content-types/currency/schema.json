@@ -29,7 +29,7 @@
       "type": "decimal",
       "required": true,
       "default": 1,
-      "min": 1e-07
+      "min": 0
     },
     "rate_updated_at": {
       "type": "datetime"

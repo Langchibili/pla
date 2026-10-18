@@ -2590,7 +2590,7 @@
           "default": 1,
           "unique": false,
           "enum": null,
-          "min": 1e-07,
+          "min": 0,
           "max": null,
           "relation": null
         },

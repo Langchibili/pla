@@ -21,15 +21,30 @@ function plaAuthUrl(mode) {
     return target.toString();
 }
 
+function plaCheckUrl() {
+    const base = process.env.NEXT_PUBLIC_PLA_FRONTEND_URL?.trim();
+    if (!base) return null;
+
+    const target = new URL('/check-login-status', base);
+    target.searchParams.set('redirectTo', 'placo');
+    target.searchParams.set('returnTo', '/');
+    return target.toString();
+}
+
 export default function LoginPage() {
-    const { ready, token, needsOnboarding, loadError } = useAuth();
+    const { ready, token, plaExchangeComplete, needsOnboarding, loadError } = useAuth();
     const router = useRouter();
     const signupUrl = plaAuthUrl('signup');
     const loginUrl = plaAuthUrl('login');
+    const sessionCheckUrl = plaCheckUrl();
     useEffect(() => {
-        if (ready && token && !loadError)
+        if (ready && token && !plaExchangeComplete && sessionCheckUrl) {
+            window.location.replace(sessionCheckUrl);
+            return;
+        }
+        if (ready && token && plaExchangeComplete && !loadError)
             router.replace(needsOnboarding ? '/onboarding' : '/');
-    }, [ready, token, needsOnboarding, loadError, router]);
+    }, [ready, token, plaExchangeComplete, sessionCheckUrl, needsOnboarding, loadError, router]);
 
     return (
         <Box sx={{

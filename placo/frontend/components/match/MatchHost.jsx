@@ -8,6 +8,8 @@ import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import PauseIcon from '@mui/icons-material/Pause';
@@ -35,6 +37,7 @@ export default function MatchHost({ matchId }) {
     const [phase, setPhase] = useState('loading');
     const [error, setError] = useState(null);
     const [score, setScore] = useState({ home: 0, away: 0 });
+    const [teamNames, setTeamNames] = useState({ home: 'Home', away: 'Away' });
     const [clock, setClock] = useState({ seconds: 0, label: '00:00', period: 1 });
     const [banner, setBanner] = useState(null);
     const [goal, setGoal] = useState(false);
@@ -46,9 +49,37 @@ export default function MatchHost({ matchId }) {
     const [camOpen, setCamOpen] = useState(false);
     const [rewards, setRewards] = useState(null);
     const [submitErr, setSubmitErr] = useState(null);
+    const [portrait, setPortrait] = useState(null);
+    const [orientationError, setOrientationError] = useState(null);
     const lastResult = useRef(null);
     const bannerT = useRef(undefined);
     const push = useCallback(() => engineRef.current?.setInput({ ...input.current, move: { ...input.current.move } }), []);
+    useEffect(() => {
+        const isPortraitTouch = () => {
+            const touchDevice = navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches;
+            return touchDevice && window.innerHeight > window.innerWidth;
+        };
+        const update = () => setPortrait(isPortraitTouch());
+        const frame = window.requestAnimationFrame(update);
+        window.addEventListener('resize', update);
+        window.visualViewport?.addEventListener('resize', update);
+        window.screen.orientation?.addEventListener('change', update);
+        return () => {
+            window.cancelAnimationFrame(frame);
+            window.removeEventListener('resize', update);
+            window.visualViewport?.removeEventListener('resize', update);
+            window.screen.orientation?.removeEventListener('change', update);
+        };
+    }, []);
+    useEffect(() => {
+        const engine = engineRef.current;
+        if (!engine || phase !== 'playing' || portrait === null)
+            return;
+        if (portrait)
+            engine.pause();
+        else if (!paused)
+            engine.resume();
+    }, [portrait, phase, paused]);
     const submit = useCallback(async () => {
         if (!cfgRef.current || !lastResult.current)
             return;
@@ -84,6 +115,7 @@ export default function MatchHost({ matchId }) {
                     issued = (await api.startMatch(matchId)).match;
                 const cfg = buildMatchConfig(issued);
                 cfgRef.current = cfg;
+                setTeamNames({ home: cfg.home.clubName || 'Home', away: cfg.away.clubName || 'Away' });
                 setCam(cfg.camera);
                 setControlledSide(cfg.controlledSide);
                 const create = await loadEngine();
@@ -179,11 +211,26 @@ export default function MatchHost({ matchId }) {
         if (!held)
             input.current.action = null;
     };
+    const requestLandscape = async () => {
+        setOrientationError(null);
+        try {
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen)
+                await document.documentElement.requestFullscreen();
+            const orientation = screen.orientation;
+            if (orientation?.lock)
+                await orientation.lock('landscape');
+            else
+                setOrientationError('This browser cannot rotate automatically. Turn your device sideways to continue.');
+        }
+        catch (e) {
+            setOrientationError(`${e.message || 'Automatic rotation is unavailable.'} Turn your device sideways to continue.`);
+        }
+    };
     const youHome = controlledSide !== 'away';
     const won = matchResult && (youHome ? matchResult.home_score > matchResult.away_score : matchResult.away_score > matchResult.home_score);
     const drew = matchResult && matchResult.home_score === matchResult.away_score;
     return (<Box className="no-touch-actions" sx={{ position: 'fixed', inset: 0, bgcolor: '#000', overflow: 'hidden' }}>
-      <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', outline: 'none' }}/>
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', outline: 'none' }}/>
 
       {phase === 'loading' && (<Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: '#07110b' }}>
           <Stack alignItems="center" spacing={2}><CircularProgress /><Typography>Preparing the pitch…</Typography></Stack>
@@ -191,15 +238,25 @@ export default function MatchHost({ matchId }) {
 
       {phase === 'playing' && (<>
           {/* scoreboard */}
-          <Box sx={{ position: 'absolute', top: 'max(8px, env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 0.5, borderRadius: 3, bgcolor: 'rgba(0,0,0,0.55)' }}>
-            <Typography fontWeight={900} fontSize={22}>{score.home}</Typography>
-            <Typography fontWeight={700} sx={{ fontVariantNumeric: 'tabular-nums', opacity: 0.9 }}>{clock.label}</Typography>
-            <Typography fontWeight={900} fontSize={22}>{score.away}</Typography>
+          <Box sx={{ position: 'absolute', top: 'max(10px, env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.75 }, px: { xs: 1.5, sm: 2.2 }, py: 0.8, borderRadius: 3, bgcolor: 'rgba(4,17,11,0.88)', border: '1px solid rgba(244,203,52,0.32)', boxShadow: '0 8px 28px rgba(0,0,0,0.38)', backdropFilter: 'blur(12px)', minWidth: 240, justifyContent: 'center' }}>
+            <Box sx={{ minWidth: 52, textAlign: 'right' }}>
+              <Typography noWrap fontWeight={800} fontSize={10} sx={{ maxWidth: 96 }}>{teamNames.home}</Typography>
+              <Typography fontWeight={900} fontSize={21} lineHeight={1}>{score.home}</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center', px: 0.8 }}>
+              <Typography fontWeight={900} fontSize={9} letterSpacing={1.2} color="#f4cb34">PRO LEAGUE AFRICA</Typography>
+              <Typography fontWeight={800} fontSize={13} sx={{ fontVariantNumeric: 'tabular-nums' }}>{clock.label}</Typography>
+              <Typography fontWeight={700} fontSize={9} color="rgba(234,245,238,0.65)">{clock.period === 1 ? 'FIRST HALF' : 'SECOND HALF'}</Typography>
+            </Box>
+            <Box sx={{ minWidth: 52 }}>
+              <Typography noWrap fontWeight={800} fontSize={10} sx={{ maxWidth: 96 }}>{teamNames.away}</Typography>
+              <Typography fontWeight={900} fontSize={21} lineHeight={1}>{score.away}</Typography>
+            </Box>
           </Box>
-          <Stack direction="row" spacing={0.5} sx={{ position: 'absolute', top: 'max(8px, env(safe-area-inset-top))', right: 8 }}>
-            <IconButton onClick={() => setCamOpen(o => !o)} sx={{ color: '#fff', bgcolor: 'rgba(0,0,0,0.4)' }}><VideocamIcon /></IconButton>
-            <IconButton onClick={() => engineRef.current?.switchPlayer()} sx={{ color: '#fff', bgcolor: 'rgba(0,0,0,0.4)' }}><SwapHorizIcon /></IconButton>
-            <IconButton onClick={togglePause} sx={{ color: '#fff', bgcolor: 'rgba(0,0,0,0.4)' }}><PauseIcon /></IconButton>
+          <Stack direction="row" spacing={0.6} sx={{ position: 'absolute', top: 'max(10px, env(safe-area-inset-top))', right: 'max(10px, env(safe-area-inset-right))' }}>
+            <IconButton aria-label="Camera options" onClick={() => setCamOpen(o => !o)} sx={{ color: '#fff', bgcolor: 'rgba(4,17,11,0.76)', border: '1px solid rgba(255,255,255,0.16)', '&:hover': { bgcolor: 'rgba(15,107,58,0.9)' } }}><VideocamIcon /></IconButton>
+            <IconButton aria-label="Switch player" onClick={() => engineRef.current?.switchPlayer()} sx={{ color: '#f4cb34', bgcolor: 'rgba(4,17,11,0.76)', border: '1px solid rgba(255,255,255,0.16)', '&:hover': { bgcolor: 'rgba(15,107,58,0.9)' } }}><SwapHorizIcon /></IconButton>
+            <IconButton aria-label="Pause match" onClick={togglePause} sx={{ color: '#fff', bgcolor: 'rgba(4,17,11,0.76)', border: '1px solid rgba(255,255,255,0.16)', '&:hover': { bgcolor: 'rgba(15,107,58,0.9)' } }}><PauseIcon /></IconButton>
           </Stack>
           {process.env.NODE_ENV !== 'production' && (<Typography variant="caption" sx={{ position: 'absolute', top: 8, left: 8, opacity: 0.6 }}>{fps} fps</Typography>)}
           {camOpen && (<ToggleButtonGroup exclusive size="small" value={cam} onChange={(_, v) => { if (v) {
@@ -214,10 +271,10 @@ export default function MatchHost({ matchId }) {
           {goal && (<Typography fontWeight={900} sx={{ position: 'absolute', top: '32%', width: '100%', textAlign: 'center', fontSize: { xs: 64, sm: 96 }, color: '#f4cb34', textShadow: '0 4px 24px #000', pointerEvents: 'none', letterSpacing: 4 }}>GOAL!</Typography>)}
 
           {/* controls */}
-          <Box sx={{ position: 'absolute', left: 'max(24px, env(safe-area-inset-left))', bottom: 'max(24px, env(safe-area-inset-bottom))' }}>
+          <Box sx={{ position: 'absolute', left: 'max(24px, env(safe-area-inset-left))', bottom: 'max(20px, env(safe-area-inset-bottom))', filter: 'drop-shadow(0 5px 18px rgba(0,0,0,0.4))' }}>
             <Joystick onChange={v => { input.current.move = v; push(); }}/>
           </Box>
-          <Box sx={{ position: 'absolute', right: 'max(20px, env(safe-area-inset-right))', bottom: 'max(24px, env(safe-area-inset-bottom))' }}>
+          <Box sx={{ position: 'absolute', right: 'max(20px, env(safe-area-inset-right))', bottom: 'max(20px, env(safe-area-inset-bottom))', filter: 'drop-shadow(0 5px 18px rgba(0,0,0,0.4))' }}>
             <ActionButtons onAction={onAction} onSprint={on => { input.current.sprint = on; push(); }}/>
           </Box>
 
@@ -250,6 +307,17 @@ export default function MatchHost({ matchId }) {
             <Alert severity="error">{error}</Alert>
             <Button variant="contained" onClick={() => router.replace('/play')}>Back</Button>
           </Stack>
+        </Box>)}
+      {portrait && phase === 'playing' && (<Box sx={{ position: 'fixed', inset: 0, zIndex: 20, display: 'grid', placeItems: 'center', p: 3, bgcolor: 'rgba(4,17,11,0.97)', backgroundImage: 'radial-gradient(ellipse at 50% 20%, rgba(15,107,58,0.38), transparent 58%)' }}>
+          <Card sx={{ width: 'min(100%, 420px)', border: '1px solid rgba(244,203,52,0.38)', bgcolor: 'rgba(10,28,19,0.94)', textAlign: 'center', borderRadius: 4 }}>
+            <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+              <Typography variant="overline" color="#f4cb34" fontWeight={900} letterSpacing={2}>PLACO · MATCH DAY</Typography>
+              <Typography variant="h5" fontWeight={900} sx={{ mt: 1 }}>Turn your phone sideways</Typography>
+              <Typography color="text.secondary" sx={{ mt: 1 }}>PLACO matches are designed for landscape play. The match is paused until you rotate your device.</Typography>
+              <Button fullWidth variant="contained" onClick={requestLandscape} sx={{ mt: 3, py: 1.4, fontWeight: 900 }}>Try landscape mode</Button>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5 }}>{orientationError || 'If your browser does not rotate automatically, rotate the phone manually.'}</Typography>
+            </CardContent>
+          </Card>
         </Box>)}
     </Box>);
 }

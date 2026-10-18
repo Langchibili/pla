@@ -9,6 +9,14 @@ saved in this frontend and handed to the configured
 `NEXT_PUBLIC_PLACO_FRONTEND_URL` in the URL fragment. Set that public URL in
 `.env.local` for the target deployment.
 
+PLACO's Next.js server Proxy sends each full page visit to
+`/check-login-status?redirectTo=placo` before rendering. This page waits for
+PLA's authenticated user check; if active, it hands the JWT to PLACO's
+one-use callback and restores the requested PLACO path. If the PLA session is
+expired or missing, it sends the browser to PLACO's `/logout` page, which
+clears both PLACO's API JWT and its saved PLA JWT. This round trip synchronizes
+sign-out across the two origins, whose browser storage is isolated.
+
 ## Custom Strapi routes this frontend expects
 
 - `POST /auth/email-otp/send`, `/resend`, and `/verify` for email-based registration and sign-in.

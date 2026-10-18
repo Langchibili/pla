@@ -83,6 +83,7 @@ export class World {
     prevHeld = false;
     holdT = 0;
     switchT = 0;
+    manualSwitchUntil = 0;
     // pass / offside / metrics bookkeeping
     pending = null;
     metrics;
@@ -899,6 +900,11 @@ export class World {
             this.controlled = this.restart.taker;
             return;
         }
+        const stickMagnitude = Math.hypot(this.input.move.x, this.input.move.y);
+        if (!force && this.controlled && field.includes(this.controlled) && (this.simT < this.manualSwitchUntil || stickMagnitude > 0.1))
+            return;
+        if (force)
+            this.manualSwitchUntil = 0;
         if (this.owner && this.owner.side === side && this.owner.role !== 'GK') {
             this.controlled = this.owner;
             return;
@@ -924,6 +930,8 @@ export class World {
         const ranked = [...field].sort((a, c) => d2(a, b.x, b.z) - d2(c, b.x, b.z));
         const i = ranked.indexOf(this.controlled);
         this.controlled = ranked[(i + 1) % ranked.length];
+        this.manualSwitchUntil = this.simT + 1.25;
+        this.switchT = 0;
     }
     handleHuman(dt) {
         if (this.phase === 'goal' || this.autoPlay)

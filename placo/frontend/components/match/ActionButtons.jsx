@@ -15,11 +15,14 @@ export default function ActionButtons({ onAction, onSprint, }) {
     });
     const base = {
         position: 'absolute', width: 70, height: 70, borderRadius: '50%', display: 'grid', placeItems: 'center',
-        color: '#fff', fontWeight: 800, fontSize: 12, border: '2px solid rgba(255,255,255,0.35)', opacity: 0.85,
+        color: '#fff', fontWeight: 900, fontSize: 11, letterSpacing: 0.5,
+        border: '1px solid rgba(255,255,255,0.68)', textShadow: '0 1px 3px rgba(0,0,0,0.65)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -9px 14px rgba(0,0,0,0.25), 0 5px 12px rgba(0,0,0,0.35)',
+        backdropFilter: 'blur(3px)', touchAction: 'none', userSelect: 'none',
     };
     return (<Box className="no-touch-actions" sx={{ position: 'relative', width: 160, height: 150 }}>
-      {BTN.map(b => (<Box key={b.act} {...mk(b.act)} sx={{ ...base, bgcolor: b.color, left: b.pos[0], top: b.pos[1], '&:active': { transform: 'scale(0.92)' } }}>{b.label}</Box>))}
-      <Box {...mk('tackle')} sx={{ ...base, bgcolor: '#f59e0b', left: -78, top: 78 }}>TACKLE</Box>
-      <Box onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); onSprint(true); }} onPointerUp={() => onSprint(false)} onPointerCancel={() => onSprint(false)} sx={{ ...base, bgcolor: '#334155', left: -78, top: 0 }}>SPRINT</Box>
+      {BTN.map(b => (<Box key={b.act} role="button" aria-label={b.label} {...mk(b.act)} sx={{ ...base, bgcolor: b.color, background: `linear-gradient(155deg, ${b.color}, rgba(5,12,10,0.72))`, left: b.pos[0], top: b.pos[1], '&:active': { transform: 'scale(0.92)' } }}>{b.label}</Box>))}
+      <Box role="button" aria-label="Tackle" {...mk('tackle')} sx={{ ...base, bgcolor: '#d99a16', background: 'linear-gradient(155deg, #f4cb34, #8e5a12)', left: -78, top: 78 }}>TACKLE</Box>
+      <Box role="button" aria-label="Hold to sprint" onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); onSprint(true); }} onPointerUp={() => onSprint(false)} onPointerCancel={() => onSprint(false)} sx={{ ...base, bgcolor: '#334155', background: 'linear-gradient(155deg, #536879, #121d22)', left: -78, top: 0 }}>SPRINT</Box>
     </Box>);
 }
