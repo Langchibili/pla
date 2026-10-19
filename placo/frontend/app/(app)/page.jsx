@@ -98,19 +98,44 @@ export default function HomePage() {
                         </CardContent>
                     </Card>
                 )}
-                {matches.map(match => (
-                    <Card key={match.documentId} sx={{ borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.035)' }}>
-                        <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: '12px !important' }}>
-                            <Box>
-                                <Typography fontWeight={900} fontSize={18}>{match.home_score ?? '–'} : {match.away_score ?? '–'}</Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    {match.match_mode} · {match.match_code}
-                                </Typography>
-                            </Box>
-                            <Chip size="small" label={match.match_status.replace('_', ' ')} sx={{ fontWeight: 700, textTransform: 'capitalize' }} />
-                        </CardContent>
-                    </Card>
-                ))}
+                {matches.map(match => {
+                    const resumable = ['ready', 'in_progress'].includes(match.match_status);
+                    return (
+                        <Card
+                            key={match.documentId}
+                            component={resumable ? Link : 'div'}
+                            href={resumable ? `/match/${match.documentId}` : undefined}
+                            aria-label={resumable ? `Resume ${match.match_mode} match` : undefined}
+                            sx={{
+                                borderRadius: 3,
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                background: 'rgba(255,255,255,0.035)',
+                                color: 'inherit',
+                                textDecoration: 'none',
+                                cursor: resumable ? 'pointer' : 'default',
+                                transition: 'border-color 120ms ease, background-color 120ms ease',
+                                '&:hover': resumable ? {
+                                    borderColor: 'rgba(244,203,52,0.48)',
+                                    background: 'rgba(244,203,52,0.07)',
+                                } : undefined,
+                                '&:focus-visible': resumable ? {
+                                    outline: '2px solid #f4cb34',
+                                    outlineOffset: 2,
+                                } : undefined,
+                            }}
+                        >
+                            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: '12px !important' }}>
+                                <Box>
+                                    <Typography fontWeight={900} fontSize={18}>{match.home_score ?? '–'} : {match.away_score ?? '–'}</Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {match.match_mode} · {match.match_code}
+                                    </Typography>
+                                </Box>
+                                <Chip size="small" label={match.match_status.replace('_', ' ')} sx={{ fontWeight: 700, textTransform: 'capitalize' }} />
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </Stack>
             <Button color="inherit" onClick={logout} sx={{ alignSelf: 'flex-start', opacity: 0.62, textTransform: 'none' }}>Sign out</Button>
         </Stack>

@@ -31,6 +31,9 @@ browser to its original path. Browser storage is isolated by origin, so this
 round trip is also how PLA sign-out clears the PLACO session. The login page
 also sends any existing PLACO token that has not completed a fresh PLA
 exchange through the status check before returning the user to the game.
+The one-use cookie's `Secure` attribute follows the validated browser origin,
+so the handoff also works when a production build is served over plain HTTP on
+a private network; use HTTPS for public deployments.
 
 `MATCH_ENGINE_HMAC_SECRET` is read only by the server-side match finalisation
 route. Set it to the matching Strapi secret in the local environment; never
@@ -82,9 +85,13 @@ resumes once the stick is released and a new selection is warranted. Side
 cameras keep a stable movement frame; chase cameras follow their smoothed view
 direction.
 
-Players use original single-mesh skinned characters with 20-bone rigs, blended
-weights at the torso, shoulders, elbows, hips, and knees, vertex-colored kits,
-faces, hair, boots, and procedural run/kick animation. The geometry and motion
-are generated in Babylon.js and kept low-poly for mobile performance. These
-are not captured or copied game assets. The stadium keeps the project
+Players load the rigged model from `public/assets/players/player.glb` and the
+retargeted locomotion/action clips from `anims.bin` plus `anims.json` in the
+same directory. Babylon's GLTF loader is installed alongside the matching
+Babylon core version. The renderer asynchronously loads the model and animation
+pack before the match starts, then drives locomotion, tackles, kicks,
+goalkeeper actions, and celebrations from recorded render poses. The source
+`anims.glb` is retained in the assets folder but is not fetched by the runtime;
+the packed binary and JSON are used during play. Animation remains render-only
+and does not alter the deterministic simulation. The stadium keeps the project
 specification's open, seat-free perimeter and league-name advertising boards.

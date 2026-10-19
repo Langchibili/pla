@@ -23,10 +23,10 @@ export const createEngine = async (canvas, config) => {
     scene.fogDensity = 0.0035;
     scene.fogColor = new Color3(0.04, 0.08, 0.11);
     const hemi = new HemisphericLight('hemi', new Vector3(0.2, 1, 0.1), scene);
-    hemi.intensity = 0.85;
+    hemi.intensity = 0.7;
     hemi.groundColor = new Color3(0.25, 0.3, 0.28);
-    const sun = new DirectionalLight('sun', new Vector3(-0.4, -1, 0.3), scene);
-    sun.intensity = 0.45;
+    const sun = new DirectionalLight('sun', new Vector3(-0.35, -1, 0.45), scene);
+    sun.intensity = 0.75;
     // listeners
     const handlers = { ready: [], score: [], clock: [], goal: [], banner: [], fps: [], finished: [], error: [] };
     const emit = (ev, ...args) => { for (const f of handlers[ev])
@@ -41,7 +41,15 @@ export const createEngine = async (canvas, config) => {
     }, SIM_BUILD);
     const P = world.P;
     const { nets } = buildStadium(scene, P);
-    const actors = new Actors(scene, P, config.home, config.away);
+    let actors;
+    try {
+        actors = await Actors.create(scene, P, config.home, config.away, {});
+    }
+    catch (error) {
+        scene.dispose();
+        engine.dispose();
+        throw error;
+    }
     const rig = new CameraRig(scene, world.hx, world.hz);
     rig.setMode(config.camera);
     // pose buffers

@@ -26,6 +26,9 @@ export class Player {
     stun = 0;
     thinkCd = 0;
     holdT = 0;
+    touchT = 0;
+    touchFoot = 1;
+    lastStep = 0;
     // animation hints for the renderer
     phase = 0;
     kickT = 0;

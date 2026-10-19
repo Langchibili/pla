@@ -36,9 +36,9 @@ export class CameraRig {
         switch (this.mode) {
             case 'tv': {
                 const fx = clamp(bx * 0.88, -hx + 8, hx - 8);
-                p.set(fx * 0.96, 19, -37);
+                p.set(fx * 0.96, 15, -31);
                 t.set(fx, 0, bz * 0.25);
-                fov = 0.66;
+                fov = 0.62;
                 break;
             }
             case 'side': {

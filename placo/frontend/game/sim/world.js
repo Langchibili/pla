@@ -185,6 +185,7 @@ export class World {
             p.tackleCd = Math.max(0, p.tackleCd - dt);
             p.stun = Math.max(0, p.stun - dt);
             p.kickT = Math.max(0, p.kickT - dt);
+            p.touchT = Math.max(0, p.touchT - dt);
         }
         if (this.phase === 'goal') {
             this.goalHold -= dt;
@@ -436,7 +437,7 @@ export class World {
         // ownership loss
         if (this.owner) {
             const o = this.owner, d = Math.hypot(b.x - o.x, b.z - o.z);
-            if (d > 1.9 || b.y > 1.3)
+            if (d > 1.5 || b.y > 1.3)
                 this.owner = null;
         }
         // dribble nudging
@@ -454,15 +455,29 @@ export class World {
                 b.vz *= 0.9;
             }
             else {
-                const interval = 0.26 + 0.14 * (1 - o.traits.control) + 0.05 * (sp / o.traits.vMax);
-                if (o.holdT > interval) {
+                const step = Math.floor(o.phase / Math.PI);
+                if ((step !== o.lastStep && o.holdT > 0.14) || o.holdT > 0.5) {
+                    o.lastStep = step;
                     o.holdT = 0;
-                    const push = 1.0 + 0.32 * sp * (1.15 - o.traits.control * 0.55);
-                    const ang = o.heading + this.rngPhys.gauss() * 0.10 * (1 - o.traits.control * 0.8);
-                    b.vx = o.vx + Math.cos(ang) * push;
-                    b.vz = o.vz + Math.sin(ang) * push;
+                    const T = o.traits, run = Math.min(1, sp / T.vMax);
+                    const hx = Math.cos(o.heading), hz = Math.sin(o.heading);
+                    const foot = (step & 1) ? 1 : -1;
+                    const stepT = Math.min(0.45, Math.PI / (1.7 * Math.max(sp, 2.5)));
+                    const ahead = 0.4 + 0.55 * run * (1.25 - 0.5 * T.control) + Math.abs(this.rngPhys.gauss()) * 0.1 * (1 - T.control);
+                    const tx = o.x + o.vx * stepT + hx * ahead - hz * foot * 0.1;
+                    const tz = o.z + o.vz * stepT + hz * ahead + hx * foot * 0.1;
+                    let vx = (tx - b.x) / stepT, vz = (tz - b.z) / stepT;
+                    const m = Math.hypot(vx, vz);
+                    if (m > 14) {
+                        vx *= 14 / m;
+                        vz *= 14 / m;
+                    }
+                    b.vx = vx;
+                    b.vz = vz;
                     b.wz = -b.vx / P.ballRadius;
                     b.wx = b.vz / P.ballRadius;
+                    o.touchT = 0.2;
+                    o.touchFoot = foot;
                 }
             }
         }

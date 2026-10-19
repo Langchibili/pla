@@ -238,15 +238,13 @@ export default function MatchHost({ matchId }) {
 
       {phase === 'playing' && (<>
           {/* scoreboard */}
-          <Box sx={{ position: 'absolute', top: 'max(10px, env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.75 }, px: { xs: 1.5, sm: 2.2 }, py: 0.8, borderRadius: 3, bgcolor: 'rgba(4,17,11,0.88)', border: '1px solid rgba(244,203,52,0.32)', boxShadow: '0 8px 28px rgba(0,0,0,0.38)', backdropFilter: 'blur(12px)', minWidth: 240, justifyContent: 'center' }}>
+          <Box sx={{ position: 'absolute', top: 'max(10px, env(safe-area-inset-top))', left: 'max(10px, env(safe-area-inset-left))', display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, px: { xs: 1.25, sm: 1.75 }, py: 0.8, borderRadius: 3, bgcolor: 'rgba(4,17,11,0.88)', border: '1px solid rgba(244,203,52,0.32)', boxShadow: '0 8px 28px rgba(0,0,0,0.38)', backdropFilter: 'blur(12px)', minWidth: 220, justifyContent: 'center' }}>
             <Box sx={{ minWidth: 52, textAlign: 'right' }}>
               <Typography noWrap fontWeight={800} fontSize={10} sx={{ maxWidth: 96 }}>{teamNames.home}</Typography>
               <Typography fontWeight={900} fontSize={21} lineHeight={1}>{score.home}</Typography>
             </Box>
             <Box sx={{ textAlign: 'center', px: 0.8 }}>
-              <Typography fontWeight={900} fontSize={9} letterSpacing={1.2} color="#f4cb34">PRO LEAGUE AFRICA</Typography>
               <Typography fontWeight={800} fontSize={13} sx={{ fontVariantNumeric: 'tabular-nums' }}>{clock.label}</Typography>
-              <Typography fontWeight={700} fontSize={9} color="rgba(234,245,238,0.65)">{clock.period === 1 ? 'FIRST HALF' : 'SECOND HALF'}</Typography>
             </Box>
             <Box sx={{ minWidth: 52 }}>
               <Typography noWrap fontWeight={800} fontSize={10} sx={{ maxWidth: 96 }}>{teamNames.away}</Typography>

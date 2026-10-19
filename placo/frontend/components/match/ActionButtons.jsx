@@ -6,7 +6,11 @@ const BTN = [
     { act: 'through', label: 'THRU', color: '#3b82f6', pos: [0, 0] },
     { act: 'lob', label: 'LOB', color: '#a855f7', pos: [80, 0] },
 ];
-/** Hold-to-charge buttons. Released → engine fires the action. Tackle sits left of the cluster, sprint is a hold toggle. */
+/**
+ * Hold-to-charge buttons. Released → engine fires the action.
+ * Tackle (stand-up) sits left of the cluster, SLIDE is new (the sim already supports input.action === 'slide', it was keyboard-only 'O'),
+ * sprint is a hold toggle.
+ */
 export default function ActionButtons({ onAction, onSprint, }) {
     const mk = (act) => ({
         onPointerDown: (e) => { e.currentTarget.setPointerCapture(e.pointerId); onAction(act, true); },
@@ -23,6 +27,7 @@ export default function ActionButtons({ onAction, onSprint, }) {
     return (<Box className="no-touch-actions" sx={{ position: 'relative', width: 160, height: 150 }}>
       {BTN.map(b => (<Box key={b.act} role="button" aria-label={b.label} {...mk(b.act)} sx={{ ...base, bgcolor: b.color, background: `linear-gradient(155deg, ${b.color}, rgba(5,12,10,0.72))`, left: b.pos[0], top: b.pos[1], '&:active': { transform: 'scale(0.92)' } }}>{b.label}</Box>))}
       <Box role="button" aria-label="Tackle" {...mk('tackle')} sx={{ ...base, bgcolor: '#d99a16', background: 'linear-gradient(155deg, #f4cb34, #8e5a12)', left: -78, top: 78 }}>TACKLE</Box>
+      <Box role="button" aria-label="Slide tackle" {...mk('slide')} sx={{ ...base, width: 62, height: 62, bgcolor: '#b45309', background: 'linear-gradient(155deg, #f08a3a, #6b2d0c)', left: -152, top: 86, '&:active': { transform: 'scale(0.92)' } }}>SLIDE</Box>
       <Box role="button" aria-label="Hold to sprint" onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); onSprint(true); }} onPointerUp={() => onSprint(false)} onPointerCancel={() => onSprint(false)} sx={{ ...base, bgcolor: '#334155', background: 'linear-gradient(155deg, #536879, #121d22)', left: -78, top: 0 }}>SPRINT</Box>
     </Box>);
 }
