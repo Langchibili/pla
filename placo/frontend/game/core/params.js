@@ -89,7 +89,17 @@ export class Attrs {
 const lerp = (a, b, t) => a + (b - a) * t;
 /** Perceptual attribute→physics curve: gentle at the bottom, steeper near the top so 90s are visibly better than 70s. */
 export const curve = (a, lo, hi, gamma = 1.0) => lerp(lo, hi, Math.pow(a, gamma));
-export function resolveTraits(raw, gkRaw, P) {
+function measurement(raw, names, fallback, min, max, fromCentimeters = false) {
+    for (const [key, value] of Object.entries(raw ?? {})) {
+        if (!names.includes(norm(key)) || !Number.isFinite(Number(value)))
+            continue;
+        const numeric = Number(value);
+        const metres = fromCentimeters && numeric > 100 ? numeric / 100 : numeric;
+        return Math.max(min, Math.min(max, metres));
+    }
+    return fallback;
+}
+export function resolveTraits(raw, gkRaw, P, role = 'MID') {
     const a = new Attrs(raw);
     const g = new Attrs({ ...(raw ?? {}), ...(gkRaw ?? {}) });
     const speed = a.get(['sprintSpeed', 'pace', 'speed', 'topSpeed']);
@@ -103,11 +113,15 @@ export function resolveTraits(raw, gkRaw, P) {
     const lpass = a.get(['longPassing', 'passing', 'passPower']);
     const shot = a.get(['shotPower', 'shooting', 'power']);
     const fin = a.get(['finishing', 'shotAccuracy', 'shooting']);
+    const height = measurement(raw, ['height', 'heightcm', 'heightm', 'stature'], role === 'GK' ? 1.9 : role === 'DEF' ? 1.84 : role === 'FWD' ? 1.77 : 1.79, 1.5, 2.1, true);
+    const mass = measurement(raw, ['weight', 'weightkg', 'mass', 'masskg'], role === 'GK' ? 82 : role === 'DEF' ? 80 : role === 'FWD' ? 73 : 76, 50, 120);
+    const bodyTurn = Math.max(0.78, Math.min(1.12, 1.08 - Math.max(0, height - 1.72) * 0.32 - Math.max(0, mass - 70) * 0.003));
     return {
         vMax: curve(speed, P.playerMaxSpeedLo, P.playerMaxSpeedHi, 1.15),
         aAccel: curve(accel, 4.2, 8.2, 1.1),
         aBrake: curve(accel, 7.0, 10.5, 1),
-        aLat: curve(agi, 5.5, 9.4, 1) * Math.min(1.2, P.tractionMu / 0.95),
+        aLat: curve(agi, 5.5, 9.4, 1) * Math.min(1.2, P.tractionMu / 0.95) * bodyTurn,
+        height, mass, bodyTurn,
         staminaMax: 1, recovery: curve(stam, 0.02, 0.07, 1),
         reach: 0.55 + 0.2 * drib,
         firstTouch: ft, control: drib,
@@ -116,6 +130,7 @@ export function resolveTraits(raw, gkRaw, P) {
         tackle: a.get(['tackling', 'standingTackle', 'defending', 'defence']),
         intercept: a.get(['interceptions', 'anticipation', 'defending', 'positioning']),
         strength: str, agility: agi, aggression: a.get(['aggression']), composure: a.get(['composure', 'reactions']),
+        penalties: a.get(['penalties', 'penaltyAccuracy', 'composure']),
         reaction: a.get(['reactions', 'reaction', 'anticipation']),
         jump: a.get(['jumping', 'jump']), heading: a.get(['heading', 'headingAccuracy']),
         positioning: a.get(['positioning', 'offTheBall', 'defensiveAwareness', 'awareness']),

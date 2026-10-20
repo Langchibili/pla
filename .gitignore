@@ -214,3 +214,41 @@ placo/backend/.env
 placo/backend/config-old
 placo/gameplay-example-vids
 placo/gameplay-placo-dls-inspired
+
+placo/frontend/PLACO Match Logic Control, Switching, Loading.md
+
+
+placo/frontend/Secrets.js
+placo/frontend/mvp-and-mmp-features.txt
+placo/frontend/logic.txt
+
+# dependencies
+placo/frontend/node_modules
+placo/frontend/.pnp
+placo/frontend/.pnp.js
+placo/frontend/.yarn/install-state.gz
+
+# next.js
+placo/frontend/.next/
+placo/frontend/out/
+
+# production
+placo/frontend/build
+
+# misc
+placo/frontend/.DS_Store
+placo/frontend/*.pem
+
+# debug
+placo/frontend/npm-debug.log*
+placo/frontend/yarn-debug.log*
+placo/frontend/yarn-error.log*
+# local env files
+placo/frontend/.env 
+
+# vercel
+placo/frontend/.vercel
+
+# typescript
+placo/frontend/*.tsbuildinfo
+placo/frontend/next-env.d.ts

@@ -32,9 +32,18 @@ export class Player {
     // animation hints for the renderer
     phase = 0;
     kickT = 0;
+    kickKind = null;
     // goalkeeper dive state
     dive = null;
     gkHolding = false;
+    humanControlled = false;
+    heavyTouchT = 0;
+    turnRate = 0;
+    runUntil = 0;
+    runTarget = null;
+    yellowCards = 0;
+    sentOff = false;
+    stumbleT = 0;
     constructor(id, side, slot, num, role, playerId, traits) {
         this.id = id;
         this.side = side;

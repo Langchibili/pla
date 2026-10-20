@@ -9,10 +9,41 @@ export const BONE = {
 };
 export const NB = 22;
 
-export async function loadPack(dir) {
+async function fetchAsset(dir, file, onProgress, signal) {
+    const response = await fetch(dir + file, { signal });
+    if (!response.ok)
+        throw new Error(file + ' ' + response.status);
+    const total = Number(response.headers.get('content-length')) || 0;
+    if (!response.body?.getReader) {
+        const buffer = await response.arrayBuffer();
+        onProgress?.({ asset: file, loaded: buffer.byteLength, total: total || buffer.byteLength });
+        return buffer;
+    }
+    const reader = response.body.getReader();
+    const chunks = [];
+    let loaded = 0;
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done)
+            break;
+        chunks.push(value);
+        loaded += value.byteLength;
+        onProgress?.({ asset: file, loaded, total });
+    }
+    const bytes = new Uint8Array(loaded);
+    let offset = 0;
+    for (const chunk of chunks) {
+        bytes.set(chunk, offset);
+        offset += chunk.byteLength;
+    }
+    onProgress?.({ asset: file, loaded, total: total || loaded });
+    return bytes.buffer;
+}
+
+export async function loadPack(dir, onProgress, signal) {
     const [meta, buf] = await Promise.all([
-        fetch(dir + 'anims.json').then(r => { if (!r.ok) throw new Error('anims.json ' + r.status); return r.json(); }),
-        fetch(dir + 'anims.bin').then(r => { if (!r.ok) throw new Error('anims.bin ' + r.status); return r.arrayBuffer(); }),
+        fetchAsset(dir, 'anims.json', onProgress, signal).then(buffer => JSON.parse(new TextDecoder().decode(buffer))),
+        fetchAsset(dir, 'anims.bin', onProgress, signal),
     ]);
     const clips = {};
     for (const [name, e] of Object.entries(meta.clips)) {

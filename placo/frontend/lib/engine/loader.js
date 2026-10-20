@@ -14,6 +14,7 @@ export function buildMatchConfig(m, opts = {}) {
         home: snap.home.club,
         away: aiSide ? aiTeamToSetup(aiSide) : snap.away.club,
         physics: m.physics_snapshot, rules: m.rules_snapshot, ai: m.ai_snapshot,
+        weather: m.weather_snapshot ?? snap.weather ?? null,
         hashes: { roster: m.roster_snapshot_hash, physics: m.physics_snapshot_hash },
         stadium: snap.home.club.stadium ?? null,
         camera: opts.camera ?? 'tv',

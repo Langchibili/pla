@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start  --port 3013",
     "lint": "eslint",
-    "calibrate": "tsx game/tools/calibrate.js"
+    "calibrate": "tsx game/tools/calibrate.js",
+    "check:systems": "tsx game/tools/systemsCheck.js"
   },
   "dependencies": {
     "@babylonjs/core": "^9.31.0",

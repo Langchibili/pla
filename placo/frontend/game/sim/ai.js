@@ -14,18 +14,35 @@ const tmp = { x: 0, y: 0, z: 0 };
  *   player brain → utility-scored shoot / pass / dribble / clear for the ball carrier; marking & support otherwise
  * Goalkeepers are handled separately (goalkeeperThink, every tick).
  */
-export function aiThink(w) {
-    const live = w.phase === 'live';
+export function aiThink(w, decisionDt = 0.1) {
+    if (w.phase === 'goal' || w.phase === 'fulltime')
+        return;
+    const live = w.phase === 'live' || w.phase === 'shootout';
+    const periodLen = w.period >= 3 ? w.extraTimeHalfLen : w.halfLen;
+    const remaining = Math.max(0, periodLen + Math.min(15, 3 + w.stoppageT) - w.clockT);
+    if (w.restart?.kind === 'corner' && w.restart.side === side && remaining < 12 &&
+        w.score[side] < w.score[1 - side]) {
+        g.tx = w.oppGoalX(side) - d * 2;
+        g.tz = 0;
+        g.speedFrac = 1;
+        g.sprint = true;
+        return;
+    }
     const b = w.ball;
     for (const side of [0, 1]) {
-        const d = w.dir(side), opp = w.team[1 - side];
+        const d = w.dir(side), opp = w.team[1 - side].filter(p => !p.sentOff);
         const attacking = w.owner ? w.owner.side === side : w.lastTouchSide === side;
+        const periodLen = w.period >= 3 ? w.extraTimeHalfLen : w.halfLen;
+        const remaining = Math.max(0, periodLen + Math.min(15, 3 + w.stoppageT) - w.clockT);
+        const late = w.phase === 'live' && remaining < 15;
+        const leadingLate = late && w.score[side] > w.score[1 - side];
+        const chasingLate = late && w.score[side] < w.score[1 - side];
         const restartSide = w.restart?.side;
         const bd = (b.x * d + w.hx) / w.L;
         const oppLine = w.offsideLine(side, b.x); // attack-direction x of the offside line
         const lineDepth = (oppLine + w.hx) / w.L;
         // chasers
-        const field = w.team[side].filter(p => p.role !== 'GK');
+        const field = w.team[side].filter(p => p.role !== 'GK' && !p.sentOff);
         const target = w.owner && w.owner.side !== side ? { x: w.owner.x + w.owner.vx * 0.3, z: w.owner.z + w.owner.vz * 0.3 } : (() => {
             if (b.hSpeed > 1) {
                 b.predict(Math.min(1.2, 0.5 + b.hSpeed * 0.03), tmp);
@@ -34,17 +51,20 @@ export function aiThink(w) {
             return { x: b.x, z: b.z };
         })();
         let chasers = [];
+        let cover = null;
         if (live) {
             const own = w.owner;
             if (!own || own.side !== side) {
-                const ranked = field.map(p => ({ p, eta: Math.hypot(target.x - p.x, target.z - p.z) / p.traits.vMax + p.stun })).sort((a, c) => a.eta - c.eta);
-                const inOwnThird = (b.x * d) < -w.hx / 3;
-                const n = !own ? 2 : inOwnThird ? 2 : 1;
-                chasers = ranked.slice(0, n).map(o => o.p);
+                const ranked = field
+                    .filter(p => w.autoPlay || !p.humanControlled)
+                    .map(p => ({ p, eta: Math.hypot(target.x - p.x, target.z - p.z) / p.traits.vMax + p.stun }))
+                    .sort((a, c) => a.eta - c.eta);
+                chasers = ranked.slice(0, 1).map(o => o.p);
+                cover = own && ranked[1]?.p;
             }
         }
         for (const p of field) {
-            if (p === w.controlled && side === w.humanSide)
+            if (!w.autoPlay && (p.humanControlled || (p.side === w.humanSide && p === w.ownerCandidate)))
                 continue;
             const isTaker = w.restart?.taker === p;
             if (isTaker)
@@ -53,6 +73,10 @@ export function aiThink(w) {
             // positional target (formation shifting)
             const k = p.role === 'DEF' ? 0.45 : p.role === 'MID' ? 0.58 : 0.5;
             let depth = p.depth + (bd - 0.5) * k + (attacking ? (p.role === 'DEF' ? 0.04 : 0.08) : -0.05);
+            if (leadingLate && !attacking)
+                depth -= p.role === 'DEF' ? 0.035 : 0.06;
+            if (chasingLate && attacking)
+                depth += p.role === 'FWD' ? 0.12 : 0.06;
             if (attacking && p.role === 'FWD' && live)
                 depth = Math.min(0.96, Math.max(depth, lineDepth - 0.012));
             depth = clamp(depth, 0.03, 0.97);
@@ -71,27 +95,70 @@ export function aiThink(w) {
                     tx = p.x;
                     tz = p.z;
                 }
+                if (w.restart && p.side !== w.restart.side && Math.hypot(p.x - w.restart.x, p.z - w.restart.z) < 7.5) {
+                    const dx = p.x - w.restart.x, dz = p.z - w.restart.z, distance = Math.hypot(dx, dz) || 1;
+                    tx = w.restart.x + dx / distance * 7.5;
+                    tz = w.restart.z + dz / distance * 7.5;
+                }
                 p.tx = tx;
                 p.tz = clamp(tz, -w.hz + 1, w.hz - 1);
                 p.speedFrac = 0.75;
                 continue;
             }
+            if (!attacking && p.role === 'DEF') {
+                const defenders = w.team[side].filter(q => q.role === 'DEF' && !q.sentOff);
+                if (defenders.length > 1) {
+                    const line = defenders.reduce((sum, q) => sum + d * q.x, 0) / defenders.length;
+                    const ballLine = d * b.x - clamp(10 + Math.abs(b.x - (w.owner?.x ?? b.x)) * 0.12, 8, 17);
+                    const cohesiveLine = clamp(line * 0.35 + ballLine * 0.65, 2, w.hx - 2);
+                    tx = d * cohesiveLine;
+                }
+            }
             if (wasOwner) {
-                ownerDecide(w, p);
+                ownerDecide(w, p, decisionDt);
                 continue;
             }
             if (chasers.includes(p)) {
-                p.tx = target.x;
-                p.tz = target.z;
-                const dist = Math.hypot(target.x - p.x, target.z - p.z);
+                const carrier = w.owner && w.owner.side !== side ? w.owner : null;
+                let chaseTarget = target;
+                if (carrier) {
+                    const dx = carrier.x - p.x, dz = carrier.z - p.z, distance = Math.hypot(dx, dz) || 1;
+                    const advance = Math.max(0, distance - 1.8);
+                    chaseTarget = {
+                        x: p.x + dx / distance * advance,
+                        z: clamp(p.z + dz / distance * advance + Math.sign(carrier.z || 1) * 0.6, -w.hz + 2, w.hz - 2),
+                    };
+                }
+                p.tx = chaseTarget.x;
+                p.tz = chaseTarget.z;
+                const dist = Math.hypot(chaseTarget.x - p.x, chaseTarget.z - p.z);
                 p.sprint = dist > 3;
                 p.speedFrac = 1;
-                // defender tries a tackle on the carrier
-                if (w.owner && w.owner.side !== side && !w.owner.gkHolding && p.tackleCd <= 0) {
-                    const dd = Math.hypot(w.owner.x - p.x, w.owner.z - p.z);
-                    if (dd < 1.25 && w.rng.next() < TUNE.tackleAttempt * (0.14 + 0.2 * p.traits.aggression))
-                        w.tackle(p, dd < 2 && w.owner.speed > 6.5 && w.rng.next() < 0.1);
+                if (carrier && !carrier.gkHolding && p.tackleCd <= 0 && w.aiTacklesThisMinute[side] < 12) {
+                    const dx = carrier.x - p.x, dz = carrier.z - p.z, distance = Math.hypot(dx, dz);
+                    const facing = (dx * Math.cos(p.heading) + dz * Math.sin(p.heading)) / (distance || 1);
+                    const facingOwnGoal = Math.cos(carrier.heading) * w.dir(carrier.side) < -0.25;
+                    const triggered = carrier.heavyTouchT > 0 || facingOwnGoal || Math.abs(carrier.turnRate) > 2.4;
+                    const configuredPressingCap = Number(w.cfg.difficulty?.pressingIntensityCap ?? 0.8);
+                    const pressingCap = Number.isFinite(configuredPressingCap) ? configuredPressingCap : 0.8;
+                    const tackleLimit = Math.max(4, Math.min(12, Math.round(4 + pressingCap * 10)));
+                    if (triggered && distance <= 2.3 && facing > Math.cos(100 * Math.PI / 180) && w.aiTacklesThisMinute[side] < tackleLimit) {
+                        w.aiTacklesThisMinute[side]++;
+                        const chance = TUNE.tackleAttempt * (0.16 + 0.2 * p.traits.aggression) *
+                            clamp((2.3 - distance) / 1.3, 0.15, 1) * clamp((facing + 0.2) / 1.2, 0.1, 1);
+                        if (w.rng.next() < chance)
+                            w.tackle(p, distance < 1.35 && carrier.speed > 6.5 && w.rng.next() < 0.08);
+                    }
                 }
+                continue;
+            }
+            if (cover === p && w.owner) {
+                const carrier = w.owner;
+                const retreat = clamp(4 + p.depth * 2, 4, 6);
+                p.tx = clamp(carrier.x - d * retreat, -w.hx + 2, w.hx - 2);
+                p.tz = clamp(carrier.z * 0.7 + base.z * 0.3, -w.hz + 2, w.hz - 2);
+                p.speedFrac = 0.78;
+                p.sprint = false;
                 continue;
             }
             // defenders pick up the most dangerous nearby runner
@@ -114,43 +181,79 @@ export function aiThink(w) {
                     p.speedFrac = 0.8;
                 }
             }
-            // supporting run when attacking: offer an angle to the carrier
+            if (p.runUntil > w.simT && p.runTarget) {
+                p.tx = clamp(p.runTarget.x, -w.hx + 2, w.hx - 2);
+                p.tz = clamp(p.runTarget.z, -w.hz + 1.5, w.hz - 1.5);
+                p.speedFrac = 1;
+                p.sprint = true;
+                continue;
+            }
+            // Supporting players spread to either side of the carrier as passing options.
             if (attacking && w.owner && w.owner.side === side && p.role !== 'DEF') {
                 const o = w.owner;
-                const dd = Math.hypot(o.x - tx, o.z - tz);
-                if (dd < 8) {
-                    tz += Math.sign(tz - o.z || 1) * 5;
-                    tx += d * 3;
-                }
-                if (p.role === 'FWD')
+                const options = field
+                    .filter(q => q !== o && q.role !== 'DEF' && !q.sentOff && (w.autoPlay || !q.humanControlled))
+                    .sort((a, c) => Math.hypot(a.x - o.x, a.z - o.z) - Math.hypot(c.x - o.x, c.z - o.z))
+                    .slice(0, 2);
+                const index = options.indexOf(p);
+                if (index >= 0) {
+                    const sign = index === 0 ? -1 : 1;
+                    const angle = 38 * Math.PI / 180;
+                    const forwardRun = p.role === 'FWD' && index === 1;
+                    tx = forwardRun
+                        ? d * Math.min(d * o.x + 15, w.offsideLine(side, b.x) - 0.7)
+                        : o.x + d * Math.cos(angle) * 11;
+                    tz = clamp(o.z + sign * Math.sin(angle) * 11, -w.hz + 3, w.hz - 3);
                     p.speedFrac = 0.9;
+                }
+            }
+            if (attacking && w.owner && w.owner.side === side && p.role === 'DEF' &&
+                (p.num === 2 || p.num === 5) && Math.abs(w.owner.z) > w.hz * 0.55) {
+                tx = w.owner.x + d * 9;
+                tz = Math.sign(w.owner.z) * (w.hz - 3);
+                p.speedFrac = 0.92;
+                p.sprint = true;
             }
             p.tx = clamp(tx, -w.hx + 2, w.hx - 2);
             p.tz = clamp(tz, -w.hz + 1.5, w.hz - 1.5);
         }
     }
 }
-function ownerDecide(w, p) {
-    p.thinkCd -= 0.1;
-    if (p.thinkCd > 0) { // keep dribbling toward goal while "thinking"
-        p.tx = p.x + w.dir(p.side) * 10;
-        p.tz = p.z;
-        p.speedFrac = 0.7;
+function ownerDecide(w, p, decisionDt) {
+    p.thinkCd -= decisionDt;
+    if (p.thinkCd > 0) {
         return;
     }
-    p.thinkCd = curve(1 - p.traits.composure, 0.12, 0.5) + w.rng.next() * 0.15;
+    const configuredReaction = Number(w.cfg.difficulty?.reactionTimeMs ?? 200);
+    const reactionScale = Number.isFinite(configuredReaction) ? clamp(configuredReaction / 200, 0.65, 1.6) : 1;
+    const temperature = Number(w.cfg.difficulty?.decisionTemperatureMultiplier ?? 1);
+    const temperatureScale = Number.isFinite(temperature) ? clamp(temperature, 0.5, 2.5) : 1;
+    p.thinkCd = (curve(1 - p.traits.composure, 0.12, 0.5) + w.rng.next() * 0.15 * temperatureScale) * reactionScale;
     const side = p.side, d = w.dir(side), T = p.traits;
-    const opp = w.team[1 - side];
+    const opp = w.team[1 - side].filter(q => !q.sentOff);
     const goalX = w.oppGoalX(side), hzg = w.P.goalWidth / 2;
     const dGoal = Math.hypot(goalX - p.x, p.z);
     const pressure = w.pressureOn(p);
+    const periodLen = w.period >= 3 ? w.extraTimeHalfLen : w.halfLen;
+    const remaining = Math.max(0, periodLen + Math.min(15, 3 + w.stoppageT) - w.clockT);
+    if (remaining < 12 && w.score[side] > w.score[1 - side] && dGoal > 16) {
+        const cornerZ = p.z >= 0 ? w.hz - 1.2 : -w.hz + 1.2;
+        p.tx = w.oppGoalX(side) - d * 1.5;
+        p.tz = cornerZ;
+        p.speedFrac = 0.35;
+        p.sprint = false;
+        return;
+    }
     // ── shoot?
     const laneMin = opp.reduce((m, q) => Math.min(m, distToSeg(q.x, q.z, p.x, p.z, goalX, 0)), 99);
     const open = sig((laneMin - 1.4) / 0.8);
     const xg = sig(-(dGoal - 17) / 4.5) * (0.5 + 0.5 * open) * (0.6 + 0.4 * T.shotAcc);
     w.debug.xg = xg;
-    const thr = (p.role === 'FWD' ? 0.09 : p.role === 'MID' ? 0.11 : 0.16) * TUNE.shootThreshold;
-    if (dGoal < 31 && (xg > thr || (pressure > 0.7 && dGoal < 24 && xg > 0.05))) {
+    const lateRemaining = Math.max(0, (w.period >= 3 ? w.extraTimeHalfLen : w.halfLen) + Math.min(15, 3 + w.stoppageT) - w.clockT);
+    const losingLate = lateRemaining < 15 && w.score[side] < w.score[1 - side];
+    const protectingLead = lateRemaining < 15 && w.score[side] > w.score[1 - side];
+    const thr = (p.role === 'FWD' ? 0.09 : p.role === 'MID' ? 0.11 : 0.16) * TUNE.shootThreshold * (losingLate ? 0.62 : 1);
+    if ((!protectingLead || dGoal < 18) && dGoal < (losingLate ? 40 : 31) && (xg > thr || (pressure > 0.7 && dGoal < 24 && xg > 0.05))) {
         const gk = w.gk((1 - side));
         const away = gk.z > 0.3 ? -1 : 1;
         const zT = clamp(away * (hzg - 0.65) * (0.55 + 0.45 * T.shotAcc) + w.rng.gauss() * 0.4, -hzg + 0.3, hzg - 0.3);
@@ -194,7 +297,8 @@ function ownerDecide(w, p) {
         const pc = (lobIt ? 0.8 : 1) * sig((laneMinP - 1.5) / 0.9) * (0.5 + 0.5 * T.passAcc) * (0.6 + 0.4 * sig((recvOpp - 1.5) / 1.5));
         const progress = ((tx - p.x) * d) / w.L;
         const openness = clamp(recvOpp / 8, 0, 1);
-        let val = pc * (0.18 + 1.9 * progress + 0.35 * openness) - (1 - pc) * 0.3;
+        const counter = w.simT < w.counterUntil ? 0.18 : 0;
+        let val = pc * (0.18 + 1.9 * progress + 0.35 * openness + counter * Math.max(0, progress)) - (1 - pc) * 0.3;
         if (q.role === 'GK')
             val -= 0.1;
         val += w.rng.gauss() * 0.06 * (1.2 - T.vision);
@@ -240,33 +344,47 @@ function ownerDecide(w, p) {
 export function goalkeeperThink(w, g, dt) {
     if (w.phase === 'goal' || w.phase === 'fulltime')
         return;
+    if (!w.autoPlay && g.humanControlled && !g.gkHolding)
+        return;
     const b = w.ball, T = g.traits, side = g.side, d = w.dir(side);
     const gx = w.ownGoalX(side), hzg = w.P.goalWidth / 2;
     // distribution
     if (g.gkHolding) {
-        g.tx = g.x;
-        g.tz = g.z;
-        if (g.holdT > 1.4 + (g.id % 3) * 0.4) {
-            const mates = w.team[side].filter(q => q !== g && q.role !== 'GK');
-            let best = null, bv = -1e9;
+        if (!g.humanControlled) {
+            g.tx = g.x;
+            g.tz = g.z;
+        }
+        const aiReleaseAt = 1.4 + (g.id % 3) * 0.3;
+        if (g.humanControlled && g.holdT < 4)
+            return;
+        if (!g.humanControlled && g.holdT < aiReleaseAt)
+            return;
+        {
+            const mates = w.team[side].filter(q => q !== g && q.role !== 'GK' && !q.sentOff);
+            let safeShort = null, safeShortValue = -1e9, long = null, longValue = -1e9;
             for (const q of mates) {
                 const dd = Math.hypot(q.x - g.x, q.z - g.z);
-                if (dd < 8 || dd > 45)
+                if (dd < 8 || dd > 50)
                     continue;
-                let m = 99;
+                let nearestOpponent = 99;
                 for (const o of w.team[1 - side])
-                    m = Math.min(m, Math.hypot(o.x - q.x, o.z - q.z));
-                const v = Math.min(m, 10) * 1.2 + (q.x - g.x) * d * 0.08 - dd * 0.05 + w.rng.next();
-                if (v > bv) {
-                    bv = v;
-                    best = q;
+                    nearestOpponent = Math.min(nearestOpponent, Math.hypot(o.x - q.x, o.z - q.z));
+                const value = Math.min(nearestOpponent, 10) + (q.x - g.x) * d * 0.08 - dd * 0.05 + w.rng.next();
+                if (dd <= 25 && nearestOpponent >= 10 && value > safeShortValue) {
+                    safeShortValue = value;
+                    safeShort = q;
+                }
+                if (value > longValue) {
+                    longValue = value;
+                    long = q;
                 }
             }
+            const best = safeShort ?? long;
             g.gkHolding = false;
             w.owner = null;
             b.y = 0.9;
             if (best)
-                w.kick(g, 'lob', best.x, best.z, 0.7, { ty: 0.11, eligibleOffside: false });
+                w.kick(g, safeShort ? 'pass' : 'lob', best.x, best.z, 0.7, { ty: safeShort ? 0.11 : 1.8, eligibleOffside: false });
             else
                 w.kick(g, 'clear', g.x + d * 35, w.rng.range(-18, 18), 0.8, { eligibleOffside: false });
         }
@@ -274,7 +392,7 @@ export function goalkeeperThink(w, g, dt) {
     }
     if (w.restart && (w.restart.taker === g))
         return;
-    const live = w.phase === 'live';
+    const live = w.phase === 'live' || w.phase === 'shootout';
     // shot detection → dive plan
     if (live && !g.dive && b.speed > 7 && (gx - b.x) * b.vx > 0 && Math.abs(gx - b.x) < 45 && w.owner === null) {
         for (let t = 0.05; t < 1.8; t += 0.05) {
@@ -282,7 +400,9 @@ export function goalkeeperThink(w, g, dt) {
             if ((tmp.x - gx) * d <= 0.2) {
                 if (Math.abs(tmp.z) < hzg + 2.5 && tmp.y < w.P.goalHeight + 1.3) {
                     const err = w.rng.gauss() * (1 - T.gkPos) * 0.8;
-                    const delay = clamp(0.30 - 0.22 * T.gkReflex + w.rng.gauss() * 0.02, 0.08, 0.4);
+                    const reactionMs = Number(w.cfg.difficulty?.reactionTimeMs ?? 200);
+                    const reactionScale = Number.isFinite(reactionMs) ? clamp(reactionMs / 200, 0.65, 1.6) : 1;
+                    const delay = clamp((0.30 - 0.22 * T.gkReflex + w.rng.gauss() * 0.02) * reactionScale, 0.08, 0.55);
                     g.dive = { t: 0, delay, z: clamp(tmp.z + err, -hzg - 2, hzg + 2), y: clamp(tmp.y, 0.2, 3), z0: g.z, reachZ: 0, reachY: 0.9 };
                 }
                 break;
@@ -328,16 +448,27 @@ export function goalkeeperThink(w, g, dt) {
     g.sprint = ballD < 28;
     // sweep up loose balls in the box
     const inBox = Math.abs(b.z) < 20 && (b.x - gx) * d < 16.5 && (b.x - gx) * d > 0;
-    if (live && inBox && w.owner === null && b.hSpeed < 9) {
+    const aerialCross = inBox && b.y > 0.7 && b.y < 2.4 && b.hSpeed < 12;
+    if (live && inBox && w.owner === null && (b.hSpeed < 9 || aerialCross)) {
         const gd = Math.hypot(b.x - g.x, b.z - g.z);
         let closer = false;
-        for (const q of w.team[1 - side])
+        for (const q of w.team[1 - side].filter(q => !q.sentOff))
             if (Math.hypot(q.x - b.x, q.z - b.z) < gd - 1)
                 closer = true;
-        if (!closer) {
+        if (!closer && (!aerialCross || gd < 14)) {
             g.tx = b.x;
             g.tz = b.z;
             g.sprint = true;
         }
+    }
+    const nearestAttacker = Math.min(...w.team[1 - side]
+        .filter(q => !q.sentOff)
+        .filter(q => q.role !== 'GK')
+        .map(q => Math.hypot(q.x - b.x, q.z - b.z)));
+    if (live && ballD < 32 && (b.x - gx) * d > 0 && nearestAttacker > Math.hypot(b.x - g.x, b.z - g.z) + 1) {
+        const sweepDistance = Math.min(18, Math.max(depth, ballD - 3));
+        g.tx = gx + d * sweepDistance;
+        g.tz = clamp(b.z, -(hzg - 0.4), hzg - 0.4);
+        g.sprint = true;
     }
 }

@@ -16,6 +16,7 @@ const KK = { pass: 1, through: 2, shot: 3, lob: 4, clear: 5, throw: 6, head: 7, 
  */
 export class Pose {
     x = new Float32Array(22); z = new Float32Array(22); h = new Float32Array(22);
+    bodyH = new Float32Array(22); bodyMass = new Float32Array(22);
     spd = new Float32Array(22); ph = new Float32Array(22); kick = new Float32Array(22); dive = new Float32Array(22);
     vx = new Float32Array(22); vz = new Float32Array(22);
     tk = new Float32Array(22); stun = new Float32Array(22); hold = new Uint8Array(22);
@@ -23,7 +24,7 @@ export class Pose {
     own = -1; gph = 0; scorer = -1; scorerSide = -1; rk = 0; rtaker = -1; rside = -1; rx = 0; rz = 0;
     bx = 0; by = 0; bz = 0; bvx = 0; bvy = 0; bvz = 0;
     copy(o) {
-        for (const k of ['x', 'z', 'h', 'spd', 'ph', 'kick', 'dive', 'vx', 'vz', 'tk', 'stun', 'hold', 'dvy', 'kk']) this[k].set(o[k]);
+        for (const k of ['x', 'z', 'h', 'bodyH', 'bodyMass', 'spd', 'ph', 'kick', 'dive', 'vx', 'vz', 'tk', 'stun', 'hold', 'dvy', 'kk']) this[k].set(o[k]);
         for (const k of ['own', 'gph', 'scorer', 'scorerSide', 'rk', 'rtaker', 'rside', 'rx', 'rz', 'bx', 'by', 'bz', 'bvx', 'bvy', 'bvz']) this[k] = o[k];
     }
     fromWorld(w) {
@@ -33,6 +34,7 @@ export class Pose {
             this.x[i] = p.x; this.z[i] = p.z; this.h[i] = p.heading; this.spd[i] = p.speed; this.ph[i] = p.phase; this.kick[i] = p.kickT;
             this.dive[i] = p.dive && p.dive.t > p.dive.delay ? Math.sign(p.dive.z - p.dive.z0 || 1) * Math.min(1, (p.dive.t - p.dive.delay) / 0.25) : 0;
             this.vx[i] = p.vx; this.vz[i] = p.vz; this.tk[i] = p.tackleCd; this.stun[i] = p.stun; this.hold[i] = p.gkHolding ? 1 : 0;
+            this.bodyH[i] = p.traits.height; this.bodyMass[i] = p.traits.mass;
             this.dvy[i] = p.dive ? p.dive.y : 0;
             this.kk[i] = p.kickKind ? (KK[p.kickKind] ?? 0) : 0; // optional 1-line sim metadata, see docs/README.md
         }
@@ -72,8 +74,14 @@ export class Actors {
     /** `await Actors.create(scene, P, home, away, { shadows })` — same draw() contract as the old class. */
     static async create(scene, P, home, away, opts = {}) {
         const a = new Actors(scene, P, home, away, opts);
-        await a.load();
-        return a;
+        try {
+            await a.load();
+            return a;
+        }
+        catch (error) {
+            a.dispose();
+            throw error;
+        }
     }
     constructor(scene, P, home, away, opts) {
         this.scene = scene; this.P = P; this.home = home; this.away = away; this.opts = opts;
@@ -84,12 +92,20 @@ export class Actors {
 
     async load() {
         const { scene } = this;
+        const progress = this.opts.onProgress;
+        progress?.({ asset: 'player.glb', loaded: 0, total: 842000 });
+        progress?.({ asset: 'anims.bin', loaded: 0, total: 705000 });
+        progress?.({ asset: 'anims.json', loaded: 0, total: 9000 });
         const [container, pack] = await Promise.all([
-            SceneLoader.LoadAssetContainerAsync(ASSETS.dir, ASSETS.model, scene),
-            loadPack(ASSETS.dir),
+            SceneLoader.LoadAssetContainerAsync(ASSETS.dir, ASSETS.model, scene, event => {
+                progress?.({ asset: 'player.glb', loaded: event.loaded, total: event.total || 842000 });
+            }),
+            loadPack(ASSETS.dir, progress, this.opts.signal),
         ]);
-        // The instantiated meshes share geometry with the container.
         this.assetContainer = container;
+        if (this.opts.signal?.aborted)
+            throw new Error('Player asset loading was cancelled');
+        // The instantiated meshes share geometry with the container.
         this.pack = pack;
         const kits = [this.home.kit, this.away.kit];
         const defaults = [{ primary: '#18a04a', secondary: '#ffffff', trim: '#f4cb34' }, { primary: '#ffffff', secondary: '#17202a', trim: '#147a3b' }];
@@ -99,9 +115,12 @@ export class Actors {
         mat.useVertexColors = true; mat.vertexAlpha = false;
         let fit = null;
         for (let i = 0; i < 22; i++) {
+            if (this.opts.signal?.aborted)
+                throw new Error('Player rig creation was cancelled');
             const side = i < 11 ? 0 : 1, keeper = i % 11 === 0, kit = kits[side] ?? defaults[side], d = defaults[side];
             const inst = container.instantiateModelsToScene(n => n, false, { doNotInstantiate: true });
             const root = new TransformNode(`p${i}`, scene), wrap = new TransformNode(`w${i}`, scene);
+            root.setEnabled(false);
             wrap.parent = root;
             inst.rootNodes.forEach(n => { n.parent = wrap; });
             const m = mat.clone(`kit${i}`);
@@ -117,13 +136,22 @@ export class Actors {
             const missingBones = BONE_NAMES.filter((_, b) => !nodes[b]);
             if (missingBones.length) throw new Error(`Player GLB is missing required bones: ${missingBones.join(', ')}`);
             if (fit === null) fit = ASSETS.scale * ASSETS.height / 1.8;
-            wrap.scaling.setAll(fit * (1 + ((hash(i * 7 + 1, 1000) / 1000 - 0.5) * 2) * ASSETS.heightVariance));
+            const baseScale = fit * (1 + ((hash(i * 7 + 1, 1000) / 1000 - 0.5) * 2) * ASSETS.heightVariance);
+            wrap.scaling.setAll(baseScale);
             const shadow = this.blob.createInstance(`s${i}`); shadow.position.y = 0.02;
-            this.rigs.push({ root, wrap, nodes, shadow, anim: new PlayerAnimator(i, pack, keeper) });
+            this.rigs.push({ root, wrap, nodes, shadow, baseScale, anim: new PlayerAnimator(i, pack, keeper) });
         }
     }
 
-    dispose() { /* scene.dispose() in createEngine frees everything */ }
+    dispose() {
+        this.assetContainer?.dispose();
+        this.assetContainer = null;
+    }
+    setPlayersEnabled(enabled) {
+        for (const rig of this.rigs)
+            rig.root.setEnabled(enabled);
+    }
+    get playerRootCount() { return this.rigs.length; }
 
     /** draw pose a→b at interpolation t (0..1), spin the ball by `spin` over dt */
     draw(a, b, t, dt, spin, controlledIdx) {
@@ -156,6 +184,10 @@ export class Actors {
             const vh = r.anim.update(S, r.nodes);
             r.root.position.set(x, 0, z);
             r.root.rotation.y = Math.PI / 2 - vh;
+            const height = lerp(a.bodyH[i], b.bodyH[i]) / 1.8;
+            const mass = lerp(a.bodyMass[i], b.bodyMass[i]);
+            const width = Math.max(0.86, Math.min(1.08, 0.96 + (mass - 75) * 0.002));
+            r.wrap.scaling.set(r.baseScale * width, r.baseScale * height, r.baseScale * width);
             r.shadow.position.set(x, 0.02, z);
         }
         this.ball.position.set(ball.x, ball.y, ball.z);

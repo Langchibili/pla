@@ -95,3 +95,42 @@ goalkeeper actions, and celebrations from recorded render poses. The source
 the packed binary and JSON are used during play. Animation remains render-only
 and does not alter the deterministic simulation. The stadium keeps the project
 specification's open, seat-free perimeter and league-name advertising boards.
+
+## Simulation and match presentation
+
+The fixed-step match simulation uses a standalone ball integrator for gravity,
+drag, spin/Magnus lift, ground friction, rolling resistance, posts and the goal
+net. A server-issued `weather_snapshot` may provide `wetness` from `0` (dry) to
+`1` (wet), or a `condition` such as `rain`/`wet` or `clear`/`dry`. Wetness
+changes ball-ground friction, rolling resistance, player traction and first
+touches; it is part of the match setup rather than a client-side weather
+override.
+
+Player `height`/`heightCm` and `weight`/`weightKg` attributes are used for body
+scale, contact reach, collision response and turning inertia. When absent, role
+based profiles are used. Player contact uses deterministic body separation and
+procedural stumble recovery; this is not a ragdoll solver or a full per-bone
+collision mesh. Existing fixed-step acceleration, traction-limited turning and
+blended locomotion/action clips remain the movement and animation foundation.
+High-ball touches and kicks select the available header animation when the
+ball is in range; no unprovided bicycle-kick or mocap clip is fabricated.
+
+The referee checks offside against the recorded pass-time line, applies fouls
+and cards, plays advantage while the fouled team keeps a promising attack, and
+adds simulated stoppage time. Knockout rules can set `knockout: true`; they
+then use two extra-time periods when `extraTimeEnabled` is true (defaulting to
+the knockout setting) and a deterministic penalty shootout if still level.
+Without knockout rules, matches retain the regular two-period ending.
+
+The match overlay includes live possession, shots, saves, fouls, cards,
+estimated xG, selected-player stamina and a radar. TV/broadcast, tactical
+top-down and end-to-end views transition smoothly. Recent play can be replayed
+manually or after goals. Event commentary is shown as captions and can be
+spoken with the browser's speech synthesis using the commentary button; no
+crowd audio is included. The knockout shootout score is currently local to the
+frontend result; result submission continues to send the existing backend
+metric schema, so server-side tournament settlement must not rely on that local
+shootout score yet.
+
+Run focused systems checks with `npm run check:systems`. For broader gameplay
+calibration and reproducibility, use the headless commands above.

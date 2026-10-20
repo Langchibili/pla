@@ -44,3 +44,5 @@ Phase 4: Full-Stack Integration & Optimization (Weeks 11–14)
 Because you are using the AI to build the core game mechanics, you must prevent it from hallucinating or generating broken Babylon.js code. Follow these two rules:
 1. Keep Physics Math-Based, Not Engine-Based: Babylon has heavy built-in physics engines (like Havok or Ammo.js). For a mobile soccer game, these are often overkill and cause performance lag. Instruct your AI to write deterministic, vector-based math loops for the ball instead. It is significantly faster and easier to debug.
 2. One Script Component at a Time: Never say "Write a 3D soccer match script." Instead, say: "Act as a Babylon.js gameplay engineer. Write an isolated BallController class. It must take a Vector3 target and calculate a realistic curved trajectory for a corner kick over a specified duration. Keep it highly performant for mobile."
+
+https://www.ai3dgen.com/image-to-3d-model-free
